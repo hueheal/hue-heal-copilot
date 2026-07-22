@@ -239,6 +239,24 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['content_ideas']['Insert']>
         Relationships: []
       }
+      app_members: {
+        Row: {
+          id: string
+          email: string
+          role: string
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          role?: string
+          status?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['app_members']['Insert']>
+        Relationships: []
+      }
       brand_profiles: {
         Row: {
           id: string
