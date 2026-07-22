@@ -283,57 +283,12 @@ export function applyDraft(content: ProposalContent, draft: DraftedProposal): Pr
 }
 
 /* ---------------------------------------------------------------------------
-   Sample data — seeds the studio's real book of work the first time the
-   tables are empty, so the app looks populated from day one. Idempotent:
-   only runs when there are zero clients.
+   Sample data seeding — DISABLED.
+   This used to auto-populate a new/empty account with demo clients, proposals
+   and invoices on first sign-in. For the live studio that meant fake records
+   appearing in real accounts, so it's now a no-op. Kept as an exported stub so
+   existing callers don't need to change; safe to remove entirely later.
 --------------------------------------------------------------------------- */
-function daysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString()
-}
-function dateDaysAgo(n: number): string {
-  return daysAgo(n).slice(0, 10)
-}
-
-// Memoised so concurrent callers (StrictMode double-mount, two pages mounting
-// at once) share a single seed run and never double-insert.
-let seedPromise: Promise<boolean> | null = null
 export function seedSampleData(): Promise<boolean> {
-  if (!seedPromise) seedPromise = runSeed()
-  return seedPromise
-}
-
-async function runSeed(): Promise<boolean> {
-  const existing = await listClients()
-  if (existing.length > 0) return false
-
-  const clients: NewClient[] = [
-    { name: 'Wild Botanic', sector: 'Hospitality', stage: 'lead', value_gbp: null, note: 'Intro call Thursday 14:00' },
-    { name: 'Lumen Spa', sector: 'Health & Fitness', stage: 'lead', value_gbp: null, note: 'Warm referral · Sky' },
-    { name: 'Aman', sector: 'Hospitality', stage: 'proposal', value_gbp: 38000, note: 'Experience design · sent 6d ago' },
-    { name: 'Kindred Kitchen', sector: 'Food & Beverage', stage: 'proposal', value_gbp: 12000, note: 'Brand + interiors' },
-    { name: 'Maven', sector: 'Education', stage: 'active', value_gbp: 24000, note: 'Retainer Q3 · invoice overdue' },
-    { name: 'Peacock', sector: 'Hospitality', stage: 'active', value_gbp: 31000, note: 'Wayfinding rollout' },
-    { name: 'NHS Trust', sector: 'Healthcare', stage: 'active', value_gbp: 46000, note: 'Ward environments' },
-    { name: 'Redbull', sector: 'F&B', stage: 'delivered', value_gbp: 19000, note: 'Event activation' },
-    { name: 'Vevo', sector: 'Media', stage: 'delivered', value_gbp: 9000, note: 'Studio identity' },
-  ]
-  for (const c of clients) await addClient(c)
-
-  const proposals: Database['public']['Tables']['proposals']['Insert'][] = [
-    { client_name: 'Aman', title: 'Experience design — flagship', amount_gbp: 38000, status: 'sent', sent_at: daysAgo(6) },
-    { client_name: 'Kindred Kitchen', title: 'Brand + interiors', amount_gbp: 12000, status: 'draft' },
-    { client_name: 'Lumen Spa', title: 'Wellness journey strategy', amount_gbp: 14500, status: 'viewed', sent_at: daysAgo(2) },
-  ]
-  for (const p of proposals) await addProposal(p)
-
-  const invoices: Database['public']['Tables']['invoices']['Insert'][] = [
-    { client_name: 'Maven', title: 'Retainer — Q3', amount_gbp: 8000, status: 'overdue', due_date: dateDaysAgo(12) },
-    { client_name: 'Peacock', title: 'Wayfinding — milestone 2', amount_gbp: 10300, status: 'paid', issued_at: dateDaysAgo(18) },
-    { client_name: 'NHS Trust', title: 'Ward environments — deposit', amount_gbp: 15000, status: 'sent', issued_at: dateDaysAgo(3) },
-  ]
-  for (const i of invoices) await addInvoice(i)
-
-  return true
+  return Promise.resolve(false)
 }
