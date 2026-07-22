@@ -10,6 +10,7 @@ import SocialCopilot from './pages/SocialCopilot'
 import SocialStudio from './pages/SocialStudio'
 import NewsletterPage from './pages/Newsletter'
 import Reports from './pages/Reports'
+import Settings from './pages/Settings'
 
 export default function App() {
   return (
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="social/studio/:id" element={<SocialStudio />} />
         <Route path="newsletter" element={<NewsletterPage />} />
         <Route path="reports" element={<Reports />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   )

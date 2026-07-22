@@ -239,6 +239,34 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['content_ideas']['Insert']>
         Relationships: []
       }
+      brand_profiles: {
+        Row: {
+          id: string
+          owner: string
+          name: string
+          tone_of_voice: string
+          writing_guidelines: string
+          image_master_prompt: string
+          image_negatives: string
+          is_default: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner?: string
+          name: string
+          tone_of_voice?: string
+          writing_guidelines?: string
+          image_master_prompt?: string
+          image_negatives?: string
+          is_default?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['brand_profiles']['Insert']>
+        Relationships: []
+      }
       newsletters: {
         Row: {
           id: string

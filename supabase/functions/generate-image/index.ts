@@ -25,6 +25,9 @@ interface Body {
   inspiration?: string
   /** Optional full override for the composed prompt (still gets the brand spec + negatives). */
   prompt?: string
+  /** Selected brand's creative direction — overrides the built-in defaults when present. */
+  masterPrompt?: string
+  negatives?: string
 }
 
 /* ---- Brand style guardrail (always applied) ---- */
@@ -49,11 +52,14 @@ const PRESETS: Record<string, string> = {
 }
 
 function composePrompt(b: Body): string {
-  if (b.prompt) return `${BRAND_STYLE} ${b.prompt} ${NEGATIVES}`
+  // The selected brand's creative direction overrides the built-in defaults.
+  const style = b.masterPrompt?.trim() ? b.masterPrompt.trim() : BRAND_STYLE
+  const negatives = b.negatives?.trim() ? b.negatives.trim() : NEGATIVES
+  if (b.prompt) return `${style} ${b.prompt} ${negatives}`
   const preset = PRESETS[b.preset ?? 'editorial'] ?? PRESETS.editorial
   const subject = `Subject: ${b.sector.replace('_', ' ')} setting evoking “${b.topic}”.`
   const insp = b.inspiration?.trim() ? ` Art-direction notes to honour: ${b.inspiration.trim()}.` : ''
-  return `${BRAND_STYLE} ${preset} ${subject}${insp} ${NEGATIVES}`
+  return `${style} ${preset} ${subject}${insp} ${negatives}`
 }
 
 /** Returns raw PNG bytes for the composed prompt. */

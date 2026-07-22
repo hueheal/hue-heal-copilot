@@ -4,6 +4,7 @@ import { PillButton } from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getPost, updatePost, generateImage, analyzeReference, IMAGE_PRESETS, SECTOR_LABEL, type Post } from '../lib/socialCopilot'
+import { listBrands, resolveActiveBrand, getActiveBrandId, setActiveBrandId, type BrandProfile } from '../lib/brand'
 import { INSTAGRAM_FORMAT_LIST, INSTAGRAM_FORMATS, type InstaFormat } from '../lib/social/formats'
 import { TEMPLATES, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
 import { captureNode, downloadDataUrl, zipPngs } from '../lib/social/exportImage'
@@ -131,6 +132,10 @@ export default function SocialStudio() {
   const [busy, setBusy] = useState(false)
   const [imgPreset, setImgPreset] = useState('editorial')
   const [imgNotes, setImgNotes] = useState('')
+  const [brands, setBrands] = useState<BrandProfile[]>([])
+  const [brandId, setBrandId] = useState<string | null>(getActiveBrandId())
+
+  useEffect(() => { listBrands().then(setBrands).catch(() => {}) }, [])
 
   const canvasRef = useRef<HTMLDivElement | null>(null)
   const drag = useRef<{ id: string; mode: 'move' | 'resize'; sx: number; sy: number; box: DesignElement['box'] } | null>(null)
@@ -291,7 +296,12 @@ export default function SocialStudio() {
   async function aiBackground() {
     setBusy(true); setStatus('Generating background… (10–20s)')
     try {
-      const { url, error } = await generateImage(post!.id, { topic: post!.topic, format: post!.format, sector: post!.sector, accent: design!.accent }, { preset: imgPreset, inspiration: imgNotes })
+      const brand = brands.find((b) => b.id === brandId) ?? resolveActiveBrand(brands)
+      const { url, error } = await generateImage(
+        post!.id,
+        { topic: post!.topic, format: post!.format, sector: post!.sector, accent: design!.accent },
+        { preset: imgPreset, inspiration: imgNotes, masterPrompt: brand?.image_master_prompt, negatives: brand?.image_negatives },
+      )
       if (url) { setBackground({ type: 'image', value: url }); setStatus('Background generated') }
       else setStatus(`AI image failed: ${error ?? 'unknown'}`)
     } finally { setBusy(false) }
@@ -374,6 +384,20 @@ export default function SocialStudio() {
               Upload<input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0])} />
             </label>
           </div>
+
+          {brands.length > 0 && (
+            <>
+              <div style={{ ...railLabel, marginTop: 12 }}>Creative direction</div>
+              <select
+                value={brands.find((b) => b.id === brandId) ? brandId! : (resolveActiveBrand(brands)?.id ?? '')}
+                onChange={(e) => { setBrandId(e.target.value); setActiveBrandId(e.target.value) }}
+                style={{ width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '8px 10px', fontSize: 12.5, fontFamily: 'var(--font-sans)' }}
+              >
+                {brands.map((b) => <option key={b.id} value={b.id}>{b.name}{b.is_default ? ' · default' : ''}</option>)}
+              </select>
+              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>Edit brand looks in Settings.</div>
+            </>
+          )}
 
           <div style={{ ...railLabel, marginTop: 12 }}>AI image · style</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

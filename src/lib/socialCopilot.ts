@@ -109,6 +109,9 @@ export async function generateCopy(brief: Brief): Promise<{ copy: GeneratedCopy;
 export interface ImageOptions {
   preset?: string
   inspiration?: string
+  /** Selected brand's creative direction (overrides the built-in defaults). */
+  masterPrompt?: string
+  negatives?: string
 }
 
 export const IMAGE_PRESETS: { key: string; label: string }[] = [
@@ -154,7 +157,7 @@ export async function generateImage(postId: string, brief: Brief, opts: ImageOpt
     const res = await fetch(`${functionsBase}/generate-image`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ postId, topic: brief.topic, sector: brief.sector, accent: brief.accent, preset: opts.preset, inspiration: opts.inspiration }),
+      body: JSON.stringify({ postId, topic: brief.topic, sector: brief.sector, accent: brief.accent, preset: opts.preset, inspiration: opts.inspiration, masterPrompt: opts.masterPrompt, negatives: opts.negatives }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) return { url: null, error: data?.error ? `${data.error}${data.detail ? ' · ' + String(data.detail).slice(0, 140) : ''}` : `Image function ${res.status}` }
