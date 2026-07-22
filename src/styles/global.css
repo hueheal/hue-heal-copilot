@@ -1,0 +1,91 @@
+@import './tokens.css';
+
+/* ---- Self-hosted fonts for the Social canvas ----
+   The PNG/ZIP exporter (html-to-image) must embed fonts to rasterise text, and
+   it can only embed SAME-ORIGIN faces — Ivy Ora (Adobe Fonts) is cross-origin and
+   can't be embedded, so the social canvas uses these self-hosted faces to guarantee
+   the export matches the preview exactly. (Same Prata the PDF uses.) */
+@font-face { font-family: 'HHSerif'; src: url('/fonts/pdf/Prata-Regular.ttf') format('truetype'); font-weight: 300 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'HHSans'; src: url('/fonts/pdf/Poppins-Light.ttf') format('truetype'); font-weight: 300; font-display: swap; }
+@font-face { font-family: 'HHSans'; src: url('/fonts/pdf/Poppins-Regular.ttf') format('truetype'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'HHSans'; src: url('/fonts/pdf/Poppins-Medium.ttf') format('truetype'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'HHSans'; src: url('/fonts/pdf/Poppins-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--hh-monterey);
+  color: var(--text-strong);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+a { text-decoration: none; color: inherit; }
+button { font-family: inherit; cursor: pointer; }
+
+/* Warm scrollbar (matches the design system) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: #D8CFBE;
+  border-radius: 8px;
+  border: 3px solid var(--hh-monterey);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--hh-mushroom); }
+
+/* ---- Atmospheric ink surface (CSS recreation of assets/atmos-deep.png) ----
+   Warm, clay-lit darkness with a soft copper glow — used behind the
+   Social Copilot hero card and other ink features. */
+.hh-atmos {
+  background-color: var(--hh-anthracite);
+  background-image:
+    radial-gradient(120% 90% at 82% 18%, rgba(206,138,83,0.34), transparent 55%),
+    radial-gradient(90% 80% at 12% 88%, rgba(138,106,82,0.30), transparent 60%),
+    radial-gradient(60% 60% at 50% 40%, rgba(58,46,37,0.55), transparent 70%),
+    linear-gradient(135deg, #241f1a 0%, #191512 60%, #120f0c 100%);
+}
+
+/* ---- Shared interaction affordances ---- */
+.hh-nav { transition: background var(--dur-fast) var(--ease-calm); }
+.hh-nav:hover { background: rgba(244,240,231,0.06); }
+.hh-btn { transition: opacity var(--dur-fast) var(--ease-calm), transform var(--dur-fast) var(--ease-calm); }
+.hh-btn:hover { opacity: 0.9; }
+.hh-card-hover { transition: box-shadow var(--dur-base) var(--ease-calm), transform var(--dur-base) var(--ease-calm); }
+.hh-card-hover:hover { box-shadow: var(--shadow-card); transform: translateY(-1px); }
+
+.hh-link-underline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--hh-copper);
+  border-bottom: 1px solid var(--hh-copper);
+  padding-bottom: 2px;
+  transition: gap var(--dur-fast) var(--ease-calm);
+}
+.hh-link-underline:hover { gap: 10px; }
+
+/* ---- Print → PDF: show only the .print-doc, hide app chrome & editor ---- */
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #fff !important; height: auto !important; overflow: visible !important; }
+  aside, .no-print { display: none !important; }
+  #root, #root > div, main { height: auto !important; overflow: visible !important; display: block !important; }
+  .print-doc {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+}
+
+/* Utility */
+.hh-serif { font-family: var(--font-serif); }
+.hh-voice { font-family: var(--font-voice); }
+.hh-eyebrow {
+  font-size: var(--type-caption);
+  letter-spacing: var(--track-eyebrow);
+  text-transform: uppercase;
+}

@@ -1,0 +1,17 @@
+# Hue & Heal — Studio Co-pilot :: Netlify deploy config
+# Static Vite SPA. The backend (Supabase DB/Auth/Storage/Edge Functions) is
+# hosted separately and reached over HTTPS — nothing server-side runs here.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# Single-page-app fallback: every path serves index.html so client-side
+# routes (/newsletter, /social/studio/:id, …) resolve instead of 404-ing.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
