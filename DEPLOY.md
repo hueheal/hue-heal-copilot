@@ -69,13 +69,31 @@ live site with no change.
 
 ---
 
-## 5. (Optional) Custom domain — copilot.hueandheal.com
+## 5. Custom domain — copilotadmin.hueandheal.com
 
-1. Netlify: **Domain management → Add a domain →** `copilot.hueandheal.com`.
-2. At your DNS host (Wix today, or Cloudflare after the newsletter DNS move), add the
-   **CNAME** record Netlify shows (points the subdomain at your Netlify site).
-3. Netlify provisions HTTPS automatically once DNS resolves.
-4. Redo **step 4** with the custom URL added to Supabase's Site URL + Redirect URLs.
+This mirrors exactly how `maria.hueandheal.com` already works: a **CNAME record in
+Wix DNS** pointing the subdomain at a Netlify site. (`maria` → `jolly-swan-f73b00.netlify.app`.)
+This is a web CNAME — unrelated to the subdomain-MX limitation that blocked Resend.
+
+1. **Netlify:** Site → **Domain management → Add a domain →** enter
+   `copilotadmin.hueandheal.com` → **Add domain**. Because DNS lives at Wix (not
+   Netlify), Netlify marks it "awaiting external DNS" and shows the **CNAME target**
+   to use (your site's `<name>.netlify.app`).
+
+2. **Wix DNS:** Wix dashboard → **Domains → hueandheal.com → Manage DNS Records**
+   (Advanced). Under **CNAME (Alias)** records, **+ Add Record**:
+   - **Host / Name:** `copilotadmin`
+   - **Value / Points to:** the `<name>.netlify.app` target Netlify gave you
+   - **TTL:** leave default
+   Save. (This is the same record type already set for `maria`.)
+
+3. Wait for DNS to propagate (usually minutes, up to ~1h). Netlify then
+   **auto-provisions an HTTPS certificate** — no action needed.
+
+4. Redo **step 4** with the custom URL: set Supabase **Site URL** to
+   `https://copilotadmin.hueandheal.com` and add `https://copilotadmin.hueandheal.com/**`
+   to **Redirect URLs**. (You can set this as the primary domain in Netlify so the
+   raw `*.netlify.app` URL redirects to it.)
 
 ---
 
