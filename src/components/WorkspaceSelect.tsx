@@ -97,6 +97,7 @@ function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
   const [files, setFiles] = useState<File[]>([])
+  const [notes, setNotes] = useState('')
   const [form, setForm] = useState<Form>({
     name: '', accent_color: '#3E5C4B', display_font: 'poppins',
     modules: [...DEFAULT_MODULES], tone_of_voice: '', writing_guidelines: '', image_master_prompt: '', image_negatives: '',
@@ -104,9 +105,9 @@ function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
   const set = (p: Partial<Form>) => setForm((f) => ({ ...f, ...p }))
 
   async function runSynthesis() {
-    if (!files.length) { setStep(1); return }
-    setBusy(true); setNote('Reading your brand files with Claude…')
-    const { result, error } = await synthesizeBrand(files)
+    if (!files.length && !notes.trim()) { setStep(1); return }
+    setBusy(true); setNote('Synthesising your brand with Claude…')
+    const { result, error } = await synthesizeBrand(files, notes)
     setBusy(false)
     if (error || !result) { setNote(error ? `Couldn’t synthesise: ${error}` : 'No result — continue manually.'); return }
     applySynthesis(result)
@@ -152,17 +153,24 @@ function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
           {step === 0 && (
             <>
               <H>Start from your brand</H>
-              <P>Upload a logo, brand guidelines (PDF) or a tone-of-voice doc and Claude will draft this world’s colour, voice and creative direction. Or skip and set it up by hand.</P>
+              <P>Tell Claude about the brand and/or upload a logo, guidelines (PDF) or a tone-of-voice doc. It’ll draft this world’s colour, voice and creative direction — you review before anything’s applied. Or skip and set it up by hand.</P>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+                placeholder="Describe the brand — who it's for, how it should feel, its personality, colours, any references… anything helps."
+                style={{ ...inp, resize: 'vertical', lineHeight: 1.55, margin: '4px 0 10px' }}
+              />
               <label style={fileBox}>
                 <input type="file" multiple accept="image/*,application/pdf,.doc,.docx,.txt,.md" style={{ display: 'none' }} onChange={(e) => setFiles([...(e.target.files ?? [])])} />
-                {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected` : '＋ Add brand files'}
+                {files.length ? `${files.length} file${files.length > 1 ? 's' : ''} selected` : '＋ Add brand files (optional)'}
               </label>
               {note && <div style={noteStyle}>{note}</div>}
               <Row>
                 <Ghost onClick={onCancel}>Cancel</Ghost>
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
                   <Ghost onClick={() => setStep(1)}>Skip</Ghost>
-                  <Primary color={form.accent_color} onText={onText} disabled={busy} onClick={runSynthesis}>{busy ? 'Synthesising…' : files.length ? 'Synthesise' : 'Continue'}</Primary>
+                  <Primary color={form.accent_color} onText={onText} disabled={busy} onClick={runSynthesis}>{busy ? 'Synthesising…' : (files.length || notes.trim()) ? 'Synthesise' : 'Continue'}</Primary>
                 </div>
               </Row>
             </>

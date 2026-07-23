@@ -15,7 +15,7 @@ export default function Dashboard() {
             fontSize: 11,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
-            color: 'var(--hh-copper)',
+            color: 'var(--text-accent)',
           }}
         >
           {longDate(now)}
@@ -59,7 +59,7 @@ export default function Dashboard() {
             >
               <div
                 className="hh-serif"
-                style={{ fontWeight: 300, fontSize: 48, lineHeight: 1, color: 'var(--hh-copper)' }}
+                style={{ fontWeight: 300, fontSize: 48, lineHeight: 1, color: 'var(--text-accent)' }}
               >
                 {m.value}
               </div>
@@ -113,7 +113,7 @@ export default function Dashboard() {
                   style={{
                     display: 'inline-flex',
                     background: 'var(--hh-copper)',
-                    color: '#F6EFE4',
+                    color: 'var(--hh-on-accent, #F6EFE4)',
                     borderRadius: 999,
                     padding: '11px 22px',
                     fontSize: 13,
@@ -142,7 +142,7 @@ export default function Dashboard() {
                   fontSize: 11,
                   letterSpacing: '0.16em',
                   textTransform: 'uppercase',
-                  color: 'var(--hh-copper)',
+                  color: 'var(--text-accent)',
                 }}
               >
                 Proposals &amp; Invoices
@@ -224,7 +224,7 @@ export default function Dashboard() {
                     fontSize: 11,
                     color:
                       item.actionTone === 'accent'
-                        ? 'var(--hh-copper)'
+                        ? 'var(--text-accent)'
                         : item.actionTone === 'positive'
                         ? 'var(--status-positive)'
                         : 'var(--text-muted)',

@@ -58,8 +58,8 @@ button { font-family: inherit; cursor: pointer; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--hh-copper);
-  border-bottom: 1px solid var(--hh-copper);
+  color: var(--text-accent);
+  border-bottom: 1px solid var(--text-accent);
   padding-bottom: 2px;
   transition: gap var(--dur-fast) var(--ease-calm);
 }

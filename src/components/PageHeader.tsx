@@ -19,7 +19,7 @@ export default function PageHeader({ eyebrow, title, subtitle, action }: Props) 
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--hh-copper)' }}>
+        <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-accent)' }}>
           {eyebrow}
         </div>
         <h1

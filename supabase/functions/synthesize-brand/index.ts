@@ -62,7 +62,8 @@ Deno.serve(async (req) => {
   let body: Body
   try { body = await req.json() } catch { return json({ error: 'Invalid JSON body' }, 400) }
   const files = Array.isArray(body.files) ? body.files : []
-  if (!files.length) return json({ error: 'No files provided' }, 400)
+  const notes = (body.notes ?? '').trim()
+  if (!files.length && !notes) return json({ error: 'Add a description or files to synthesise from' }, 400)
 
   const instruction =
     'You are a brand strategist + art director. From the uploaded brand materials (logo, guidelines, tone-of-voice docs), ' +
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
     'Write a rich, premium editorial photographic creative-direction master prompt (photography, lighting, colour, human authenticity, ' +
     'composition, environment, mood) plus a negatives list. Suggest the copilot modules this brand most needs. ' +
     'Use display_font "poppins" (Ivy Ora is reserved for Hue & Heal itself). ' +
-    (body.notes ? `Additional context: ${body.notes}. ` : '') +
+    (notes ? `The user describes the brand as follows — treat this as primary input: "${notes}". ` : '') +
     'Call the brand_identity tool with your result.'
 
   let resp: Response
