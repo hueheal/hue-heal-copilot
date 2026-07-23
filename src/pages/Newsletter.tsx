@@ -18,6 +18,7 @@ import {
   addSubscribers,
   deleteSubscriber,
   sendNewsletter,
+  generateNewsletter,
 } from '../lib/newsletter'
 
 const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13.5, fontFamily: 'var(--font-sans)' }
@@ -41,6 +42,10 @@ export default function NewsletterPage() {
   const [testEmail, setTestEmail] = useState(auth.email ?? '')
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [aiTopic, setAiTopic] = useState('')
+  const [aiNotes, setAiNotes] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiNote, setAiNote] = useState<string | null>(null)
 
   async function reload() {
     if (gated) return
@@ -68,6 +73,27 @@ export default function NewsletterPage() {
     () => renderEmailHtml({ subject, preheader, eyebrow, blocks }, emailBrand),
     [subject, preheader, eyebrow, blocks, emailBrand],
   )
+
+  async function draftWithAI() {
+    if (!aiTopic.trim()) return
+    setAiBusy(true); setAiNote(null)
+    const { result, error } = await generateNewsletter({
+      topic: aiTopic,
+      notes: aiNotes,
+      brandName: brand?.name,
+      toneOfVoice: brand?.tone_of_voice,
+      writingGuidelines: brand?.writing_guidelines,
+      template: TEMPLATES.find((t) => t.id === templateId)?.label,
+    })
+    setAiBusy(false)
+    if (error || !result) { setAiNote(error ?? 'Could not draft'); return }
+    setSubject(result.subject)
+    setPreheader(result.preheader)
+    if (result.eyebrow) setEyebrow(result.eyebrow)
+    setBlocks(result.blocks)
+    setCurrentId(null)
+    setAiNote('Draft ready — edit anything below.')
+  }
 
   function applyTemplate(id: string) {
     const t = TEMPLATES.find((x) => x.id === id) ?? TEMPLATES[0]
@@ -146,6 +172,40 @@ export default function NewsletterPage() {
           <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 24, alignItems: 'start' }}>
             {/* ---- Editor ---- */}
             <div>
+              {/* Write with AI — drafts in this brand world's voice */}
+              <div style={{ border: '1px solid var(--hh-line)', borderRadius: 12, padding: 14, background: 'var(--hh-bone)' }}>
+                <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>
+                  ✦ Write with AI
+                </div>
+                <input
+                  style={{ ...inp, marginBottom: 8 }}
+                  value={aiTopic}
+                  onChange={(e) => setAiTopic(e.target.value)}
+                  placeholder="Topic — e.g. designing for stillness"
+                  onKeyDown={(e) => { if (e.key === 'Enter') draftWithAI() }}
+                />
+                <textarea
+                  style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }}
+                  rows={3}
+                  value={aiNotes}
+                  onChange={(e) => setAiNotes(e.target.value)}
+                  placeholder="Notes, points to cover, links, anything to work from (optional)"
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                  <button
+                    className="hh-btn"
+                    onClick={draftWithAI}
+                    disabled={aiBusy || !aiTopic.trim()}
+                    style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '9px 18px', fontSize: 12.5, cursor: aiBusy || !aiTopic.trim() ? 'default' : 'pointer', opacity: aiBusy || !aiTopic.trim() ? 0.55 : 1 }}
+                  >
+                    {aiBusy ? 'Writing…' : 'Draft newsletter'}
+                  </button>
+                  <span style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                    {aiNote ?? `In ${brand?.name ?? 'this brand'}’s voice`}
+                  </span>
+                </div>
+              </div>
+
               <label style={rail}>Subject</label>
               <input style={inp} value={subject} onChange={(e) => setSubject(e.target.value)} />
               <label style={rail}>Preheader</label>

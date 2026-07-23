@@ -147,6 +147,65 @@ export function renderEmailHtml(
 }
 
 /* ---------------------------------------------------------------------------
+   AI drafting — Claude writes the newsletter in the brand world's voice
+--------------------------------------------------------------------------- */
+export interface GeneratedNewsletter {
+  subject: string
+  preheader: string
+  eyebrow: string
+  blocks: Block[]
+}
+
+interface RawBlock { type?: string; text?: string; alt?: string; label?: string; href?: string }
+
+/** Map the model's blocks onto our editable Block model, assigning ids. */
+function toBlocks(raw: unknown): Block[] {
+  if (!Array.isArray(raw)) return []
+  const out: Block[] = []
+  for (const r of raw as RawBlock[]) {
+    switch (r?.type) {
+      case 'heading': out.push({ id: bid(), type: 'heading', text: r.text ?? '' }); break
+      case 'text': out.push({ id: bid(), type: 'text', text: r.text ?? '' }); break
+      case 'image': out.push({ id: bid(), type: 'image', url: '', alt: r.alt ?? '' }); break
+      case 'button': out.push({ id: bid(), type: 'button', label: r.label || 'Read more', href: r.href ?? '' }); break
+      case 'divider': out.push({ id: bid(), type: 'divider' }); break
+      default: break
+    }
+  }
+  return out
+}
+
+export async function generateNewsletter(input: {
+  topic: string
+  notes?: string
+  brandName?: string
+  toneOfVoice?: string
+  writingGuidelines?: string
+  template?: string
+}): Promise<{ result: GeneratedNewsletter | null; error?: string }> {
+  if (!(isSupabaseConfigured && supabase && functionsBase)) return { result: null, error: 'Not connected' }
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) return { result: null, error: 'Sign in first' }
+  try {
+    const res = await fetch(`${functionsBase}/generate-newsletter`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { result: null, error: data?.error ? String(data.error) : `Draft ${res.status}` }
+    const n = data?.newsletter
+    if (!n) return { result: null, error: 'No draft returned' }
+    const blocks = toBlocks(n.blocks)
+    if (!blocks.length) return { result: null, error: 'Draft came back empty' }
+    return { result: { subject: n.subject ?? '', preheader: n.preheader ?? '', eyebrow: n.eyebrow ?? '', blocks } }
+  } catch (e) {
+    return { result: null, error: String(e) }
+  }
+}
+
+/* ---------------------------------------------------------------------------
    Persistence (Supabase when connected, in-memory otherwise)
 --------------------------------------------------------------------------- */
 let localNls: Newsletter[] = []
