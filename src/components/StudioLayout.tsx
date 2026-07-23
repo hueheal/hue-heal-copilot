@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import AuthGate from './AuthGate'
+import WorkspaceSelect from './WorkspaceSelect'
 import { BrandProvider, useBrand } from '../lib/brandContext'
 
 export default function StudioLayout() {
@@ -14,7 +15,9 @@ export default function StudioLayout() {
 }
 
 function LayoutInner() {
-  const { current } = useBrand()
+  const { current, chosen } = useBrand()
+  // On entry (and when "switch workspace" is used) show the brand-world picker.
+  if (!chosen) return <WorkspaceSelect />
   return (
     <div style={{ width: '100%', height: '100vh', overflow: 'hidden', background: 'var(--hh-monterey)' }}>
       <div

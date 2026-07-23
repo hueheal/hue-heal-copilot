@@ -11,6 +11,7 @@ import SocialStudio from './pages/SocialStudio'
 import NewsletterPage from './pages/Newsletter'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import ComingSoon from './pages/ComingSoon'
 
 export default function App() {
   return (
@@ -27,6 +28,9 @@ export default function App() {
         <Route path="newsletter" element={<NewsletterPage />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="research" element={<ComingSoon title="Research" blurb="Audience & market insight for this brand." />} />
+        <Route path="linkedin" element={<ComingSoon title="LinkedIn" blurb="Long-form professional posts for this brand." />} />
+
       </Route>
     </Routes>
   )

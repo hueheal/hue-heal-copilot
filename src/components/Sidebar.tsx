@@ -2,9 +2,14 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { NAV, USER } from '../data/studio'
 import { useAuth } from '../lib/auth'
+import { useBrand } from '../lib/brandContext'
+import { CORE_NAV, DEFAULT_MODULES } from '../lib/modules'
 import BrandSwitcher from './BrandSwitcher'
 
 export default function Sidebar() {
+  const { current } = useBrand()
+  const enabled = current?.modules ?? DEFAULT_MODULES
+  const nav = NAV.filter((item) => CORE_NAV.includes(item.key) || enabled.includes(item.key))
   return (
     <aside
       style={{
@@ -33,7 +38,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      {NAV.map((item) => (
+      {nav.map((item) => (
         <NavLink
           key={item.key}
           to={item.path}

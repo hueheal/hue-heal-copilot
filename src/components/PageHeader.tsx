@@ -46,7 +46,7 @@ export function PillButton({
 }) {
   const styles =
     tone === 'accent'
-      ? { background: 'var(--hh-copper)', color: '#F6EFE4', border: '1px solid var(--hh-copper)' }
+      ? { background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: '1px solid var(--hh-copper)' }
       : tone === 'ink'
       ? { background: 'var(--hh-anthracite)', color: 'var(--text-on-ink)', border: '1px solid var(--hh-anthracite)' }
       : { background: 'transparent', color: 'var(--text-strong)', border: '1px solid var(--hh-line)' }

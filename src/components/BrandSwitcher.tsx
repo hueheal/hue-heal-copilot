@@ -7,7 +7,7 @@ import Logo from './Logo'
    (the Ivy Ora wordmark for the Hue & Heal parent; the brand name + accent for
    white-label worlds) and lets you tab between worlds or spin up a new one. */
 export default function BrandSwitcher() {
-  const { brands, current, setCurrent, reload } = useBrand()
+  const { brands, current, setCurrent, reload, openSelector } = useBrand()
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
@@ -60,6 +60,9 @@ export default function BrandSwitcher() {
           ))}
 
           <div style={{ borderTop: '1px solid var(--hh-line-ink)', margin: '6px 4px' }} />
+          <button onClick={() => { setOpen(false); openSelector() }} className="hh-btn" style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', textAlign: 'left', background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 10px', color: 'var(--text-on-ink-muted)', cursor: 'pointer', fontSize: 13.5 }}>
+            <span style={{ width: 9, textAlign: 'center' }}>⇄</span> Switch workspace
+          </button>
           {creating ? (
             <div style={{ display: 'flex', gap: 6, padding: '2px 4px 4px' }}>
               <input

@@ -104,6 +104,7 @@ function localRow(input: NewBrandProfile): BrandProfile {
     accent_color: input.accent_color ?? '#B5632F',
     logo_url: input.logo_url ?? null,
     display_font: input.display_font ?? (input.name === 'Hue & Heal' ? 'ivyora' : 'poppins'),
+    modules: input.modules ?? ['calendar', 'clients', 'proposals', 'social', 'newsletter', 'reports'],
     is_default: input.is_default ?? false,
     created_at: iso(),
     updated_at: iso(),
@@ -154,24 +155,36 @@ export async function listBrands(): Promise<BrandProfile[]> {
   return [...localBrands].sort((a, b) => Number(b.is_default) - Number(a.is_default))
 }
 
-/** Create a fresh, blank white-label brand world and make the creator its owner. */
-export async function createBlankBrand(name: string): Promise<BrandProfile> {
+/** Create a brand world (from onboarding or blank) and make the creator its owner. */
+export async function createBrandWorld(input: NewBrandProfile): Promise<BrandProfile> {
+  const fields: NewBrandProfile = {
+    display_font: 'poppins',
+    accent_color: '#3E5C4B',
+    is_default: false,
+    ...input,
+    name: (input.name ?? 'New brand').trim() || 'New brand',
+  }
   if (supabase) {
     const { data: u } = await supabase.auth.getUser()
     const uid = u.user?.id ?? null
     const email = u.user?.email ?? ''
     const { data, error } = await supabase
       .from('brand_profiles')
-      .insert({ name: name.trim() || 'New brand', display_font: 'poppins', accent_color: '#3E5C4B', created_by: uid, is_default: false })
+      .insert({ ...fields, created_by: uid })
       .select('*')
       .single()
     if (error) throw error
     if (uid) await supabase.from('brand_members').insert({ brand_id: data.id, user_id: uid, email, role: 'owner' })
     return data
   }
-  const row = localRow({ name })
+  const row = localRow(fields)
   localBrands = [...localBrands, row]
   return row
+}
+
+/** Convenience: a fresh blank white-label world. */
+export function createBlankBrand(name: string): Promise<BrandProfile> {
+  return createBrandWorld({ name })
 }
 
 export async function saveBrand(input: NewBrandProfile): Promise<BrandProfile> {
