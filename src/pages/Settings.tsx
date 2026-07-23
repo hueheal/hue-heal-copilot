@@ -4,11 +4,15 @@ import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
 import {
   type BrandProfile,
+  type BrandMember,
   listBrands,
-  saveBrand,
+  createBlankBrand,
   updateBrand,
   deleteBrand,
   setDefaultBrand,
+  listBrandMembers,
+  inviteBrandMember,
+  removeBrandMember,
 } from '../lib/brand'
 import {
   type AppMember,
@@ -82,13 +86,14 @@ function BrandsPanel() {
       await updateBrand(draft.id, {
         name: draft.name, tone_of_voice: draft.tone_of_voice, writing_guidelines: draft.writing_guidelines,
         image_master_prompt: draft.image_master_prompt, image_negatives: draft.image_negatives,
+        accent_color: draft.accent_color, display_font: draft.display_font, logo_url: draft.logo_url,
       })
       await reload(draft.id); setStatus('Saved')
     } catch (e) { setStatus(String(e)) } finally { setBusy(false) }
   }
   async function addBrand() {
     setBusy(true)
-    try { const b = await saveBrand({ name: 'New brand', tone_of_voice: '', writing_guidelines: '', image_master_prompt: '', image_negatives: '' }); await reload(b.id); setStatus('Brand created') }
+    try { const b = await createBlankBrand('New brand'); await reload(b.id); setStatus('Brand created') }
     catch (e) { setStatus(String(e)) } finally { setBusy(false) }
   }
   async function makeDefault() { if (!draft) return; await setDefaultBrand(draft.id); await reload(draft.id); setStatus('Set as default') }
@@ -122,7 +127,29 @@ function BrandsPanel() {
               {draft.is_default && <span style={{ fontSize: 12, color: 'var(--hh-copper)' }}>Default brand</span>}
             </div>
 
-            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '26px 0 2px' }}>Verbal identity</div>
+            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '26px 0 2px' }}>Workspace identity</div>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginTop: 12 }}>
+              <div>
+                <label style={{ ...label, margin: '0 0 8px' }}>Accent colour</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input type="color" value={draft.accent_color || '#B5632F'} onChange={(e) => patch({ accent_color: e.target.value })} style={{ width: 38, height: 34, border: '1px solid var(--hh-line)', borderRadius: 8, background: 'none', padding: 2, cursor: 'pointer' }} />
+                  <input value={draft.accent_color || ''} onChange={(e) => patch({ accent_color: e.target.value })} style={{ ...inp, width: 110 }} />
+                </div>
+              </div>
+              <div>
+                <label style={{ ...label, margin: '0 0 8px' }}>Headline font</label>
+                <select value={draft.display_font} onChange={(e) => patch({ display_font: e.target.value })} style={{ ...inp, width: 180 }}>
+                  <option value="poppins">Poppins (white-label)</option>
+                  <option value="ivyora">Ivy Ora (Hue &amp; Heal)</option>
+                </select>
+              </div>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Logo URL (optional)</label>
+                <input value={draft.logo_url || ''} onChange={(e) => patch({ logo_url: e.target.value })} placeholder="https://…/logo.svg" style={inp} />
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '30px 0 2px' }}>Verbal identity</div>
             <label style={label}>Tone of voice</label>
             <textarea rows={4} value={draft.tone_of_voice} onChange={(e) => patch({ tone_of_voice: e.target.value })} style={area} />
             <p style={hint}>How the brand sounds. Injected into the newsletter & caption writer.</p>
@@ -146,9 +173,49 @@ function BrandsPanel() {
               )}
               {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
             </div>
+
+            <BrandMembersSection brandId={draft.id} />
           </div>
         )}
       </section>
+    </div>
+  )
+}
+
+/* Per-brand members — invite people into this brand world. */
+function BrandMembersSection({ brandId }: { brandId: string }) {
+  const [members, setMembers] = useState<BrandMember[]>([])
+  const [email, setEmail] = useState('')
+  const [note, setNote] = useState<string | null>(null)
+
+  async function reload() { try { setMembers(await listBrandMembers(brandId)) } catch { setMembers([]) } }
+  useEffect(() => { reload() /* eslint-disable-next-line */ }, [brandId])
+
+  async function invite() {
+    setNote(null)
+    try { await inviteBrandMember(brandId, email); setEmail(''); await reload(); setNote('Invited') }
+    catch (e) { setNote(String(e)) }
+  }
+
+  return (
+    <div style={{ borderTop: '1px solid var(--hh-line)', marginTop: 34, paddingTop: 22 }}>
+      <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', marginBottom: 4 }}>Brand members</div>
+      <p style={hint}>People invited here can access this brand world. They still need product access (Team tab) to sign in.</p>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '14px 0 16px' }}>
+        <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@studio.com" style={{ ...inp, maxWidth: 280 }} onKeyDown={(e) => { if (e.key === 'Enter') invite() }} />
+        <PillButton tone="ghost" onClick={invite}>Invite</PillButton>
+        {note && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{note}</span>}
+      </div>
+      <div style={{ border: '1px solid var(--hh-line)', borderRadius: 10, overflow: 'hidden', maxWidth: 480 }}>
+        {members.map((m) => (
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--hh-line)' }}>
+            <div style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.email}</div>
+            <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: m.role === 'owner' ? 'var(--hh-copper)' : 'var(--text-faint)' }}>{m.role}</span>
+            {m.role !== 'owner' && <ConfirmButton onConfirm={() => removeBrandMember(m.id).then(reload)} style={{ background: 'none', border: 'none', color: 'var(--hh-ember)', fontSize: 12 }}>Remove</ConfirmButton>}
+          </div>
+        ))}
+        {members.length === 0 && <div style={{ padding: 14, fontSize: 12.5, color: 'var(--text-muted)' }}>No members yet.</div>}
+      </div>
     </div>
   )
 }

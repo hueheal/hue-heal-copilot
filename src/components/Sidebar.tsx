@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { NAV, USER } from '../data/studio'
 import { useAuth } from '../lib/auth'
-import Logo from './Logo'
+import BrandSwitcher from './BrandSwitcher'
 
 export default function Sidebar() {
   return (
@@ -17,10 +17,8 @@ export default function Sidebar() {
         padding: '22px 16px',
       }}
     >
-      {/* Brand lockup */}
-      <div style={{ padding: '6px 10px 24px', color: 'var(--text-on-ink)' }}>
-        <Logo height={18} />
-      </div>
+      {/* Brand-world switcher */}
+      <BrandSwitcher />
 
       <div
         style={{

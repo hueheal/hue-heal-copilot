@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
+import { filterByBrand, withBrandInsert } from './brandScope'
 import type { Database, PostFormat, Sector, Accent, PostStatus, Slide } from './database.types'
 
 export type Post = Database['public']['Tables']['social_posts']['Row']
@@ -223,7 +224,7 @@ let localIdeaSeq = 1
 
 export async function listIdeas(): Promise<Idea[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('content_ideas').select('*').order('created_at', { ascending: false })
+    const { data, error } = await filterByBrand(supabase.from('content_ideas').select('*')).order('created_at', { ascending: false })
     if (error) throw error
     return data ?? []
   }
@@ -234,7 +235,7 @@ export async function saveIdea(theme: string, g: GeneratedIdea): Promise<Idea> {
   if (supabase) {
     const { data, error } = await supabase
       .from('content_ideas')
-      .insert({ theme, hook: g.hook, angle: g.angle, format: g.format, status: 'backlog' })
+      .insert(withBrandInsert({ theme, hook: g.hook, angle: g.angle, format: g.format, status: 'backlog' }))
       .select('*')
       .single()
     if (error) throw error
@@ -269,7 +270,7 @@ function nowIso() {
 
 export async function listPosts(): Promise<Post[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('social_posts').select('*').order('created_at', { ascending: false })
+    const { data, error } = await filterByBrand(supabase.from('social_posts').select('*')).order('created_at', { ascending: false })
     if (error) throw error
     return data ?? []
   }
@@ -287,7 +288,7 @@ export async function getPost(id: string): Promise<Post | null> {
 
 export async function savePost(input: NewPost): Promise<Post> {
   if (supabase) {
-    const { data, error } = await supabase.from('social_posts').insert(input).select('*').single()
+    const { data, error } = await supabase.from('social_posts').insert(withBrandInsert(input)).select('*').single()
     if (error) throw error
     return data
   }

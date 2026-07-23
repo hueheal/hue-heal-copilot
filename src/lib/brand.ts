@@ -95,18 +95,24 @@ function localRow(input: NewBrandProfile): BrandProfile {
   return {
     id: `local-brand${seq++}`,
     owner: 'local',
+    created_by: 'local',
     name: input.name,
     tone_of_voice: input.tone_of_voice ?? '',
     writing_guidelines: input.writing_guidelines ?? '',
     image_master_prompt: input.image_master_prompt ?? '',
     image_negatives: input.image_negatives ?? '',
+    accent_color: input.accent_color ?? '#B5632F',
+    logo_url: input.logo_url ?? null,
+    display_font: input.display_font ?? (input.name === 'Hue & Heal' ? 'ivyora' : 'poppins'),
     is_default: input.is_default ?? false,
     created_at: iso(),
     updated_at: iso(),
   }
 }
 
-// Memoised so concurrent callers share one seed run and never double-insert.
+// Brand *worlds* are created server-side (migration 0007) or via createBlankBrand.
+// On first load we only backfill the rich creative-direction text into the seeded
+// Hue & Heal / Remedae shells if they're still empty — never insert duplicates.
 let seedRun: Promise<void> | null = null
 function ensureSeeded(): Promise<void> {
   if (!seedRun) seedRun = runSeed()
@@ -114,13 +120,21 @@ function ensureSeeded(): Promise<void> {
 }
 async function runSeed(): Promise<void> {
   if (supabase) {
-    const { data } = await supabase.from('brand_profiles').select('id').limit(1)
-    if (data && data.length > 0) return
     try {
-      await supabase.from('brand_profiles').insert(seedProfiles())
-    } catch {
-      /* not signed in / race — ignore, list() will retry another session */
-    }
+      const { data } = await supabase.from('brand_profiles').select('id, name, image_master_prompt')
+      if (!data) return
+      for (const seed of seedProfiles()) {
+        const existing = data.find((b) => b.name === seed.name)
+        if (existing && !(existing.image_master_prompt ?? '').trim()) {
+          await supabase.from('brand_profiles').update({
+            tone_of_voice: seed.tone_of_voice,
+            writing_guidelines: seed.writing_guidelines,
+            image_master_prompt: seed.image_master_prompt,
+            image_negatives: seed.image_negatives,
+          }).eq('id', existing.id)
+        }
+      }
+    } catch { /* table missing / not signed in — ignore */ }
     return
   }
   if (localBrands.length === 0) localBrands = seedProfiles().map(localRow)
@@ -138,6 +152,26 @@ export async function listBrands(): Promise<BrandProfile[]> {
     return data ?? []
   }
   return [...localBrands].sort((a, b) => Number(b.is_default) - Number(a.is_default))
+}
+
+/** Create a fresh, blank white-label brand world and make the creator its owner. */
+export async function createBlankBrand(name: string): Promise<BrandProfile> {
+  if (supabase) {
+    const { data: u } = await supabase.auth.getUser()
+    const uid = u.user?.id ?? null
+    const email = u.user?.email ?? ''
+    const { data, error } = await supabase
+      .from('brand_profiles')
+      .insert({ name: name.trim() || 'New brand', display_font: 'poppins', accent_color: '#3E5C4B', created_by: uid, is_default: false })
+      .select('*')
+      .single()
+    if (error) throw error
+    if (uid) await supabase.from('brand_members').insert({ brand_id: data.id, user_id: uid, email, role: 'owner' })
+    return data
+  }
+  const row = localRow({ name })
+  localBrands = [...localBrands, row]
+  return row
 }
 
 export async function saveBrand(input: NewBrandProfile): Promise<BrandProfile> {
@@ -193,4 +227,28 @@ export function resolveActiveBrand(brands: BrandProfile[]): BrandProfile | null 
   if (!brands.length) return null
   const activeId = getActiveBrandId()
   return brands.find((b) => b.id === activeId) ?? brands.find((b) => b.is_default) ?? brands[0]
+}
+
+/* ---- Per-brand membership (invite people to a brand world) ---- */
+export type BrandMember = Database['public']['Tables']['brand_members']['Row']
+
+export async function listBrandMembers(brandId: string): Promise<BrandMember[]> {
+  if (!supabase) return []
+  const { data, error } = await supabase.from('brand_members').select('*').eq('brand_id', brandId).order('created_at', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function inviteBrandMember(brandId: string, email: string, role: 'admin' | 'member' = 'member'): Promise<void> {
+  if (!supabase) return
+  const clean = email.trim().toLowerCase()
+  if (!/.+@.+\..+/.test(clean)) throw new Error('Enter a valid email')
+  const { error } = await supabase.from('brand_members').insert({ brand_id: brandId, email: clean, role })
+  if (error) throw error
+}
+
+export async function removeBrandMember(id: string): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('brand_members').delete().eq('id', id)
+  if (error) throw error
 }

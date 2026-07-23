@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
+import { filterByBrand, withBrandInsert } from './brandScope'
 import type {
   Database,
   ClientStage,
@@ -55,7 +56,7 @@ const iso = () => new Date().toISOString()
 /* ---- Clients ---- */
 export async function listClients(): Promise<Client[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('clients').select('*').order('created_at', { ascending: true })
+    const { data, error } = await filterByBrand(supabase.from('clients').select('*')).order('created_at', { ascending: true })
     if (error) throw error
     return data ?? []
   }
@@ -64,7 +65,7 @@ export async function listClients(): Promise<Client[]> {
 
 export async function addClient(input: NewClient): Promise<Client> {
   if (supabase) {
-    const { data, error } = await supabase.from('clients').insert(input).select('*').single()
+    const { data, error } = await supabase.from('clients').insert(withBrandInsert(input)).select('*').single()
     if (error) throw error
     return data
   }
@@ -98,7 +99,7 @@ export async function deleteClient(id: string): Promise<void> {
 /* ---- Proposals ---- */
 export async function listProposals(): Promise<Proposal[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('proposals').select('*').order('created_at', { ascending: false })
+    const { data, error } = await filterByBrand(supabase.from('proposals').select('*')).order('created_at', { ascending: false })
     if (error) throw error
     return data ?? []
   }
@@ -107,7 +108,7 @@ export async function listProposals(): Promise<Proposal[]> {
 
 export async function addProposal(input: Database['public']['Tables']['proposals']['Insert']): Promise<Proposal> {
   if (supabase) {
-    const { data, error } = await supabase.from('proposals').insert(input).select('*').single()
+    const { data, error } = await supabase.from('proposals').insert(withBrandInsert(input)).select('*').single()
     if (error) throw error
     return data
   }
@@ -151,7 +152,7 @@ export async function updateProposal(id: string, patch: Database['public']['Tabl
 /* ---- Invoices ---- */
 export async function listInvoices(): Promise<Invoice[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('invoices').select('*').order('created_at', { ascending: false })
+    const { data, error } = await filterByBrand(supabase.from('invoices').select('*')).order('created_at', { ascending: false })
     if (error) throw error
     return data ?? []
   }
@@ -160,7 +161,7 @@ export async function listInvoices(): Promise<Invoice[]> {
 
 export async function addInvoice(input: Database['public']['Tables']['invoices']['Insert']): Promise<Invoice> {
   if (supabase) {
-    const { data, error } = await supabase.from('invoices').insert(input).select('*').single()
+    const { data, error } = await supabase.from('invoices').insert(withBrandInsert(input)).select('*').single()
     if (error) throw error
     return data
   }

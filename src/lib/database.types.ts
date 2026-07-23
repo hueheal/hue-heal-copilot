@@ -260,29 +260,57 @@ export interface Database {
       brand_profiles: {
         Row: {
           id: string
-          owner: string
+          owner: string | null
+          created_by: string | null
           name: string
           tone_of_voice: string
           writing_guidelines: string
           image_master_prompt: string
           image_negatives: string
+          accent_color: string
+          logo_url: string | null
+          display_font: string
           is_default: boolean
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
-          owner?: string
+          owner?: string | null
+          created_by?: string | null
           name: string
           tone_of_voice?: string
           writing_guidelines?: string
           image_master_prompt?: string
           image_negatives?: string
+          accent_color?: string
+          logo_url?: string | null
+          display_font?: string
           is_default?: boolean
           created_at?: string
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['brand_profiles']['Insert']>
+        Relationships: []
+      }
+      brand_members: {
+        Row: {
+          id: string
+          brand_id: string
+          user_id: string | null
+          email: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          brand_id: string
+          user_id?: string | null
+          email: string
+          role?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['brand_members']['Insert']>
         Relationships: []
       }
       newsletters: {

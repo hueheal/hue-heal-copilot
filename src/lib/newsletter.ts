@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
+import { filterByBrand, withBrandInsert } from './brandScope'
 import type { Database } from './database.types'
 
 export type Newsletter = Database['public']['Tables']['newsletters']['Row']
@@ -122,7 +123,7 @@ const iso = () => new Date().toISOString()
 
 export async function listNewsletters(): Promise<Newsletter[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('newsletters').select('*').order('created_at', { ascending: false })
+    const { data, error } = await filterByBrand(supabase.from('newsletters').select('*')).order('created_at', { ascending: false })
     if (error) throw error
     return data ?? []
   }
@@ -131,7 +132,7 @@ export async function listNewsletters(): Promise<Newsletter[]> {
 
 export async function saveNewsletter(input: Database['public']['Tables']['newsletters']['Insert']): Promise<Newsletter> {
   if (supabase) {
-    const { data, error } = await supabase.from('newsletters').insert(input).select('*').single()
+    const { data, error } = await supabase.from('newsletters').insert(withBrandInsert(input)).select('*').single()
     if (error) throw error
     return data
   }
@@ -165,7 +166,7 @@ export async function deleteNewsletter(id: string): Promise<void> {
 /* ---- Subscribers ---- */
 export async function listSubscribers(): Promise<Subscriber[]> {
   if (supabase) {
-    const { data, error } = await supabase.from('subscribers').select('*').order('created_at', { ascending: false })
+    const { data, error } = await filterByBrand(supabase.from('subscribers').select('*')).order('created_at', { ascending: false })
     if (error) throw error
     return data ?? []
   }
@@ -176,7 +177,7 @@ export async function addSubscribers(emails: string[], name = ''): Promise<numbe
   const clean = [...new Set(emails.map((e) => e.trim().toLowerCase()).filter((e) => /.+@.+\..+/.test(e)))]
   if (!clean.length) return 0
   if (supabase) {
-    const rows = clean.map((email) => ({ email, name, status: 'subscribed' }))
+    const rows = clean.map((email) => withBrandInsert({ email, name, status: 'subscribed' }))
     const { error } = await supabase.from('subscribers').upsert(rows, { onConflict: 'owner,email', ignoreDuplicates: true })
     if (error) throw error
     return clean.length
