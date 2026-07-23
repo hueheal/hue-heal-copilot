@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
 import { getPost, updatePost, generateImage, analyzeReference, IMAGE_PRESETS, SECTOR_LABEL, type Post } from '../lib/socialCopilot'
 import { listBrands, resolveActiveBrand, getActiveBrandId, setActiveBrandId, type BrandProfile } from '../lib/brand'
+import { useBrand } from '../lib/brandContext'
 import { INSTAGRAM_FORMAT_LIST, INSTAGRAM_FORMATS, type InstaFormat } from '../lib/social/formats'
 import { TEMPLATES, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
 import { captureNode, downloadDataUrl, zipPngs } from '../lib/social/exportImage'
@@ -134,6 +135,7 @@ export default function SocialStudio() {
   const [imgNotes, setImgNotes] = useState('')
   const [brands, setBrands] = useState<BrandProfile[]>([])
   const [brandId, setBrandId] = useState<string | null>(getActiveBrandId())
+  const { current: brandWorld } = useBrand()
 
   useEffect(() => { listBrands().then(setBrands).catch(() => {}) }, [])
 
@@ -145,7 +147,7 @@ export default function SocialStudio() {
     getPost(id).then((p) => {
       if (!p) { setStatus('Could not load post'); return }
       setPost(p)
-      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent }
+      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name }
       const fmt: InstaFormat = (p.format === 'square' || p.format === 'portrait' || p.format === 'story' || p.format === 'carousel') ? p.format : 'portrait'
       const content = (p.slides ?? []) as ContentSlideInput[]
       setDesign(isDesign(p.design) ? (p.design as unknown as Design) : buildDesign(fmt, 'guide', seed, 3, content))
@@ -226,14 +228,14 @@ export default function SocialStudio() {
   /* ---- actions ---- */
   const contentSlides = (post.slides ?? []) as ContentSlideInput[]
   function applyFormat(f: InstaFormat) {
-    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent }
+    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name }
     setDesign(buildDesign(f, design!.templateId, seed, 3, contentSlides))
     setActive(0); setSelId(null)
   }
   // Switching template only restyles the COVER — content slides are left intact,
   // and edited text is carried over by matching element roles + the current accent.
   function applyTemplate(tid: string) {
-    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent }
+    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name }
     const cover = templateById(tid).build(design!.format, seed)
     const old = design!.slides[0]
     const accNew = accentHex(design!.accent)

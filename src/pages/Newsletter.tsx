@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
+import { useBrand } from '../lib/brandContext'
 import {
   type Block,
   type Newsletter,
@@ -24,6 +25,7 @@ const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textT
 
 export default function NewsletterPage() {
   const auth = useAuth()
+  const { current: brand } = useBrand()
   const gated = auth.mode === 'connected' && !auth.session
 
   const [subject, setSubject] = useState('This month from Hue & Heal')
@@ -46,7 +48,26 @@ export default function NewsletterPage() {
   }
   useEffect(() => { reload(); if (auth.email) setTestEmail(auth.email) /* eslint-disable-next-line */ }, [auth.session, auth.mode])
 
-  const html = useMemo(() => renderEmailHtml({ subject, preheader, eyebrow, blocks }), [subject, preheader, eyebrow, blocks])
+  // Render in the current brand world's identity — its name/logo, accent and,
+  // for the Hue & Heal parent, its tagline.
+  const emailBrand = useMemo(
+    () =>
+      brand
+        ? {
+            name: brand.name,
+            accent_color: brand.accent_color,
+            logo_url: brand.logo_url,
+            ...(brand.name === 'Hue & Heal'
+              ? { tagline: 'Designing the future of wellness', website: 'hueandheal.com' }
+              : {}),
+          }
+        : undefined,
+    [brand?.id, brand?.name, brand?.accent_color, brand?.logo_url],
+  )
+  const html = useMemo(
+    () => renderEmailHtml({ subject, preheader, eyebrow, blocks }, emailBrand),
+    [subject, preheader, eyebrow, blocks, emailBrand],
+  )
 
   function applyTemplate(id: string) {
     const t = TEMPLATES.find((x) => x.id === id) ?? TEMPLATES[0]

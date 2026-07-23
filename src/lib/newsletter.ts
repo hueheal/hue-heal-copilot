@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
 import { filterByBrand, withBrandInsert } from './brandScope'
+import { readableOn, textOnColor } from './color'
 import type { Database } from './database.types'
 
 export type Newsletter = Database['public']['Tables']['newsletters']['Row']
@@ -71,7 +72,7 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function renderBlock(b: Block): string {
+function renderBlock(b: Block, accent: string = C.copper, onAccent: string = '#F6EFE4'): string {
   switch (b.type) {
     case 'heading':
       return `<tr><td style="padding:8px 40px 4px;"><h1 style="margin:0;font-family:${SERIF};font-weight:400;font-size:30px;line-height:1.15;color:${C.ink};">${esc(b.text)}</h1></td></tr>`
@@ -82,30 +83,62 @@ function renderBlock(b: Block): string {
         ? `<tr><td style="padding:14px 40px;"><img src="${esc(b.url)}" alt="${esc(b.alt ?? '')}" width="520" style="width:100%;max-width:520px;border-radius:10px;display:block;" /></td></tr>`
         : `<tr><td style="padding:14px 40px;"><div style="width:100%;height:180px;background:${C.bone};border:1px dashed ${C.line};border-radius:10px;"></div></td></tr>`
     case 'button':
-      return `<tr><td style="padding:16px 40px;"><a href="${esc(b.href)}" style="display:inline-block;background:${C.copper};color:#F6EFE4;text-decoration:none;font-family:${SANS};font-size:14px;padding:12px 24px;border-radius:999px;">${esc(b.label)}</a></td></tr>`
+      return `<tr><td style="padding:16px 40px;"><a href="${esc(b.href)}" style="display:inline-block;background:${accent};color:${onAccent};text-decoration:none;font-family:${SANS};font-size:14px;padding:12px 24px;border-radius:999px;">${esc(b.label)}</a></td></tr>`
     case 'divider':
       return `<tr><td style="padding:6px 40px;"><div style="border-top:1px solid ${C.line};"></div></td></tr>`
   }
 }
 
-export function renderEmailHtml(nl: { subject: string; preheader: string; eyebrow?: string; blocks: Block[] }): string {
-  const blocksHtml = nl.blocks.map(renderBlock).join('')
-  const eyebrow = nl.eyebrow ? `<div style="font-family:${SANS};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.copper};padding:0 40px 4px;">${esc(nl.eyebrow)}</div>` : ''
+/** Identity of the brand world this newsletter belongs to. */
+export interface EmailBrand {
+  name: string
+  accent_color?: string
+  logo_url?: string | null
+  tagline?: string
+  website?: string
+}
+
+const HUE_HEAL_BRAND: EmailBrand = { name: 'Hue & Heal', accent_color: '#B5632F', tagline: 'Designing the future of wellness', website: 'hueandheal.com' }
+
+export function renderEmailHtml(
+  nl: { subject: string; preheader: string; eyebrow?: string; blocks: Block[] },
+  brand: EmailBrand = HUE_HEAL_BRAND,
+): string {
+  const accent = brand.accent_color || C.copper
+  // Accent as text needs to stay legible on the near-white email paper.
+  const accentInk = readableOn(accent, C.paper, 4.2)
+  const onAccent = textOnColor(accent)
+  const blocksHtml = nl.blocks.map((b) => renderBlock(b, accent, onAccent)).join('')
+  const eyebrow = nl.eyebrow
+    ? `<div style="font-family:${SANS};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${accentInk};padding:0 40px 4px;">${esc(nl.eyebrow)}</div>`
+    : ''
+
+  // Masthead: the brand's logo when it has one, otherwise its name set in the serif.
+  const isParent = brand.name === HUE_HEAL_BRAND.name
+  const masthead = brand.logo_url
+    ? `<img src="${esc(brand.logo_url)}" alt="${esc(brand.name)}" height="26" style="height:26px;display:block;border:0;" />`
+    : isParent
+    ? `<span style="font-family:${SERIF};font-size:24px;color:${C.ink};">hue&amp;heal<span style="color:${accentInk};">.</span></span>`
+    : `<span style="font-family:${SERIF};font-size:24px;color:${C.ink};">${esc(brand.name)}<span style="color:${accentInk};">.</span></span>`
+
+  const taglineHtml = brand.tagline
+    ? `<div style="font-family:${SERIF};font-style:italic;font-size:15px;color:${C.muted};margin-bottom:8px;">${esc(brand.tagline)}</div>`
+    : ''
+  const footerLine = [esc(brand.name), brand.website ? esc(brand.website) : ''].filter(Boolean).join(' · ')
+
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(nl.subject)}</title></head>
 <body style="margin:0;background:${C.paper};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(nl.preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.paper};padding:28px 0;"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${C.paper};">
-  <tr><td style="padding:8px 40px 20px;border-bottom:1px solid ${C.line};">
-    <span style="font-family:${SERIF};font-size:24px;color:${C.ink};">hue&amp;heal<span style="color:${C.copper};">.</span></span>
-  </td></tr>
+  <tr><td style="padding:8px 40px 20px;border-bottom:1px solid ${C.line};">${masthead}</td></tr>
   <tr><td style="height:20px;"></td></tr>
   ${eyebrow}
   ${blocksHtml}
   <tr><td style="height:24px;"></td></tr>
   <tr><td style="padding:20px 40px;border-top:1px solid ${C.line};font-family:${SANS};font-size:12px;color:${C.muted};">
-    <div style="font-family:${SERIF};font-style:italic;font-size:15px;color:${C.muted};margin-bottom:8px;">Designing the future of wellness</div>
-    Hue &amp; Heal · hueandheal.com<br/>
+    ${taglineHtml}
+    ${footerLine}<br/>
     <a href="{{unsubscribe}}" style="color:${C.muted};">Unsubscribe</a>
   </td></tr>
 </table>
