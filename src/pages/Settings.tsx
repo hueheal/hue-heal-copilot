@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
+import { useBrand } from '../lib/brandContext'
 import {
   type BrandProfile,
   type BrandMember,
@@ -61,6 +62,7 @@ export default function Settings() {
 
 /* ------------------------------------------------------------------ Brands */
 function BrandsPanel() {
+  const brandCtx = useBrand()
   const [brands, setBrands] = useState<BrandProfile[]>([])
   const [selId, setSelId] = useState<string | null>(null)
   const [draft, setDraft] = useState<BrandProfile | null>(null)
@@ -88,15 +90,15 @@ function BrandsPanel() {
         image_master_prompt: draft.image_master_prompt, image_negatives: draft.image_negatives,
         accent_color: draft.accent_color, display_font: draft.display_font, logo_url: draft.logo_url,
       })
-      await reload(draft.id); setStatus('Saved')
+      await reload(draft.id); await brandCtx.reload(); setStatus('Saved')
     } catch (e) { setStatus(String(e)) } finally { setBusy(false) }
   }
   async function addBrand() {
     setBusy(true)
-    try { const b = await createBlankBrand('New brand'); await reload(b.id); setStatus('Brand created') }
+    try { const b = await createBlankBrand('New brand'); await reload(b.id); await brandCtx.reload(); setStatus('Brand created') }
     catch (e) { setStatus(String(e)) } finally { setBusy(false) }
   }
-  async function makeDefault() { if (!draft) return; await setDefaultBrand(draft.id); await reload(draft.id); setStatus('Set as default') }
+  async function makeDefault() { if (!draft) return; await setDefaultBrand(draft.id); await reload(draft.id); await brandCtx.reload(); setStatus('Set as default') }
   async function remove(id: string) { await deleteBrand(id); setSelId(null); await reload(); setStatus('Brand deleted') }
 
   return (
