@@ -4,6 +4,7 @@
 import type { Accent } from '../database.types'
 import { INSTAGRAM_FORMATS, type InstaFormat } from './formats'
 import { type Design, type Slide, type DesignElement, accentHex, eid } from './design'
+import { type SocialStyle, defaultStyle, backgroundFor, fgFor } from './style'
 
 export interface TemplateSeed {
   headline: string
@@ -13,6 +14,13 @@ export interface TemplateSeed {
   brandName?: string
   /** Brand world's uploaded logo (public URL). When set, slides show it in place of the text wordmark. */
   logoUrl?: string
+  /** Brand world's social style profile — drives bg treatment, text tone, font, motif, tagline. */
+  style?: SocialStyle
+}
+
+/** Resolve the style for a seed (falls back to per-brand defaults). */
+function styleOf(seed: TemplateSeed): SocialStyle {
+  return seed.style ?? defaultStyle({ name: seed.brandName })
 }
 
 /** Tagline line — only the parent brand has a house tagline; others start blank. */
@@ -72,19 +80,18 @@ export const TEMPLATES: TemplateDef[] = [
     label: 'Guide cover',
     build: (format, seed) => {
       const acc = accentHex(seed.accent)
+      const st = styleOf(seed)
+      const fg = fgFor(st, acc)
       const big = format === 'story' ? 108 : 92
-      return {
-        id: eid('slide'),
-        background: { type: 'atmos', value: 'atmos' },
-        elements: [
-          brandmark(seed, { x: 8, y: 6, w: 40, h: 8 }, CREAM),
-          text((seed.sector ?? 'Hospitality').toUpperCase(), { x: 8, y: 60, w: 60, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 20, letterSpacing: 0.18, uppercase: true }, { role: 'eyebrow', accentRef: true }),
-          text('A guide to', { x: 8, y: 66, w: 60, h: 8 }, { color: CREAM, fontKey: 'sans', fontSize: 22, letterSpacing: 0.12, uppercase: true, opacity: 0.8 }, { role: 'kicker' }),
-          text(seed.headline || 'Hotels', { x: 8, y: 71, w: 84, h: 18 }, { color: CREAM, fontKey: 'serif', fontSize: big, fontWeight: 300, lineHeight: 1.0 }, { role: 'headline' }),
-          shape({ x: 8, y: 90, w: 12, h: 0.6 }, acc, 0, { accentRef: true }),
-          text(taglineFor(seed), { x: 8, y: 92, w: 70, h: 6 }, { color: CREAM, fontKey: 'voice', fontSize: 30, italic: true, opacity: 0.85 }, { role: 'tagline' }),
-        ],
-      }
+      const els: DesignElement[] = [
+        brandmark(seed, { x: 8, y: 6, w: 40, h: 8 }, fg),
+        text((seed.sector ?? 'Hospitality').toUpperCase(), { x: 8, y: 60, w: 60, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 20, letterSpacing: 0.18, uppercase: true }, { role: 'eyebrow', accentRef: true }),
+        text('A guide to', { x: 8, y: 66, w: 60, h: 8 }, { color: fg, fontKey: 'sans', fontSize: 22, letterSpacing: 0.12, uppercase: true, opacity: 0.8 }, { role: 'kicker' }),
+        text(seed.headline || 'Hotels', { x: 8, y: 71, w: 84, h: 18 }, { color: fg, fontKey: st.headlineFont, fontSize: big, fontWeight: 300, lineHeight: 1.0, align: st.align }, { role: 'headline' }),
+      ]
+      if (st.motif === 'rule') els.push(shape({ x: 8, y: 90, w: 12, h: 0.6 }, acc, 0, { accentRef: true }))
+      if (st.tagline) els.push(text(st.tagline, { x: 8, y: 92, w: 70, h: 6 }, { color: fg, fontKey: 'voice', fontSize: 30, italic: true, opacity: 0.85 }, { role: 'tagline' }))
+      return { id: eid('slide'), background: backgroundFor(st, acc), elements: els }
     },
   },
   {
@@ -92,14 +99,17 @@ export const TEMPLATES: TemplateDef[] = [
     label: 'Quote',
     build: (_format, seed) => {
       const acc = accentHex(seed.accent)
+      const st = styleOf(seed)
+      const fg = fgFor(st, acc)
+      const muted = fg === INK ? '#6E6456' : 'rgba(244,240,231,0.72)'
       return {
         id: eid('slide'),
-        background: { type: 'solid', value: '#ECE6DA' },
+        background: backgroundFor(st, acc),
         elements: [
-          brandmark(seed, { x: 8, y: 7, w: 40, h: 8 }, INK),
+          brandmark(seed, { x: 8, y: 7, w: 40, h: 8 }, fg),
           text('“', { x: 7, y: 22, w: 30, h: 20 }, { color: acc, fontKey: 'serif', fontSize: 180, lineHeight: 0.8 }, { accentRef: true }),
-          text(seed.headline || 'A space should make you feel something before you understand why.', { x: 9, y: 34, w: 82, h: 40 }, { color: INK, fontKey: 'serif', fontSize: 68, fontWeight: 300, lineHeight: 1.12 }, { role: 'headline' }),
-          text(attributionFor(seed), { x: 9, y: 86, w: 60, h: 6 }, { color: '#6E6456', fontKey: 'sans', fontSize: 24, letterSpacing: 0.04 }, { role: 'tagline' }),
+          text(seed.headline || 'A space should make you feel something before you understand why.', { x: 9, y: 34, w: 82, h: 40 }, { color: fg, fontKey: st.headlineFont, fontSize: 68, fontWeight: 300, lineHeight: 1.12 }, { role: 'headline' }),
+          text(attributionFor(seed), { x: 9, y: 86, w: 60, h: 6 }, { color: muted, fontKey: 'sans', fontSize: 24, letterSpacing: 0.04 }, { role: 'tagline' }),
         ],
       }
     },
@@ -109,17 +119,16 @@ export const TEMPLATES: TemplateDef[] = [
     label: 'Statement',
     build: (format, seed) => {
       const acc = accentHex(seed.accent)
+      const st = styleOf(seed)
+      const fg = fgFor(st, acc)
       const big = format === 'story' ? 120 : 104
-      return {
-        id: eid('slide'),
-        background: { type: 'atmos', value: 'atmos' },
-        elements: [
-          brandmark(seed, { x: 8, y: 7, w: 40, h: 8 }, CREAM),
-          text(seed.headline || 'The science of feeling well', { x: 8, y: 38, w: 84, h: 30 }, { color: CREAM, fontKey: 'serif', fontSize: big, fontWeight: 300, lineHeight: 1.02 }, { role: 'headline' }),
-          shape({ x: 8, y: 72, w: 14, h: 0.7 }, acc, 0, { accentRef: true }),
-          text((seed.sector ?? 'Wellness design').toUpperCase(), { x: 8, y: 75, w: 70, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 22, letterSpacing: 0.18, uppercase: true }, { role: 'eyebrow', accentRef: true }),
-        ],
-      }
+      const els: DesignElement[] = [
+        brandmark(seed, { x: 8, y: 7, w: 40, h: 8 }, fg),
+        text(seed.headline || 'The science of feeling well', { x: 8, y: 38, w: 84, h: 30 }, { color: fg, fontKey: st.headlineFont, fontSize: big, fontWeight: 300, lineHeight: 1.02, align: st.align }, { role: 'headline' }),
+      ]
+      if (st.motif === 'rule') els.push(shape({ x: 8, y: 72, w: 14, h: 0.7 }, acc, 0, { accentRef: true }))
+      els.push(text((seed.sector ?? 'Wellness design').toUpperCase(), { x: 8, y: 75, w: 70, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 22, letterSpacing: 0.18, uppercase: true }, { role: 'eyebrow', accentRef: true }))
+      return { id: eid('slide'), background: backgroundFor(st, acc), elements: els }
     },
   },
 ]
@@ -158,19 +167,18 @@ export interface ContentSlideInput {
 /** A carousel content slide (used for slides 2..N): number, heading, body. */
 export function buildContentSlide(
   _format: InstaFormat,
-  { index, total, heading, body, accent }: { index: number; total: number; heading: string; body: string; accent: Accent },
+  { index, total, heading, body, accent, style }: { index: number; total: number; heading: string; body: string; accent: Accent; style?: SocialStyle },
 ): Slide {
   const acc = accentHex(accent)
-  return {
-    id: eid('slide'),
-    background: { type: 'atmos', value: 'atmos' },
-    elements: [
-      text(`0${index + 1} / 0${total}`, { x: 8, y: 8, w: 40, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 22, letterSpacing: 0.16, uppercase: true }, { accentRef: true }),
-      text(heading, { x: 8, y: 30, w: 84, h: 20 }, { color: CREAM, fontKey: 'serif', fontSize: 72, fontWeight: 300, lineHeight: 1.05 }, { role: 'heading' }),
-      shape({ x: 8, y: 54, w: 12, h: 0.6 }, acc, 0, { accentRef: true }),
-      text(body, { x: 8, y: 58, w: 82, h: 30 }, { color: CREAM, fontKey: 'sans', fontSize: 30, lineHeight: 1.5, opacity: 0.9 }, { role: 'body' }),
-    ],
-  }
+  const st = style ?? defaultStyle(null)
+  const fg = fgFor(st, acc)
+  const els: DesignElement[] = [
+    text(`0${index + 1} / 0${total}`, { x: 8, y: 8, w: 40, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 22, letterSpacing: 0.16, uppercase: true }, { accentRef: true }),
+    text(heading, { x: 8, y: 30, w: 84, h: 20 }, { color: fg, fontKey: st.headlineFont, fontSize: 72, fontWeight: 300, lineHeight: 1.05 }, { role: 'heading' }),
+  ]
+  if (st.motif === 'rule') els.push(shape({ x: 8, y: 54, w: 12, h: 0.6 }, acc, 0, { accentRef: true }))
+  els.push(text(body, { x: 8, y: 58, w: 82, h: 30 }, { color: fg, fontKey: 'sans', fontSize: 30, lineHeight: 1.5, opacity: 0.9 }, { role: 'body' }))
+  return { id: eid('slide'), background: backgroundFor(st, acc), elements: els }
 }
 
 /** Build a fresh Design. For carousels, lays out a cover + one slide per
@@ -191,7 +199,7 @@ export function buildDesign(
   let rest: Slide[]
   if (contentSlides && contentSlides.length) {
     rest = contentSlides.map((cs, i) =>
-      buildContentSlide(format, { index: i, total: contentSlides.length, heading: cs.heading, body: cs.body, accent: seed.accent }),
+      buildContentSlide(format, { index: i, total: contentSlides.length, heading: cs.heading, body: cs.body, accent: seed.accent, style: seed.style }),
     )
   } else {
     rest = Array.from({ length: Math.max(slideCount - 1, 0) }, () => def.build(format, seed))

@@ -271,6 +271,7 @@ export interface Database {
           logo_url: string | null
           display_font: string
           modules: string[]
+          social_style: Record<string, unknown> | null
           is_default: boolean
           created_at: string
           updated_at: string
@@ -288,6 +289,7 @@ export interface Database {
           logo_url?: string | null
           display_font?: string
           modules?: string[]
+          social_style?: Record<string, unknown> | null
           is_default?: boolean
           created_at?: string
           updated_at?: string

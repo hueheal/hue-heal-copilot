@@ -24,6 +24,10 @@ import {
   deletePost,
 } from '../lib/socialCopilot'
 import type { PostFormat, Sector, Accent } from '../lib/database.types'
+import { useBrand } from '../lib/brandContext'
+import { updateBrand } from '../lib/brand'
+import SocialLookSetup from '../components/SocialLookSetup'
+import type { SocialStyle } from '../lib/social/style'
 
 const FORMATS = Object.keys(FORMAT_LABEL) as PostFormat[]
 const SECTORS = Object.keys(SECTOR_LABEL) as Sector[]
@@ -66,6 +70,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 export default function SocialCopilot() {
   const auth = useAuth()
+  const { current: brand, reload: reloadBrands } = useBrand()
+  const [lookDismissed, setLookDismissed] = useState(false)
+  const needsLook = !!brand && !brand.social_style && !lookDismissed
+  async function applyLook(style: SocialStyle) {
+    if (brand) { try { await updateBrand(brand.id, { social_style: style as unknown as Record<string, unknown> }); await reloadBrands() } catch { /* ignore */ } }
+    setLookDismissed(true)
+  }
   const nav = useNavigate()
   const [topic, setTopic] = useState('Hotels')
   const [format, setFormat] = useState<PostFormat>('carousel')
@@ -212,6 +223,21 @@ export default function SocialCopilot() {
           </PillButton>
         }
       />
+
+      {needsLook && (
+        <div style={{ padding: '22px 40px', borderBottom: '1px solid var(--hh-line)', background: 'var(--hh-bone)' }}>
+          <div style={{ fontSize: 12.5, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>
+            Set up {brand?.name}’s social look
+          </div>
+          <SocialLookSetup
+            brandName={brand?.name}
+            accentColor={brand?.accent_color}
+            dark={false}
+            onApply={applyLook}
+            onSkip={() => setLookDismissed(true)}
+          />
+        </div>
+      )}
 
       {status && (
         <div style={{ padding: '10px 40px', borderBottom: '1px solid var(--hh-line)', fontSize: 12.5, color: 'var(--text-muted)', background: 'var(--hh-lotus)' }}>

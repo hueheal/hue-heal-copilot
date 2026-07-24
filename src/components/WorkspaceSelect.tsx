@@ -4,6 +4,8 @@ import { useBrand, textOnColor } from '../lib/brandContext'
 import { createBrandWorld } from '../lib/brand'
 import { MODULE_OPTIONS, FUNCTION_PRESETS, DEFAULT_MODULES, COMING_SOON } from '../lib/modules'
 import { synthesizeBrand, type SynthesisResult } from '../lib/brandSynthesis'
+import { type SocialStyle } from '../lib/social/style'
+import SocialLookSetup from './SocialLookSetup'
 import Logo from './Logo'
 
 const INK = 'var(--hh-ink, #1E1B18)'
@@ -87,9 +89,10 @@ interface Form {
   writing_guidelines: string
   image_master_prompt: string
   image_negatives: string
+  socialStyle?: SocialStyle
 }
 
-const STEPS = ['Brand files', 'Name', 'Colour', 'Modules', 'Review'] as const
+const STEPS = ['Brand files', 'Name', 'Colour', 'Modules', 'Social look', 'Review'] as const
 
 function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
   const { setCurrent, reload } = useBrand()
@@ -131,7 +134,7 @@ function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
   async function create() {
     setBusy(true); setNote(null)
     try {
-      const b = await createBrandWorld(form)
+      const b = await createBrandWorld({ ...form, social_style: (form.socialStyle as unknown as Record<string, unknown>) ?? null })
       await reload()
       setCurrent(b.id)
     } catch (e) { setNote(String(e)); setBusy(false) }
@@ -235,6 +238,19 @@ function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
 
           {step === 4 && (
             <>
+              <H>Social look</H>
+              <SocialLookSetup
+                brandName={form.name || 'this brand'}
+                accentColor={form.accent_color}
+                dark
+                onApply={(s) => { set({ socialStyle: s }); setStep(5) }}
+                onSkip={() => setStep(5)}
+              />
+            </>
+          )}
+
+          {step === 5 && (
+            <>
               <H>Review</H>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0 18px' }}>
                 <span style={{ width: 42, height: 42, borderRadius: 12, background: form.accent_color, color: onText, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontFamily: form.display_font === 'ivyora' ? 'var(--font-serif)' : 'var(--font-sans)' }}>{(form.name || 'B').slice(0, 1).toUpperCase()}</span>
@@ -248,7 +264,7 @@ function OnboardingWizard({ onCancel }: { onCancel: () => void }) {
                 {form.tone_of_voice && <><br />Voice: {form.tone_of_voice.slice(0, 120)}{form.tone_of_voice.length > 120 ? '…' : ''}</>}
               </div>
               {note && <div style={noteStyle}>{note}</div>}
-              <Row><Ghost onClick={() => setStep(3)}>Back</Ghost><Primary color={form.accent_color} onText={onText} disabled={busy || !form.name.trim()} onClick={create}>{busy ? 'Creating…' : 'Create brand world'}</Primary></Row>
+              <Row><Ghost onClick={() => setStep(4)}>Back</Ghost><Primary color={form.accent_color} onText={onText} disabled={busy || !form.name.trim()} onClick={create}>{busy ? 'Creating…' : 'Create brand world'}</Primary></Row>
             </>
           )}
         </div>

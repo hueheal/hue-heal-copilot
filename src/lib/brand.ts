@@ -105,6 +105,7 @@ function localRow(input: NewBrandProfile): BrandProfile {
     logo_url: input.logo_url ?? null,
     display_font: input.display_font ?? (input.name === 'Hue & Heal' ? 'ivyora' : 'poppins'),
     modules: input.modules ?? ['calendar', 'clients', 'proposals', 'social', 'newsletter', 'reports'],
+    social_style: input.social_style ?? null,
     is_default: input.is_default ?? false,
     created_at: iso(),
     updated_at: iso(),
