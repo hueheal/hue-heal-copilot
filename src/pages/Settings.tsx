@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
+import ConfirmModal from '../components/ConfirmModal'
 import { useAuth } from '../lib/auth'
 import { useBrand } from '../lib/brandContext'
 import { supabase } from '../lib/supabase'
@@ -69,6 +70,8 @@ function BrandsPanel() {
   const [draft, setDraft] = useState<BrandProfile | null>(null)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [delBusy, setDelBusy] = useState(false)
 
   async function reload(pick?: string) {
     const list = await listBrands()
@@ -115,7 +118,15 @@ function BrandsPanel() {
       setStatus('Logo uploaded — Save changes to apply')
     } catch (e) { setStatus(`Upload failed: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
   }
-  async function remove(id: string) { await deleteBrand(id); setSelId(null); await reload(); setStatus('Brand deleted') }
+  async function remove(id: string) {
+    setDelBusy(true)
+    try {
+      await deleteBrand(id)
+      setSelId(null); setConfirmDelete(false)
+      await reload(); await brandCtx.reload()
+      setStatus('Workspace deleted')
+    } catch (e) { setStatus(String(e)) } finally { setDelBusy(false) }
+  }
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch' }}>
@@ -195,9 +206,9 @@ function BrandsPanel() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 28 }}>
               <PillButton onClick={save}>{busy ? 'Saving…' : 'Save changes'}</PillButton>
               {!draft.is_default && (
-                <ConfirmButton onConfirm={() => remove(draft.id)} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '11px 22px', fontSize: 13, color: 'var(--text-muted)' }}>
-                  Delete brand
-                </ConfirmButton>
+                <button className="hh-btn" onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '11px 22px', fontSize: 13, color: '#B23B2E', cursor: 'pointer' }}>
+                  Delete workspace
+                </button>
               )}
               {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
             </div>
@@ -206,6 +217,22 @@ function BrandsPanel() {
           </div>
         )}
       </section>
+
+      <ConfirmModal
+        open={confirmDelete && !!draft}
+        danger
+        title={`Delete the ${draft?.name ?? ''} workspace?`}
+        confirmLabel="Delete workspace"
+        requireText={draft?.name}
+        busy={delBusy}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => draft && remove(draft.id)}
+        body={
+          <>
+            This permanently deletes the entire <strong>{draft?.name}</strong> brand world and <strong>everything in it</strong> — its clients, proposals, invoices, social posts, newsletters, subscribers and members. This cannot be undone.
+          </>
+        }
+      />
     </div>
   )
 }
