@@ -6,7 +6,7 @@ import type { Accent } from '../database.types'
 import type { InstaFormat } from './formats'
 
 export type FontKey = 'serif' | 'sans' | 'voice'
-export type ElementType = 'text' | 'shape' | 'image' | 'pill'
+export type ElementType = 'text' | 'shape' | 'image' | 'pill' | 'logo'
 
 export interface Box { x: number; y: number; w: number; h: number } // percent 0–100
 

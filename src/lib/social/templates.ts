@@ -11,6 +11,8 @@ export interface TemplateSeed {
   accent: Accent
   /** Brand world's wordmark text — defaults to the Hue & Heal parent. */
   brandName?: string
+  /** Brand world's uploaded logo (public URL). When set, slides show it in place of the text wordmark. */
+  logoUrl?: string
 }
 
 /** Tagline line — only the parent brand has a house tagline; others start blank. */
@@ -29,6 +31,15 @@ export function wordmarkFor(seed: TemplateSeed): string {
   const n = (seed.brandName ?? '').trim()
   if (!n || n === 'Hue & Heal') return 'hue&heal.'
   return `${n}.`
+}
+
+/** The brand mark for a slide: the uploaded logo image when present, else the
+    text wordmark. Carries role 'wordmark' so template switches preserve it. */
+function brandmark(seed: TemplateSeed, box: DesignElement['box'], color: string): DesignElement {
+  if (seed.logoUrl && seed.logoUrl.trim()) {
+    return { id: eid('logo'), type: 'logo', box, style: { align: 'left' }, content: seed.logoUrl.trim(), role: 'wordmark' }
+  }
+  return text(wordmarkFor(seed), box, { color, fontKey: 'serif', fontSize: 34, fontWeight: 300 }, { role: 'wordmark' })
 }
 
 export interface TemplateDef {
@@ -66,7 +77,7 @@ export const TEMPLATES: TemplateDef[] = [
         id: eid('slide'),
         background: { type: 'atmos', value: 'atmos' },
         elements: [
-          text(wordmarkFor(seed), { x: 8, y: 6, w: 40, h: 8 }, { color: CREAM, fontKey: 'serif', fontSize: 34, fontWeight: 300 }, { role: 'wordmark' }),
+          brandmark(seed, { x: 8, y: 6, w: 40, h: 8 }, CREAM),
           text((seed.sector ?? 'Hospitality').toUpperCase(), { x: 8, y: 60, w: 60, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 20, letterSpacing: 0.18, uppercase: true }, { role: 'eyebrow', accentRef: true }),
           text('A guide to', { x: 8, y: 66, w: 60, h: 8 }, { color: CREAM, fontKey: 'sans', fontSize: 22, letterSpacing: 0.12, uppercase: true, opacity: 0.8 }, { role: 'kicker' }),
           text(seed.headline || 'Hotels', { x: 8, y: 71, w: 84, h: 18 }, { color: CREAM, fontKey: 'serif', fontSize: big, fontWeight: 300, lineHeight: 1.0 }, { role: 'headline' }),
@@ -85,7 +96,7 @@ export const TEMPLATES: TemplateDef[] = [
         id: eid('slide'),
         background: { type: 'solid', value: '#ECE6DA' },
         elements: [
-          text(wordmarkFor(seed), { x: 8, y: 7, w: 40, h: 8 }, { color: INK, fontKey: 'serif', fontSize: 34, fontWeight: 300 }, { role: 'wordmark' }),
+          brandmark(seed, { x: 8, y: 7, w: 40, h: 8 }, INK),
           text('“', { x: 7, y: 22, w: 30, h: 20 }, { color: acc, fontKey: 'serif', fontSize: 180, lineHeight: 0.8 }, { accentRef: true }),
           text(seed.headline || 'A space should make you feel something before you understand why.', { x: 9, y: 34, w: 82, h: 40 }, { color: INK, fontKey: 'serif', fontSize: 68, fontWeight: 300, lineHeight: 1.12 }, { role: 'headline' }),
           text(attributionFor(seed), { x: 9, y: 86, w: 60, h: 6 }, { color: '#6E6456', fontKey: 'sans', fontSize: 24, letterSpacing: 0.04 }, { role: 'tagline' }),
@@ -103,7 +114,7 @@ export const TEMPLATES: TemplateDef[] = [
         id: eid('slide'),
         background: { type: 'atmos', value: 'atmos' },
         elements: [
-          text(wordmarkFor(seed), { x: 8, y: 7, w: 40, h: 8 }, { color: CREAM, fontKey: 'serif', fontSize: 34, fontWeight: 300 }, { role: 'wordmark' }),
+          brandmark(seed, { x: 8, y: 7, w: 40, h: 8 }, CREAM),
           text(seed.headline || 'The science of feeling well', { x: 8, y: 38, w: 84, h: 30 }, { color: CREAM, fontKey: 'serif', fontSize: big, fontWeight: 300, lineHeight: 1.02 }, { role: 'headline' }),
           shape({ x: 8, y: 72, w: 14, h: 0.7 }, acc, 0, { accentRef: true }),
           text((seed.sector ?? 'Wellness design').toUpperCase(), { x: 8, y: 75, w: 70, h: 6 }, { color: acc, fontKey: 'sans', fontSize: 22, letterSpacing: 0.18, uppercase: true }, { role: 'eyebrow', accentRef: true }),

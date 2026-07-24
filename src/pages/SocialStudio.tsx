@@ -101,6 +101,19 @@ function SlideCanvas({
           )
         } else if (el.type === 'shape') {
           inner = <div style={{ width: '100%', height: displayH * (el.box.h / 100), background: el.style.bg ?? '#000', borderRadius: `${el.style.radius ?? 0}%` }} />
+        } else if (el.type === 'logo') {
+          inner = (
+            <img
+              src={el.content}
+              alt=""
+              crossOrigin="anonymous"
+              style={{
+                width: '100%', height: displayH * (el.box.h / 100),
+                objectFit: 'contain',
+                objectPosition: el.style.align === 'center' ? 'center' : el.style.align === 'right' ? 'right' : 'left',
+              }}
+            />
+          )
         } else {
           inner = <img src={el.content} alt="" style={{ width: '100%', height: displayH * (el.box.h / 100), objectFit: 'cover', borderRadius: `${el.style.radius ?? 0}%` }} />
         }
@@ -147,7 +160,7 @@ export default function SocialStudio() {
     getPost(id).then((p) => {
       if (!p) { setStatus('Could not load post'); return }
       setPost(p)
-      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name }
+      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined }
       const fmt: InstaFormat = (p.format === 'square' || p.format === 'portrait' || p.format === 'story' || p.format === 'carousel') ? p.format : 'portrait'
       const content = (p.slides ?? []) as ContentSlideInput[]
       setDesign(isDesign(p.design) ? (p.design as unknown as Design) : buildDesign(fmt, 'guide', seed, 3, content))
@@ -228,14 +241,14 @@ export default function SocialStudio() {
   /* ---- actions ---- */
   const contentSlides = (post.slides ?? []) as ContentSlideInput[]
   function applyFormat(f: InstaFormat) {
-    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name }
+    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined }
     setDesign(buildDesign(f, design!.templateId, seed, 3, contentSlides))
     setActive(0); setSelId(null)
   }
   // Switching template only restyles the COVER — content slides are left intact,
   // and edited text is carried over by matching element roles + the current accent.
   function applyTemplate(tid: string) {
-    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name }
+    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined }
     const cover = templateById(tid).build(design!.format, seed)
     const old = design!.slides[0]
     const accNew = accentHex(design!.accent)

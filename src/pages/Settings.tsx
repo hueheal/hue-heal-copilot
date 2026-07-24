@@ -3,6 +3,7 @@ import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
 import { useBrand } from '../lib/brandContext'
+import { supabase } from '../lib/supabase'
 import {
   type BrandProfile,
   type BrandMember,
@@ -99,6 +100,21 @@ function BrandsPanel() {
     catch (e) { setStatus(String(e)) } finally { setBusy(false) }
   }
   async function makeDefault() { if (!draft) return; await setDefaultBrand(draft.id); await reload(draft.id); await brandCtx.reload(); setStatus('Set as default') }
+
+  async function uploadLogo(file: File) {
+    if (!supabase || !draft) { patch({ logo_url: '' }); return }
+    setBusy(true); setStatus('Uploading logo…')
+    try {
+      const { data: u } = await supabase.auth.getUser()
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '')
+      const path = `${u.user?.id ?? 'anon'}/brand-logos/${draft.id}-${Date.now()}-${safe}`
+      const { error } = await supabase.storage.from('social-assets').upload(path, file, { upsert: true, contentType: file.type || 'image/png' })
+      if (error) throw error
+      const { data } = supabase.storage.from('social-assets').getPublicUrl(path)
+      patch({ logo_url: data.publicUrl })
+      setStatus('Logo uploaded — Save changes to apply')
+    } catch (e) { setStatus(`Upload failed: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
+  }
   async function remove(id: string) { await deleteBrand(id); setSelId(null); await reload(); setStatus('Brand deleted') }
 
   return (
@@ -145,9 +161,19 @@ function BrandsPanel() {
                   <option value="ivyora">Ivy Ora (Hue &amp; Heal)</option>
                 </select>
               </div>
-              <div style={{ flex: 1, minWidth: 220 }}>
-                <label style={{ ...label, margin: '0 0 8px' }}>Logo URL (optional)</label>
-                <input value={draft.logo_url || ''} onChange={(e) => patch({ logo_url: e.target.value })} placeholder="https://…/logo.svg" style={inp} />
+              <div style={{ flex: 1, minWidth: 240 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Logo</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {draft.logo_url
+                    ? <img src={draft.logo_url} alt="" style={{ height: 34, maxWidth: 90, objectFit: 'contain', background: 'var(--hh-anthracite)', borderRadius: 6, padding: 4 }} />
+                    : <div style={{ height: 34, width: 60, borderRadius: 6, border: '1px dashed var(--hh-line)' }} />}
+                  <label className="hh-btn" style={{ cursor: 'pointer', border: '1px solid var(--hh-line)', borderRadius: 8, padding: '9px 14px', fontSize: 12.5, color: 'var(--text-strong)' }}>
+                    {draft.logo_url ? 'Replace' : 'Upload'}
+                    <input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" style={{ display: 'none' }} onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
+                  </label>
+                  {draft.logo_url && <button className="hh-btn" onClick={() => patch({ logo_url: '' })} style={{ background: 'none', border: 'none', color: 'var(--hh-ember)', fontSize: 12 }}>Remove</button>}
+                </div>
+                <input value={draft.logo_url || ''} onChange={(e) => patch({ logo_url: e.target.value })} placeholder="…or paste a logo URL" style={{ ...inp, marginTop: 8 }} />
               </div>
             </div>
 
