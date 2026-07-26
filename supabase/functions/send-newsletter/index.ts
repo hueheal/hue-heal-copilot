@@ -10,10 +10,11 @@ import { corsHeaders, json } from '../_shared/cors.ts'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const RESEND_FROM = Deno.env.get('RESEND_FROM') ?? 'Hue & Heal <onboarding@resend.dev>'
 
+interface Recipient { email: string; unsubUrl?: string }
 interface Body {
   subject: string
   html: string
-  recipients: string[]
+  recipients: (string | Recipient)[]
 }
 
 async function sendBatch(items: { from: string; to: string[]; subject: string; html: string }[]) {
@@ -37,16 +38,25 @@ Deno.serve(async (req) => {
   } catch {
     return json({ error: 'Invalid JSON body' }, 400)
   }
-  const recipients = (body.recipients ?? []).map((r) => r.trim()).filter(Boolean)
+  const recipients: Recipient[] = (body.recipients ?? [])
+    .map((r) => (typeof r === 'string' ? { email: r.trim() } : { email: (r.email ?? '').trim(), unsubUrl: r.unsubUrl }))
+    .filter((r) => r.email)
   if (!recipients.length) return json({ error: 'No recipients' }, 400)
   if (!body.subject || !body.html) return json({ error: 'subject and html are required' }, 400)
 
   // One message per recipient (privacy: no shared To). Chunk to 100 per batch call.
+  // Each message gets its own {{unsubscribe}} link swapped in.
   let sent = 0
   const errors: string[] = []
   for (let i = 0; i < recipients.length; i += 100) {
     const chunk = recipients.slice(i, i + 100)
-    const items = chunk.map((to) => ({ from: RESEND_FROM, to: [to], subject: body.subject, html: body.html }))
+    const items = chunk.map((r) => ({
+      from: RESEND_FROM,
+      to: [r.email],
+      subject: body.subject,
+      html: body.html.replaceAll('{{unsubscribe}}', r.unsubUrl || '#'),
+      ...(r.unsubUrl ? { headers: { 'List-Unsubscribe': `<${r.unsubUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
+    }))
     try {
       const r = await sendBatch(items)
       if (r.ok) sent += chunk.length

@@ -19,6 +19,8 @@ import {
   deleteSubscriber,
   sendNewsletter,
   generateNewsletter,
+  subscribeLink,
+  subscriberGroups,
 } from '../lib/newsletter'
 
 const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13.5, fontFamily: 'var(--font-sans)' }
@@ -40,6 +42,8 @@ export default function NewsletterPage() {
   const [subs, setSubs] = useState<Subscriber[]>([])
   const [subInput, setSubInput] = useState('')
   const [testEmail, setTestEmail] = useState(auth.email ?? '')
+  const [sendGroup, setSendGroup] = useState<string>('__all')
+  const [copied, setCopied] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [aiTopic, setAiTopic] = useState('')
@@ -140,8 +144,11 @@ export default function NewsletterPage() {
     finally { setBusy(false) }
   }
   async function sendToList() {
-    const recipients = subs.filter((s) => s.status === 'subscribed').map((s) => s.email)
-    if (!recipients.length) { setStatus('No subscribers yet'); return }
+    const audience = subs
+      .filter((s) => s.status === 'subscribed')
+      .filter((s) => sendGroup === '__all' || (s.groups ?? []).includes(sendGroup))
+    const recipients = audience.map((s) => ({ email: s.email, token: s.unsub_token }))
+    if (!recipients.length) { setStatus(sendGroup === '__all' ? 'No subscribers yet' : `No subscribers in “${sendGroup}”`); return }
     setBusy(true); setStatus(`Sending to ${recipients.length}…`)
     try {
       const { sent, error } = await sendNewsletter(subject, html, recipients)
@@ -247,18 +254,46 @@ export default function NewsletterPage() {
                 ))}
               </div>
 
+              {/* Shareable subscribe link */}
+              {brand && (
+                <>
+                  <label style={rail}>Subscribe link</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input readOnly style={{ ...inp, flex: 1, fontSize: 12 }} value={subscribeLink(brand.id, brand.name)} onFocus={(e) => e.currentTarget.select()} />
+                    <button className="hh-btn" style={{ ...miniBtn, width: 'auto', padding: '7px 12px' }}
+                      onClick={() => { navigator.clipboard?.writeText(subscribeLink(brand.id, brand.name)); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
+                      {copied ? 'Copied' : 'Copy'}
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>Share this — people who open it join {brand.name}’s list.</div>
+                </>
+              )}
+
               {/* Subscribers */}
               <label style={rail}>Subscribers · {subs.length}</label>
-              <textarea style={{ ...inp, resize: 'vertical' }} rows={2} placeholder="Add emails (comma or newline separated)" value={subInput} onChange={(e) => setSubInput(e.target.value)} />
+              <textarea style={{ ...inp, resize: 'vertical' }} rows={2} placeholder="Add emails manually (comma or newline separated)" value={subInput} onChange={(e) => setSubInput(e.target.value)} />
               <button className="hh-btn" onClick={onAddSubs} style={{ ...miniBtn, width: 'auto', padding: '7px 12px', marginTop: 6 }}>＋ Add subscribers</button>
               <div style={{ marginTop: 8, maxHeight: 140, overflowY: 'auto' }}>
                 {subs.map((s) => (
                   <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: '1px solid var(--hh-line)', fontSize: 12.5 }}>
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.email}</span>
+                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {s.email}
+                      {s.status === 'unsubscribed' && <span style={{ color: 'var(--hh-ember)', marginLeft: 6, fontSize: 10.5 }}>unsubscribed</span>}
+                      {(s.groups ?? []).length > 0 && <span style={{ color: 'var(--text-faint)', marginLeft: 6, fontSize: 10.5 }}>· {(s.groups ?? []).join(', ')}</span>}
+                    </span>
                     <ConfirmButton onConfirm={async () => { await deleteSubscriber(s.id); await reload() }} style={{ ...miniBtn, border: 'none' }}>×</ConfirmButton>
                   </div>
                 ))}
               </div>
+
+              {/* Send audience */}
+              <label style={rail}>Send to</label>
+              <select value={sendGroup} onChange={(e) => setSendGroup(e.target.value)} style={inp}>
+                <option value="__all">All subscribed ({subs.filter((s) => s.status === 'subscribed').length})</option>
+                {subscriberGroups(subs).map((g) => (
+                  <option key={g} value={g}>{g} ({subs.filter((s) => s.status === 'subscribed' && (s.groups ?? []).includes(g)).length})</option>
+                ))}
+              </select>
 
               <label style={rail}>Test send</label>
               <div style={{ display: 'flex', gap: 6 }}>

@@ -12,10 +12,16 @@ import NewsletterPage from './pages/Newsletter'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import ComingSoon from './pages/ComingSoon'
+import Subscribe from './pages/Subscribe'
+import Unsubscribe from './pages/Unsubscribe'
 
 export default function App() {
   return (
     <Routes>
+      {/* Public pages — outside the auth gate / studio shell */}
+      <Route path="/subscribe" element={<Subscribe />} />
+      <Route path="/unsubscribe" element={<Unsubscribe />} />
+
       <Route element={<StudioLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="calendar" element={<Calendar />} />

@@ -350,18 +350,24 @@ export interface Database {
       subscribers: {
         Row: {
           id: string
-          owner: string
+          owner: string | null
+          brand_id: string | null
           email: string
           name: string
           status: string
+          groups: string[]
+          unsub_token: string
           created_at: string
         }
         Insert: {
           id?: string
-          owner?: string
+          owner?: string | null
+          brand_id?: string | null
           email: string
           name?: string
           status?: string
+          groups?: string[]
+          unsub_token?: string
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['subscribers']['Insert']>

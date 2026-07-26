@@ -276,9 +276,39 @@ export async function addSubscribers(emails: string[], name = ''): Promise<numbe
   }
   const existing = new Set(localSubs.map((s) => s.email))
   clean.forEach((email) => {
-    if (!existing.has(email)) localSubs = [{ id: `local-sub${seq++}`, owner: 'local', email, name, status: 'subscribed', created_at: iso() }, ...localSubs]
+    if (!existing.has(email)) localSubs = [{ id: `local-sub${seq++}`, owner: 'local', brand_id: null, email, name, status: 'subscribed', groups: [], unsub_token: `local-${seq}`, created_at: iso() }, ...localSubs]
   })
   return clean.length
+}
+
+/* ---- Self-serve subscribe / unsubscribe (public — called with the anon key) ---- */
+export async function publicSubscribe(input: { brandId: string; email: string; name?: string; group?: string }): Promise<{ ok: boolean; error?: string }> {
+  if (!(supabase)) return { ok: false, error: 'Not connected' }
+  const { data, error } = await supabase.functions.invoke('subscribe', { body: input })
+  if (error) return { ok: false, error: (data as { error?: string } | null)?.error ?? error.message }
+  if ((data as { error?: string } | null)?.error) return { ok: false, error: (data as { error?: string }).error }
+  return { ok: true }
+}
+
+export async function publicUnsubscribe(token: string): Promise<{ ok: boolean; email?: string; error?: string }> {
+  if (!(supabase)) return { ok: false, error: 'Not connected' }
+  const { data, error } = await supabase.functions.invoke('unsubscribe', { body: { token } })
+  const d = data as { ok?: boolean; email?: string; error?: string } | null
+  if (error) return { ok: false, error: d?.error ?? error.message }
+  if (d?.error) return { ok: false, error: d.error }
+  return { ok: true, email: d?.email }
+}
+
+/** The shareable public subscribe URL for a brand. */
+export function subscribeLink(brandId: string, brandName: string): string {
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const params = new URLSearchParams({ b: brandId, name: brandName })
+  return `${origin}/subscribe?${params.toString()}`
+}
+
+/** All distinct groups present across a brand's subscribers. */
+export function subscriberGroups(subs: Subscriber[]): string[] {
+  return [...new Set(subs.flatMap((s) => s.groups ?? []))].sort()
 }
 
 export async function deleteSubscriber(id: string): Promise<void> {
@@ -290,21 +320,32 @@ export async function deleteSubscriber(id: string): Promise<void> {
   localSubs = localSubs.filter((s) => s.id !== id)
 }
 
-/* ---- Send via the edge function ---- */
+/* ---- Send via the edge function ----
+   Recipients can be plain emails (test sends) or {email, token} so each message
+   gets a working per-subscriber {{unsubscribe}} link. */
+export type SendRecipient = string | { email: string; token?: string }
+
 export async function sendNewsletter(
   subject: string,
   html: string,
-  recipients: string[],
+  recipients: SendRecipient[],
 ): Promise<{ sent: number; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { sent: 0, error: 'Not connected — add Supabase keys' }
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
   if (!token) return { sent: 0, error: 'Sign in first (bottom-left)' }
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  // Normalise to {email, unsubUrl} — build the per-recipient unsubscribe link here.
+  const payload = recipients.map((r) => {
+    const email = typeof r === 'string' ? r : r.email
+    const tok = typeof r === 'string' ? undefined : r.token
+    return { email, unsubUrl: tok ? `${origin}/unsubscribe?t=${tok}` : `${origin}/unsubscribe` }
+  })
   try {
     const res = await fetch(`${functionsBase}/send-newsletter`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ subject, html, recipients }),
+      body: JSON.stringify({ subject, html, recipients: payload }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) return { sent: 0, error: data?.error ? String(data.error) : `Send ${res.status}` }
