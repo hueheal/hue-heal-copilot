@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
 import { filterByBrand, withBrandInsert } from './brandScope'
-import { readableOn, textOnColor } from './color'
+import { readableOn } from './color'
 import type { Database } from './database.types'
 
 export type Newsletter = Database['public']['Tables']['newsletters']['Row']
@@ -31,7 +31,7 @@ export const TEMPLATES: NewsletterTemplate[] = [
     eyebrow: 'The Journal',
     blocks: () => [
       { id: bid(), type: 'heading', text: 'Designing for stillness' },
-      { id: bid(), type: 'text', text: 'This month we’ve been thinking about how a space can lower the heart rate before a word is spoken — and what that means for the places we design.' },
+      { id: bid(), type: 'text', text: 'This month we’ve been thinking about how a space can lower the heart rate before a word is spoken, and what that means for the places we design.' },
       { id: bid(), type: 'image', url: '', alt: 'Feature image' },
       { id: bid(), type: 'text', text: 'Three principles guiding our latest work…' },
       { id: bid(), type: 'button', label: 'Read the full piece', href: 'https://www.hueandheal.com' },
@@ -55,38 +55,88 @@ export const TEMPLATES: NewsletterTemplate[] = [
       { id: bid(), type: 'heading', text: 'A guide to wellness in hospitality' },
       { id: bid(), type: 'text', text: 'The five principles we design by, distilled into a short read.' },
       { id: bid(), type: 'divider' },
-      { id: bid(), type: 'text', text: '01 — Sense of arrival\n02 — Light as material\n03 — Natural texture\n04 — Room to breathe\n05 — A reason to return' },
+      { id: bid(), type: 'text', text: '01 · Sense of arrival\n02 · Light as material\n03 · Natural texture\n04 · Room to breathe\n05 · A reason to return' },
       { id: bid(), type: 'button', label: 'Explore the guide', href: 'https://www.hueandheal.com' },
     ],
   },
 ]
 
-/* ---- On-brand, email-safe HTML (inline styles, table layout, web-safe fonts) ----
-   Email clients don't reliably support custom web fonts, so the display serif falls
-   back to Georgia (Ivy Ora's closest ubiquitous cousin) — standard email practice. */
-const C = { ink: '#1E1B18', copper: '#B5632F', bone: '#F5F1E8', paper: '#FBFAF6', muted: '#6E6456', line: '#E0D7C6', cream: '#F4F0E7' }
-const SERIF = "Georgia, 'Times New Roman', serif"
-const SANS = "'Helvetica Neue', Helvetica, Arial, sans-serif"
+/* ---- On-brand, email-safe HTML (inline styles, table layout) ----
+   The whole newsletter is set in Poppins, the brand's typeface. Clients that
+   support web fonts (Apple Mail, iOS Mail, Outlook mobile) load it via the
+   Google Fonts link in the head; everywhere else it falls back cleanly to a
+   system sans, so the layout never breaks. */
+const C = {
+  ink: '#211D18',      // deep warm near-black (footer, display text)
+  copper: '#B5632F',   // default accent
+  bone: '#EDE6D6',     // image placeholder
+  paper: '#F6F1E7',    // the newsletter card
+  page: '#E7E0CF',     // warm cream margin the card sits on
+  muted: '#7A6F5E',    // captions, footer secondary
+  soft: '#463D30',     // body copy, softer than ink so long reads feel calm
+  line: '#DBD1BE',     // hairlines
+  cream: '#F4F0E7',
+  onDark: '#F1EADB',   // text on the dark footer
+  onDarkMuted: '#B7AC97',
+}
+const SANS = "'Poppins', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+// Hosted raster of the Hue & Heal wordmark. Email can't render the SVG logo,
+// so the parent brand falls back to these PNGs (ink on the light masthead,
+// cream on the dark footer). Absolute URLs: email needs hosted images.
+const PARENT_LOGO_INK = 'https://copilotadmin.hueandheal.com/brand/hue-heal-email-ink.png'
+const PARENT_LOGO_CREAM = 'https://copilotadmin.hueandheal.com/brand/hue-heal-email-cream.png'
 
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function renderBlock(b: Block, accent: string = C.copper, onAccent: string = '#F6EFE4'): string {
+/* A single full-bleed image — magazine-style, edge to edge, no radius. */
+function imageCell(b: Extract<Block, { type: 'image' }>): string {
+  return b.url
+    ? `<img src="${esc(b.url)}" alt="${esc(b.alt ?? '')}" width="600" style="width:100%;max-width:600px;display:block;border:0;" />`
+    : `<div style="width:100%;height:300px;background:${C.bone};"></div>`
+}
+
+function renderBlock(b: Block, accentInk: string): string {
   switch (b.type) {
+    // Display heading in Poppins medium, large and calm with air above it.
     case 'heading':
-      return `<tr><td style="padding:8px 40px 4px;"><h1 style="margin:0;font-family:${SERIF};font-weight:400;font-size:30px;line-height:1.15;color:${C.ink};">${esc(b.text)}</h1></td></tr>`
+      return `<tr><td style="padding:30px 48px 6px;"><h1 style="margin:0;font-family:${SANS};font-weight:500;font-size:28px;line-height:1.3;letter-spacing:-0.3px;color:${C.ink};">${esc(b.text)}</h1></td></tr>`
+    // Body copy, set slightly larger and looser so it reads slowly.
     case 'text':
-      return `<tr><td style="padding:10px 40px;font-family:${SANS};font-size:16px;line-height:1.7;color:${C.muted};white-space:pre-line;">${esc(b.text)}</td></tr>`
+      return `<tr><td style="padding:12px 48px;font-family:${SANS};font-weight:300;font-size:15px;line-height:1.9;color:${C.soft};white-space:pre-line;">${esc(b.text)}</td></tr>`
+    // Full-bleed feature image with breathing room above and below.
     case 'image':
-      return b.url
-        ? `<tr><td style="padding:14px 40px;"><img src="${esc(b.url)}" alt="${esc(b.alt ?? '')}" width="520" style="width:100%;max-width:520px;border-radius:10px;display:block;" /></td></tr>`
-        : `<tr><td style="padding:14px 40px;"><div style="width:100%;height:180px;background:${C.bone};border:1px dashed ${C.line};border-radius:10px;"></div></td></tr>`
+      return `<tr><td style="padding:26px 0;">${imageCell(b)}</td></tr>`
+    // Understated editorial CTA: small-caps, letter-spaced, hairline outline.
     case 'button':
-      return `<tr><td style="padding:16px 40px;"><a href="${esc(b.href)}" style="display:inline-block;background:${accent};color:${onAccent};text-decoration:none;font-family:${SANS};font-size:14px;padding:12px 24px;border-radius:999px;">${esc(b.label)}</a></td></tr>`
+      return `<tr><td align="center" style="padding:26px 48px;"><a href="${esc(b.href)}" style="display:inline-block;border:1px solid ${accentInk};color:${accentInk};text-decoration:none;font-family:${SANS};font-size:11px;font-weight:500;letter-spacing:2.5px;text-transform:uppercase;padding:14px 30px;">${esc(b.label)}</a></td></tr>`
+    // A short centred rule, a beat of silence between ideas.
     case 'divider':
-      return `<tr><td style="padding:6px 40px;"><div style="border-top:1px solid ${C.line};"></div></td></tr>`
+      return `<tr><td align="center" style="padding:26px 48px;"><div style="width:46px;height:1px;background:${C.line};margin:0 auto;line-height:1px;font-size:0;">&nbsp;</div></td></tr>`
   }
+}
+
+/* Render the block flow, pairing two adjacent images into a two-up grid
+   (a signature editorial layout) and letting single images run full-bleed. */
+function renderBlocks(blocks: Block[], accentInk: string): string {
+  const out: string[] = []
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i]
+    const next = blocks[i + 1]
+    if (b.type === 'image' && b.url && next && next.type === 'image' && next.url) {
+      out.push(
+        `<tr><td style="padding:26px 24px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>` +
+          `<td width="50%" valign="top" style="padding-right:6px;"><img src="${esc(b.url)}" alt="${esc(b.alt ?? '')}" width="264" style="width:100%;display:block;border:0;" /></td>` +
+          `<td width="50%" valign="top" style="padding-left:6px;"><img src="${esc(next.url)}" alt="${esc(next.alt ?? '')}" width="264" style="width:100%;display:block;border:0;" /></td>` +
+          `</tr></table></td></tr>`,
+      )
+      i++ // consumed the pair
+      continue
+    }
+    out.push(renderBlock(b, accentInk))
+  }
+  return out.join('')
 }
 
 /** Identity of the brand world this newsletter belongs to. */
@@ -107,39 +157,63 @@ export function renderEmailHtml(
   const accent = brand.accent_color || C.copper
   // Accent as text needs to stay legible on the near-white email paper.
   const accentInk = readableOn(accent, C.paper, 4.2)
-  const onAccent = textOnColor(accent)
-  const blocksHtml = nl.blocks.map((b) => renderBlock(b, accent, onAccent)).join('')
-  const eyebrow = nl.eyebrow
-    ? `<div style="font-family:${SANS};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${accentInk};padding:0 40px 4px;">${esc(nl.eyebrow)}</div>`
-    : ''
-
-  // Masthead: the brand's logo when it has one, otherwise its name set in the serif.
   const isParent = brand.name === HUE_HEAL_BRAND.name
-  const masthead = brand.logo_url
-    ? `<img src="${esc(brand.logo_url)}" alt="${esc(brand.name)}" height="26" style="height:26px;display:block;border:0;" />`
-    : isParent
-    ? `<span style="font-family:${SERIF};font-size:24px;color:${C.ink};">hue&amp;heal<span style="color:${accentInk};">.</span></span>`
-    : `<span style="font-family:${SERIF};font-size:24px;color:${C.ink};">${esc(brand.name)}<span style="color:${accentInk};">.</span></span>`
 
-  const taglineHtml = brand.tagline
-    ? `<div style="font-family:${SERIF};font-style:italic;font-size:15px;color:${C.muted};margin-bottom:8px;">${esc(brand.tagline)}</div>`
+  // Long Lane hero: if the newsletter opens on an image, lift it out of the flow
+  // and run it full-bleed under the logo — an image-led cover.
+  const first = nl.blocks[0]
+  const hero = first && first.type === 'image' && first.url ? first : null
+  const flow = hero ? nl.blocks.slice(1) : nl.blocks
+  const blocksHtml = renderBlocks(flow, accentInk)
+
+  const heroHtml = hero
+    ? `<tr><td style="padding:0;">${imageCell(hero)}</td></tr>`
     : ''
-  const footerLine = [esc(brand.name), brand.website ? esc(brand.website) : ''].filter(Boolean).join(' · ')
 
-  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(nl.subject)}</title></head>
-<body style="margin:0;background:${C.paper};">
+  // Masthead: the brand's logo centred. A raster logo_url is used as-is; the
+  // parent brand falls back to its hosted PNG wordmark (email can't render the
+  // SVG logo). SVG urls are skipped for the same reason. If a child brand has
+  // no raster logo, its name is set in Poppins as a graceful fallback.
+  const rasterLogo = brand.logo_url && !/\.svg(\?|$)/i.test(brand.logo_url) ? brand.logo_url : null
+  const mastLogo = rasterLogo ?? (isParent ? PARENT_LOGO_INK : null)
+  const masthead = mastLogo
+    ? `<img src="${esc(mastLogo)}" alt="${esc(brand.name)}" height="40" style="height:40px;width:auto;max-width:80%;display:block;border:0;margin:0 auto;" />`
+    : `<span style="font-family:${SANS};font-weight:500;font-size:26px;letter-spacing:0.3px;color:${C.ink};">${esc(brand.name)}</span>`
+
+  const eyebrowHtml = nl.eyebrow
+    ? `<tr><td align="center" style="padding:38px 48px 0;font-family:${SANS};font-weight:500;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${accentInk};">${esc(nl.eyebrow)}</td></tr>`
+    : `<tr><td style="height:14px;"></td></tr>`
+
+  // Footer: a grounded dark band. The parent shows its cream wordmark PNG; a
+  // child brand shows its name set in Poppins (a dark logo would vanish on ink).
+  const footerMark = isParent
+    ? `<img src="${esc(PARENT_LOGO_CREAM)}" alt="${esc(brand.name)}" height="30" style="height:30px;width:auto;max-width:70%;display:block;border:0;margin:0 auto;" />`
+    : `<div style="font-family:${SANS};font-weight:500;font-size:22px;letter-spacing:0.3px;color:${C.onDark};">${esc(brand.name)}</div>`
+  const taglineHtml = brand.tagline
+    ? `<div style="font-family:${SANS};font-weight:300;font-style:italic;font-size:14px;color:${C.onDarkMuted};margin:14px 0 0;">${esc(brand.tagline)}</div>`
+    : ''
+  const websiteHtml = brand.website
+    ? `<div style="font-family:${SANS};font-size:11px;letter-spacing:1px;color:${C.onDarkMuted};margin-top:14px;">${esc(brand.website)}</div>`
+    : ''
+
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(nl.subject)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');body,table,td,a,span,div,h1{font-family:'Poppins','Helvetica Neue',Helvetica,Arial,sans-serif;}</style></head>
+<body style="margin:0;background:${C.page};">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(nl.preheader)}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.paper};padding:28px 0;"><tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.page};padding:36px 0;"><tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:${C.paper};">
-  <tr><td style="padding:8px 40px 20px;border-bottom:1px solid ${C.line};">${masthead}</td></tr>
-  <tr><td style="height:20px;"></td></tr>
-  ${eyebrow}
+  <tr><td align="center" style="padding:40px 40px 30px;">${masthead}</td></tr>
+  ${heroHtml}
+  ${eyebrowHtml}
   ${blocksHtml}
-  <tr><td style="height:24px;"></td></tr>
-  <tr><td style="padding:20px 40px;border-top:1px solid ${C.line};font-family:${SANS};font-size:12px;color:${C.muted};">
+  <tr><td style="height:44px;"></td></tr>
+  <tr><td align="center" style="background:${C.ink};padding:44px 40px;">
+    ${footerMark}
     ${taglineHtml}
-    ${footerLine}<br/>
-    <a href="{{unsubscribe}}" style="color:${C.muted};">Unsubscribe</a>
+    ${websiteHtml}
+    <div style="margin-top:20px;"><a href="{{unsubscribe}}" style="font-family:${SANS};font-size:11px;letter-spacing:1px;text-transform:uppercase;color:${C.onDarkMuted};text-decoration:underline;">Unsubscribe</a></div>
   </td></tr>
 </table>
 </td></tr></table>

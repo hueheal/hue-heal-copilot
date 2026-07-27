@@ -39,10 +39,12 @@ export function PillButton({
   children,
   tone = 'accent',
   onClick,
+  disabled = false,
 }: {
   children: ReactNode
   tone?: 'accent' | 'ink' | 'ghost'
   onClick?: () => void
+  disabled?: boolean
 }) {
   const styles =
     tone === 'accent'
@@ -54,7 +56,8 @@ export function PillButton({
     <button
       className="hh-btn"
       onClick={onClick}
-      style={{ ...styles, borderRadius: 999, padding: '11px 22px', fontSize: 13, fontWeight: 500 }}
+      disabled={disabled}
+      style={{ ...styles, borderRadius: 999, padding: '11px 22px', fontSize: 13, fontWeight: 500, opacity: disabled ? 0.55 : 1, cursor: disabled ? 'default' : 'pointer' }}
     >
       {children}
     </button>

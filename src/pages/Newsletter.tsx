@@ -46,6 +46,7 @@ export default function NewsletterPage() {
   const [copied, setCopied] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [sending, setSending] = useState(false)
   const [aiTopic, setAiTopic] = useState('')
   const [aiNotes, setAiNotes] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
@@ -138,23 +139,25 @@ export default function NewsletterPage() {
   }
 
   async function testSend() {
+    if (sending) return
     if (!testEmail) { setStatus('Enter a test email'); return }
-    setBusy(true); setStatus('Sending test…')
+    setSending(true); setStatus('Sending test…')
     try { const { sent, error } = await sendNewsletter(subject, html, [testEmail]); setStatus(sent ? `Test sent to ${testEmail}` : `Test failed: ${error}`) }
-    finally { setBusy(false) }
+    finally { setSending(false) }
   }
   async function sendToList() {
+    if (sending) return
     const audience = subs
       .filter((s) => s.status === 'subscribed')
       .filter((s) => sendGroup === '__all' || (s.groups ?? []).includes(sendGroup))
     const recipients = audience.map((s) => ({ email: s.email, token: s.unsub_token }))
     if (!recipients.length) { setStatus(sendGroup === '__all' ? 'No subscribers yet' : `No subscribers in “${sendGroup}”`); return }
-    setBusy(true); setStatus(`Sending to ${recipients.length}…`)
+    setSending(true); setStatus(`Sending to ${recipients.length}…`)
     try {
       const { sent, error } = await sendNewsletter(subject, html, recipients)
       if (sent) { if (currentId) await updateNewsletter(currentId, { status: 'sent', sent_at: new Date().toISOString(), recipients_count: sent }); setStatus(`Sent to ${sent} subscriber${sent > 1 ? 's' : ''}`); await reload() }
       else setStatus(`Send failed: ${error}`)
-    } finally { setBusy(false) }
+    } finally { setSending(false) }
   }
 
   return (
@@ -166,8 +169,8 @@ export default function NewsletterPage() {
         action={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
-            <PillButton tone="ghost" onClick={save}>{busy ? '…' : 'Save'}</PillButton>
-            <PillButton tone="ink" onClick={sendToList}>Send to list ⟶</PillButton>
+            <PillButton tone="ghost" onClick={save} disabled={busy}>{busy ? '…' : 'Save'}</PillButton>
+            <PillButton tone="ink" onClick={sendToList} disabled={sending}>{sending ? 'Sending…' : 'Send to list ⟶'}</PillButton>
           </div>
         }
       />
@@ -298,7 +301,7 @@ export default function NewsletterPage() {
               <label style={rail}>Test send</label>
               <div style={{ display: 'flex', gap: 6 }}>
                 <input style={{ ...inp, flex: 1 }} placeholder="you@studio.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} />
-                <PillButton tone="accent" onClick={testSend}>Send test</PillButton>
+                <PillButton tone="accent" onClick={testSend} disabled={sending}>{sending ? 'Sending…' : 'Send test'}</PillButton>
               </div>
             </div>
 

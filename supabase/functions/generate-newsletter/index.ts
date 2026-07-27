@@ -73,7 +73,8 @@ Deno.serve(async (req) => {
     (body.template ? `\nThis is a "${body.template}" style edition.\n` : '') +
     '\nRules: one clear idea, developed simply. Short paragraphs. Concrete and sensory over abstract claims. ' +
     'No hype, no buzzwords, no exclamation marks, no emoji. British English. ' +
-    'Structure: a heading, 2–4 short text blocks, one image placeholder where a photo belongs, and exactly one button CTA at the end. ' +
+    'Never use em dashes or en dashes anywhere. Use full stops, commas, colons, or the word "and" instead. ' +
+    'Structure: a heading, 2 to 4 short text blocks, one image placeholder where a photo belongs, and exactly one button CTA at the end. ' +
     'Do not invent statistics, testimonials or facts. If a link is unknown, leave href empty. ' +
     'Call the newsletter tool with the result.'
 
