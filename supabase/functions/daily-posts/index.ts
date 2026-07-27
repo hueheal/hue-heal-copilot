@@ -8,7 +8,9 @@
 // Secrets: CRON_SECRET, ANTHROPIC_API_KEY, OPENAI_API_KEY, RESEND_API_KEY,
 //          optional RESEND_FROM, ANTHROPIC_MODEL, OPENAI_IMAGE_MODEL, DAILY_TO.
 // SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY are injected by the runtime.
-// Deploy:  npx supabase functions deploy daily-posts --project-ref <ref>
+// Deploy:  npx supabase functions deploy daily-posts --no-verify-jwt --project-ref <ref>
+//          (--no-verify-jwt is required so the cron's service-to-service call
+//           reaches this code; the CRON_SECRET header is the real gate.)
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
