@@ -16,6 +16,22 @@ export interface TemplateSeed {
   logoUrl?: string
   /** Brand world's social style profile — drives bg treatment, text tone, font, motif, tagline. */
   style?: SocialStyle
+  /** Optional cover background photo (e.g. an AI-generated image). When set, the
+      cover slide uses it full-bleed with a legibility scrim over the treatment. */
+  coverImage?: string
+}
+
+/** If the seed carries a cover photo, use it as the slide background with a
+    gradient scrim so overlaid text stays legible. */
+function withCover(slide: Slide, seed: TemplateSeed): Slide {
+  const img = seed.coverImage?.trim()
+  if (!img) return slide
+  return {
+    ...slide,
+    background: { type: 'image', value: img },
+    scrim: slide.scrim && slide.scrim !== 'none' ? slide.scrim : 'gradient',
+    scrimStrength: slide.scrimStrength ?? 68,
+  }
 }
 
 /** Resolve the style for a seed (falls back to per-brand defaults). */
@@ -193,9 +209,9 @@ export function buildDesign(
   const def = templateById(templateId)
   const spec = INSTAGRAM_FORMATS[format]
   if (!spec.multi) {
-    return { format, accent: seed.accent, templateId, slides: [def.build(format, seed)] }
+    return { format, accent: seed.accent, templateId, slides: [withCover(def.build(format, seed), seed)] }
   }
-  const cover = def.build(format, seed)
+  const cover = withCover(def.build(format, seed), seed)
   let rest: Slide[]
   if (contentSlides && contentSlides.length) {
     rest = contentSlides.map((cs, i) =>

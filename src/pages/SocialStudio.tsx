@@ -161,10 +161,13 @@ export default function SocialStudio() {
     getPost(id).then((p) => {
       if (!p) { setStatus('Could not load post'); return }
       setPost(p)
-      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined) }
+      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined), coverImage: p.image_url ?? undefined }
       const fmt: InstaFormat = (p.format === 'square' || p.format === 'portrait' || p.format === 'story' || p.format === 'carousel') ? p.format : 'portrait'
       const content = (p.slides ?? []) as ContentSlideInput[]
-      setDesign(isDesign(p.design) ? (p.design as unknown as Design) : buildDesign(fmt, 'guide', seed, 3, content))
+      // A draft that arrives with a cover photo (e.g. the daily automated posts) opens
+      // in the photo-led statement template; otherwise the guide cover.
+      const seedTemplate = p.image_url ? 'statement' : 'guide'
+      setDesign(isDesign(p.design) ? (p.design as unknown as Design) : buildDesign(fmt, seedTemplate, seed, 3, content))
     }).catch(() => setStatus('Could not load post'))
   }, [id])
 
