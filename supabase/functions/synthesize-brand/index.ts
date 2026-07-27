@@ -72,7 +72,8 @@ Deno.serve(async (req) => {
     'Write a rich, premium editorial photographic creative-direction master prompt (photography, lighting, colour, human authenticity, ' +
     'composition, environment, mood) plus a negatives list. Suggest the copilot modules this brand most needs. ' +
     'Use display_font "poppins" (Ivy Ora is reserved for Hue & Heal itself). ' +
-    (notes ? `The user describes the brand as follows — treat this as primary input: "${notes}". ` : '') +
+    'Never use em dashes or en dashes in any text you write; use commas, colons, full stops, or the word "and" instead. ' +
+    (notes ? `The user describes the brand as follows, treat this as primary input: "${notes}". ` : '') +
     'Call the brand_identity tool with your result.'
 
   let resp: Response

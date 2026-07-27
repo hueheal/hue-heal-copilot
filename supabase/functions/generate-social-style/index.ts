@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
       (inspiration ? `The brand describes the look they want: "${inspiration}".\n` : '') +
       (images.length ? 'Use the attached reference image(s) as the visual direction.\n' : '') +
       'Choose a background treatment, text tone (must contrast the background), headline font, whether to use an accent rule, a short tagline (or empty), and alignment. ' +
+      'In the tagline, never use em dashes or en dashes; use commas, colons, full stops, or the word "and" instead. ' +
       'Make it feel distinctly like THIS brand, not a generic wellness studio. Call the social_style tool.',
   })
 

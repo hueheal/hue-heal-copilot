@@ -220,8 +220,24 @@ export function renderEmailHtml(
 </body></html>`
 }
 
+/* Upload an image chosen from the user's device to the social-assets bucket and
+   return its public URL, so image blocks can attach a local file instead of
+   pasting a URL. Email needs a hosted absolute URL, which the public bucket gives. */
+export async function uploadNewsletterImage(file: File): Promise<{ url?: string; error?: string }> {
+  if (!(isSupabaseConfigured && supabase)) return { error: 'Not connected' }
+  const { data: s } = await supabase.auth.getSession()
+  const uid = s.session?.user.id
+  if (!uid) return { error: 'Sign in first' }
+  const safe = file.name.replace(/[^a-zA-Z0-9.]/g, '')
+  const path = `${uid}/newsletter/img-${Date.now()}-${safe}`
+  const { error } = await supabase.storage.from('social-assets').upload(path, file, { upsert: true, contentType: file.type || 'image/png' })
+  if (error) return { error: error.message }
+  const { data } = supabase.storage.from('social-assets').getPublicUrl(path)
+  return { url: data.publicUrl }
+}
+
 /* ---------------------------------------------------------------------------
-   AI drafting — Claude writes the newsletter in the brand world's voice
+   AI drafting: Claude writes the newsletter in the brand world's voice
 --------------------------------------------------------------------------- */
 export interface GeneratedNewsletter {
   subject: string

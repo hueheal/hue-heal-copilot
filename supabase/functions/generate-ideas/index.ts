@@ -62,8 +62,9 @@ Deno.serve(async (req) => {
     `You are the social content strategist for ${brand.name ?? 'Hue & Heal'}, a wellness experience design studio`,
     `(hospitality, food & beverage, health & fitness, education).`,
     brand.tagline ? `Tagline: "${brand.tagline}".` : '',
-    brand.voice ? `Voice: ${brand.voice}` : 'Voice: warm, editorial, grounded — never salesy or hyped.',
+    brand.voice ? `Voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, never salesy or hyped.',
     'Write in British English. Ideas must be specific and useful, not generic. Never invent statistics or client names.',
+    'Never use em dashes or en dashes anywhere. Use commas, colons, full stops, or the word "and" instead.',
   ]
     .filter(Boolean)
     .join('\n')

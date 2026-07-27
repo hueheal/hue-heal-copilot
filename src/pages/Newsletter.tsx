@@ -18,6 +18,7 @@ import {
   addSubscribers,
   deleteSubscriber,
   sendNewsletter,
+  uploadNewsletterImage,
   generateNewsletter,
   subscribeLink,
   subscriberGroups,
@@ -47,6 +48,7 @@ export default function NewsletterPage() {
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [sending, setSending] = useState(false)
+  const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [aiTopic, setAiTopic] = useState('')
   const [aiNotes, setAiNotes] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
@@ -107,6 +109,13 @@ export default function NewsletterPage() {
   const setBlock = (id: string, patch: Partial<Block>) => setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, ...patch } as Block : b)))
   const removeBlock = (id: string) => setBlocks((bs) => bs.filter((b) => b.id !== id))
   const moveBlock = (i: number, dir: -1 | 1) => setBlocks((bs) => { const j = i + dir; if (j < 0 || j >= bs.length) return bs; const c = [...bs]; [c[i], c[j]] = [c[j], c[i]]; return c })
+  async function uploadBlockImage(id: string, file: File) {
+    setUploadingId(id); setStatus('Uploading image…')
+    const { url, error } = await uploadNewsletterImage(file)
+    setUploadingId(null)
+    if (error || !url) { setStatus(`Upload failed: ${error ?? 'unknown error'}`); return }
+    setBlock(id, { url }); setStatus('Image added')
+  }
   function addBlock(type: Block['type']) {
     const b: Block =
       type === 'heading' ? { id: bid(), type, text: 'Heading' }
@@ -241,7 +250,19 @@ export default function NewsletterPage() {
                     </div>
                     {b.type === 'heading' && <input style={inp} value={b.text} onChange={(e) => setBlock(b.id, { text: e.target.value })} />}
                     {b.type === 'text' && <textarea style={{ ...inp, resize: 'vertical' }} rows={3} value={b.text} onChange={(e) => setBlock(b.id, { text: e.target.value })} />}
-                    {b.type === 'image' && <input style={inp} placeholder="Image URL" value={b.url} onChange={(e) => setBlock(b.id, { url: e.target.value })} />}
+                    {b.type === 'image' && (
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {b.url && <img src={b.url} alt="" style={{ height: 38, width: 38, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--hh-line)' }} />}
+                          <label className="hh-btn" style={{ ...miniBtn, width: 'auto', padding: '8px 12px', cursor: uploadingId === b.id ? 'default' : 'pointer', opacity: uploadingId === b.id ? 0.6 : 1, flex: 1, textAlign: 'center' }}>
+                            {uploadingId === b.id ? 'Uploading…' : b.url ? 'Replace image' : '⭱ Upload image'}
+                            <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingId === b.id}
+                              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBlockImage(b.id, f); e.currentTarget.value = '' }} />
+                          </label>
+                        </div>
+                        <input style={{ ...inp, marginTop: 6, fontSize: 12 }} placeholder="or paste an image URL" value={b.url} onChange={(e) => setBlock(b.id, { url: e.target.value })} />
+                      </div>
+                    )}
                     {b.type === 'button' && (
                       <div style={{ display: 'flex', gap: 6 }}>
                         <input style={{ ...inp, flex: 1 }} placeholder="Label" value={b.label} onChange={(e) => setBlock(b.id, { label: e.target.value })} />

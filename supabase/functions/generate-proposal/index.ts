@@ -64,8 +64,9 @@ Deno.serve(async (req) => {
     `You are the proposal writer for ${brand.name ?? 'Hue & Heal'}, a wellness experience design studio`,
     `working across hospitality, food & beverage, health & fitness and education.`,
     brand.tagline ? `Tagline: "${brand.tagline}".` : '',
-    brand.voice ? `Voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, confident — never salesy.',
+    brand.voice ? `Voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, confident, never salesy.',
     'Write in British English. Be specific to the brief; never invent facts, names or numbers beyond it.',
+    'Never use em dashes or en dashes anywhere. Use commas, colons, full stops, or the word "and" instead.',
     'Fees should be realistic studio fees in GBP. Typical phases: Discovery, Concept, Design development, Delivery.',
   ]
     .filter(Boolean)
