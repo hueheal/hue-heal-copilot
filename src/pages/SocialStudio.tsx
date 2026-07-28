@@ -21,6 +21,18 @@ const FONTS: { key: FontKey; label: string }[] = [
   { key: 'serif', label: 'Ivy Ora' }, { key: 'sans', label: 'Poppins' }, { key: 'voice', label: 'Italic' },
 ]
 
+/* Shared type scale (real-canvas px on a 1080-wide export). One consistent set
+   of sizes across every template so styleguides stay aligned. The slider stays
+   for fine-tuning off-scale. */
+const TYPE_SCALE: { label: string; size: number }[] = [
+  { label: 'Headline', size: 104 },
+  { label: 'H1', size: 84 },
+  { label: 'H2', size: 68 },
+  { label: 'Subtitle', size: 44 },
+  { label: 'Body', size: 30 },
+  { label: 'Small', size: 22 },
+]
+
 /* ---------- Slide canvas (shared by editor + offscreen export) ---------- */
 function SlideCanvas({
   slide, spec, displayW, interactive, selectedId, onSelectEl, onElPointerDown, onResizePointerDown, innerRef,
@@ -479,9 +491,18 @@ export default function SocialStudio() {
                   <button key={f.key} className="hh-btn" onClick={() => updateElStyle(selEl.id, { fontKey: f.key })} style={chip(selEl.style.fontKey === f.key)}>{f.label}</button>
                 ))}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Size</span>
+              <div style={railLabel}>Size</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {TYPE_SCALE.map((t) => (
+                  <button key={t.label} className="hh-btn" title={`${t.size}px`}
+                    onClick={() => updateElStyle(selEl.id, { fontSize: t.size })}
+                    style={chip((selEl.style.fontSize ?? 48) === t.size)}>{t.label}</button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
+                <span style={{ fontSize: 11, color: 'var(--text-faint)', minWidth: 34 }}>Custom</span>
                 <input type="range" min={16} max={200} value={selEl.style.fontSize ?? 48} onChange={(e) => updateElStyle(selEl.id, { fontSize: Number(e.target.value) })} style={{ flex: 1 }} />
+                <span style={{ fontSize: 11, color: 'var(--text-faint)', minWidth: 34, textAlign: 'right' }}>{Math.round(selEl.style.fontSize ?? 48)}px</span>
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
                 {(['left', 'center', 'right'] as const).map((a) => (
