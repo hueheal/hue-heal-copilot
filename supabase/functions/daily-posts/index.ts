@@ -179,10 +179,10 @@ function buildPostDesign(post: Post, isCarousel: boolean) {
     id: eid('slide'),
     background: { type: 'atmos', value: 'atmos' },
     elements: [
-      T('hue&heal.', [8, 7, 44, 8], { color: CREAM, fontKey: 'serif', fontSize: 34, fontWeight: 300 }, 'wordmark'),
-      T(post.title, [8, 38, 84, 30], { color: CREAM, fontKey: 'serif', fontSize: 104, fontWeight: 300, lineHeight: 1.02, align: 'left' }, 'headline'),
+      T('hue&heal.', [8, 7, 44, 8], { color: CREAM, fontKey: 'serif', fontSize: 41, fontWeight: 300 }, 'wordmark'),
+      T(post.title, [8, 38, 84, 30], { color: CREAM, fontKey: 'serif', fontSize: 125, fontWeight: 300, lineHeight: 1.02, align: 'left' }, 'headline'),
       { id: eid('s'), type: 'shape', box: { x: 8, y: 72, w: 14, h: 0.7 }, style: { bg: ACCENT, radius: 0 }, content: '' },
-      T(eyebrow, [8, 76, 74, 6], { color: ACCENT, fontKey: 'sans', fontSize: 22, letterSpacing: 0.18, uppercase: true }, 'eyebrow'),
+      T(eyebrow, [8, 76, 74, 6], { color: ACCENT, fontKey: 'sans', fontSize: 26, letterSpacing: 0.18, uppercase: true }, 'eyebrow'),
     ],
   }
   if (!isCarousel) return { format: 'portrait', accent: 'copper', templateId: 'statement', slides: [cover] }
@@ -193,10 +193,10 @@ function buildPostDesign(post: Post, isCarousel: boolean) {
     id: eid('slide'),
     background: { type: 'solid', value: INK },
     elements: [
-      T(`0${i + 1} / 0${total}`, [8, 8, 40, 6], { color: ACCENT, fontKey: 'sans', fontSize: 22, letterSpacing: 0.16, uppercase: true }),
-      T(cs.heading, [8, 28, 84, 20], { color: CREAM, fontKey: 'serif', fontSize: 68, fontWeight: 300, lineHeight: 1.06 }, 'heading'),
+      T(`0${i + 1} / 0${total}`, [8, 8, 40, 6], { color: ACCENT, fontKey: 'sans', fontSize: 26, letterSpacing: 0.16, uppercase: true }),
+      T(cs.heading, [8, 28, 84, 20], { color: CREAM, fontKey: 'serif', fontSize: 82, fontWeight: 300, lineHeight: 1.06 }, 'heading'),
       { id: eid('s'), type: 'shape', box: { x: 8, y: 52, w: 12, h: 0.6 }, style: { bg: ACCENT, radius: 0 }, content: '' },
-      T(cs.body, [8, 57, 82, 34], { color: CREAM, fontKey: 'sans', fontSize: 30, lineHeight: 1.5, opacity: 0.9 }, 'body'),
+      T(cs.body, [8, 57, 82, 34], { color: CREAM, fontKey: 'sans', fontSize: 36, lineHeight: 1.5, opacity: 0.9 }, 'body'),
     ],
   }))
   return { format: 'carousel', accent: 'copper', templateId: 'guide', slides: [cover, ...content] }

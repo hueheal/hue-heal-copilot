@@ -8,7 +8,7 @@ export type TypeRole = (typeof TYPE_ROLES)[number]
 
 /** Social canvas px (on a 1080-wide export). Matches the template scale. */
 export const CANVAS_TYPE_SIZE: Record<TypeRole, number> = {
-  Headline: 104, H1: 84, H2: 68, Subtitle: 44, Body: 30, Small: 22,
+  Headline: 125, H1: 101, H2: 82, Subtitle: 53, Body: 36, Small: 26,
 }
 
 /** Email px (rendered at real screen size in inboxes). */
