@@ -3,6 +3,7 @@ import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
 import { useBrand } from '../lib/brandContext'
+import { TYPE_ROLES, EMAIL_TYPE_SIZE } from '../lib/typeScale'
 import {
   type Block,
   type Newsletter,
@@ -115,6 +116,23 @@ export default function NewsletterPage() {
     setUploadingId(null)
     if (error || !url) { setStatus(`Upload failed: ${error ?? 'unknown error'}`); return }
     setBlock(id, { url }); setStatus('Image added')
+  }
+  // Shared type-scale presets for heading/text blocks (email px).
+  function sizeRow(b: Extract<Block, { type: 'heading' | 'text' }>, def: number) {
+    return (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+        {TYPE_ROLES.map((r) => {
+          const size = EMAIL_TYPE_SIZE[r]
+          const active = (b.size ?? def) === size
+          return (
+            <button key={r} className="hh-btn" title={`${size}px`} onClick={() => setBlock(b.id, { size })}
+              style={{ ...miniBtn, width: 'auto', padding: '4px 8px', fontSize: 10.5, border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-faint)' }}>
+              {r}
+            </button>
+          )
+        })}
+      </div>
+    )
   }
   function addBlock(type: Block['type']) {
     const b: Block =
@@ -248,8 +266,8 @@ export default function NewsletterPage() {
                       <button className="hh-btn" onClick={() => moveBlock(i, 1)} style={miniBtn}>↓</button>
                       <ConfirmButton onConfirm={() => removeBlock(b.id)} style={{ ...miniBtn, border: 'none' }}>×</ConfirmButton>
                     </div>
-                    {b.type === 'heading' && <input style={inp} value={b.text} onChange={(e) => setBlock(b.id, { text: e.target.value })} />}
-                    {b.type === 'text' && <textarea style={{ ...inp, resize: 'vertical' }} rows={3} value={b.text} onChange={(e) => setBlock(b.id, { text: e.target.value })} />}
+                    {b.type === 'heading' && (<><input style={inp} value={b.text} onChange={(e) => setBlock(b.id, { text: e.target.value })} />{sizeRow(b, 28)}</>)}
+                    {b.type === 'text' && (<><textarea style={{ ...inp, resize: 'vertical' }} rows={3} value={b.text} onChange={(e) => setBlock(b.id, { text: e.target.value })} />{sizeRow(b, 15)}</>)}
                     {b.type === 'image' && (
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

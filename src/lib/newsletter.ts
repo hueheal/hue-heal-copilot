@@ -8,8 +8,8 @@ export type Subscriber = Database['public']['Tables']['subscribers']['Row']
 
 /* ---- Block model (stored in newsletters.blocks) ---- */
 export type Block =
-  | { id: string; type: 'heading'; text: string }
-  | { id: string; type: 'text'; text: string }
+  | { id: string; type: 'heading'; text: string; size?: number }
+  | { id: string; type: 'text'; text: string; size?: number }
   | { id: string; type: 'image'; url: string; alt?: string }
   | { id: string; type: 'button'; label: string; href: string }
   | { id: string; type: 'divider' }
@@ -101,10 +101,10 @@ function renderBlock(b: Block, accentInk: string): string {
   switch (b.type) {
     // Display heading in Poppins medium, large and calm with air above it.
     case 'heading':
-      return `<tr><td style="padding:30px 48px 6px;"><h1 style="margin:0;font-family:${SANS};font-weight:500;font-size:28px;line-height:1.3;letter-spacing:-0.3px;color:${C.ink};">${esc(b.text)}</h1></td></tr>`
+      return `<tr><td style="padding:30px 48px 6px;"><h1 style="margin:0;font-family:${SANS};font-weight:500;font-size:${b.size ?? 28}px;line-height:1.3;letter-spacing:-0.3px;color:${C.ink};">${esc(b.text)}</h1></td></tr>`
     // Body copy, set slightly larger and looser so it reads slowly.
     case 'text':
-      return `<tr><td style="padding:12px 48px;font-family:${SANS};font-weight:300;font-size:15px;line-height:1.9;color:${C.soft};white-space:pre-line;">${esc(b.text)}</td></tr>`
+      return `<tr><td style="padding:12px 48px;font-family:${SANS};font-weight:300;font-size:${b.size ?? 15}px;line-height:1.9;color:${C.soft};white-space:pre-line;">${esc(b.text)}</td></tr>`
     // Full-bleed feature image with breathing room above and below.
     case 'image':
       return `<tr><td style="padding:26px 0;">${imageCell(b)}</td></tr>`

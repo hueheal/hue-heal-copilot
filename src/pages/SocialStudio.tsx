@@ -9,6 +9,7 @@ import { useBrand } from '../lib/brandContext'
 import { INSTAGRAM_FORMAT_LIST, INSTAGRAM_FORMATS, type InstaFormat } from '../lib/social/formats'
 import { TEMPLATES, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
 import { resolveStyle } from '../lib/social/style'
+import { TYPE_ROLES, CANVAS_TYPE_SIZE } from '../lib/typeScale'
 import { captureNode, downloadDataUrl, zipPngs } from '../lib/social/exportImage'
 import {
   type Design, type Slide, type DesignElement, type ElStyle, type FontKey,
@@ -21,17 +22,8 @@ const FONTS: { key: FontKey; label: string }[] = [
   { key: 'serif', label: 'Ivy Ora' }, { key: 'sans', label: 'Poppins' }, { key: 'voice', label: 'Italic' },
 ]
 
-/* Shared type scale (real-canvas px on a 1080-wide export). One consistent set
-   of sizes across every template so styleguides stay aligned. The slider stays
-   for fine-tuning off-scale. */
-const TYPE_SCALE: { label: string; size: number }[] = [
-  { label: 'Headline', size: 104 },
-  { label: 'H1', size: 84 },
-  { label: 'H2', size: 68 },
-  { label: 'Subtitle', size: 44 },
-  { label: 'Body', size: 30 },
-  { label: 'Small', size: 22 },
-]
+/* The shared type scale rendered at social-canvas px. */
+const TYPE_SCALE: { label: string; size: number }[] = TYPE_ROLES.map((label) => ({ label, size: CANVAS_TYPE_SIZE[label] }))
 
 /* ---------- Slide canvas (shared by editor + offscreen export) ---------- */
 function SlideCanvas({
