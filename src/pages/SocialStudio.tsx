@@ -11,6 +11,7 @@ import { INSTAGRAM_FORMAT_LIST, INSTAGRAM_FORMATS, type InstaFormat } from '../l
 import { TEMPLATES, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
 import { resolveStyle } from '../lib/social/style'
 import { TYPE_ROLES, CANVAS_TYPE_SIZE } from '../lib/typeScale'
+import { useIsMobile } from '../lib/useIsMobile'
 import { captureNode, captureNodeJpeg, dataUrlToBlob, downloadDataUrl, zipPngs } from '../lib/social/exportImage'
 import {
   type Design, type Slide, type DesignElement, type ElStyle, type FontKey,
@@ -67,6 +68,8 @@ function SlideCanvas({
           position: 'absolute', left: `${el.box.x}%`, top: `${el.box.y}%`, width: `${el.box.w}%`,
           opacity: el.style.opacity ?? 1, cursor: interactive ? 'move' : 'default',
           outline: selected ? '1.5px solid var(--hh-copper)' : 'none', outlineOffset: 2,
+          // Let a touch drag move the element instead of scrolling the page.
+          touchAction: interactive ? 'none' : undefined,
         }
         const startDrag = interactive
           ? (e: React.PointerEvent) => { e.stopPropagation(); onSelectEl?.(el.id); onElPointerDown?.(el.id, e) }
@@ -129,7 +132,7 @@ function SlideCanvas({
             {selected && (
               <div
                 onPointerDown={(e) => { e.stopPropagation(); onResizePointerDown?.(el.id, e) }}
-                style={{ position: 'absolute', right: -6, bottom: -6, width: 12, height: 12, background: 'var(--hh-copper)', borderRadius: 3, cursor: 'nwse-resize' }}
+                style={{ position: 'absolute', right: -9, bottom: -9, width: 18, height: 18, background: 'var(--hh-copper)', borderRadius: 4, cursor: 'nwse-resize', touchAction: 'none', border: '2px solid #fff' }}
               />
             )}
           </div>
@@ -177,7 +180,16 @@ export default function SocialStudio() {
   }, [id])
 
   const spec = useMemo(() => (design ? INSTAGRAM_FORMATS[design.format] : INSTAGRAM_FORMATS.portrait), [design])
-  const displayW = useMemo(() => Math.min(520, (600 * spec.w) / spec.h), [spec])
+  // Track viewport width so the canvas scales to fit small screens.
+  const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200)
+  useEffect(() => {
+    const on = () => setVw(window.innerWidth)
+    window.addEventListener('resize', on)
+    return () => window.removeEventListener('resize', on)
+  }, [])
+  const isMobile = useIsMobile()
+  // Fit within height, the 520 cap, and (on mobile) the viewport width.
+  const displayW = useMemo(() => Math.min(520, (600 * spec.w) / spec.h, isMobile ? vw - 32 : Infinity), [spec, isMobile, vw])
 
   // Drag / resize listeners — declared before any early return (Rules of Hooks).
   // Uses a functional setDesign so it needs no later-defined closures.
@@ -428,10 +440,10 @@ export default function SocialStudio() {
   return (
     <div>
       {/* toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 32px', borderBottom: '1px solid var(--hh-line)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', rowGap: 8, gap: 12, padding: isMobile ? '12px 16px' : '18px 32px', borderBottom: '1px solid var(--hh-line)' }}>
         <button onClick={() => nav('/social')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13 }}>⟵ Social</button>
         <div style={{ fontSize: 13, color: 'var(--text-faint)' }}>{spec.label} · {spec.w}×{spec.h}</div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ marginLeft: isMobile ? 0 : 'auto', width: isMobile ? '100%' : 'auto', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
           {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
           <PillButton tone="ghost" onClick={save}>{busy ? '…' : 'Save'}</PillButton>
           <PillButton tone="ghost" onClick={exportImages}>↧ Export {design.format === 'carousel' ? 'ZIP' : 'PNG'}</PillButton>
@@ -442,9 +454,9 @@ export default function SocialStudio() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 0, minHeight: 'calc(100vh - 60px)' }}>
-        {/* control rail */}
-        <div style={{ borderRight: '1px solid var(--hh-line)', padding: '4px 20px 40px', overflowY: 'auto', maxHeight: 'calc(100vh - 60px)' }}>
+      <div style={{ display: isMobile ? 'flex' : 'grid', flexDirection: isMobile ? 'column' : undefined, gridTemplateColumns: isMobile ? undefined : '300px 1fr', gap: 0, minHeight: isMobile ? undefined : 'calc(100vh - 60px)' }}>
+        {/* control rail (drops below the canvas on mobile) */}
+        <div style={{ order: isMobile ? 2 : 0, borderRight: isMobile ? 'none' : '1px solid var(--hh-line)', borderTop: isMobile ? '1px solid var(--hh-line)' : 'none', padding: isMobile ? '4px 16px 32px' : '4px 20px 40px', overflowY: isMobile ? 'visible' : 'auto', maxHeight: isMobile ? undefined : 'calc(100vh - 60px)' }}>
           <div style={railLabel}>Format</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {INSTAGRAM_FORMAT_LIST.map((f) => (
@@ -589,8 +601,8 @@ export default function SocialStudio() {
           </div>
         </div>
 
-        {/* canvas stage */}
-        <div style={{ padding: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, overflowY: 'auto', maxHeight: 'calc(100vh - 60px)', background: 'var(--hh-monterey)' }}>
+        {/* canvas stage (shown first on mobile) */}
+        <div style={{ order: isMobile ? 1 : 0, padding: isMobile ? '20px 16px' : 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, overflowY: isMobile ? 'visible' : 'auto', maxHeight: isMobile ? undefined : 'calc(100vh - 60px)', background: 'var(--hh-monterey)' }}>
           <div style={{ boxShadow: 'var(--shadow-raised)', borderRadius: 4, overflow: 'hidden' }}>
             <SlideCanvas
               slide={slide} spec={spec} displayW={displayW} interactive
