@@ -26,7 +26,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session)
       setLoading(false)
     })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      // Ignore token refreshes for the SAME user. Supabase re-emits on tab
+      // refocus with a fresh session object; if we swap it in, effects keyed on
+      // the session re-run and remount the app, throwing you back to the
+      // workspace picker mid-edit. Keep the same reference when the user is
+      // unchanged. Access tokens are read fresh via getSession() at call time,
+      // so holding a stable object in state is harmless.
+      setSession((prev) => (prev && s && prev.user?.id === s.user?.id ? prev : s))
+    })
     return () => sub.subscription.unsubscribe()
   }, [])
 

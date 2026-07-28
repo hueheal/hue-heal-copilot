@@ -22,7 +22,9 @@ export function BrandProvider({ children }: { children: ReactNode }) {
   const [brands, setBrands] = useState<BrandProfile[]>([])
   const [currentId, setCurrentId] = useState<string | null>(getActiveBrandId())
   const [loading, setLoading] = useState(true)
-  const [chosen, setChosen] = useState(false)
+  // Start "chosen" if a workspace was already picked (persisted). Otherwise a
+  // remount would bounce a returning user back to the picker mid-edit.
+  const [chosen, setChosen] = useState(() => !!getActiveBrandId())
 
   const reload = useCallback(async () => {
     try {
