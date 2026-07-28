@@ -382,6 +382,7 @@ export interface Database {
           dek: string
           reading_time: string
           body_md: string
+          blocks: unknown[]
           takeaways: string[]
           slug: string
           status: string
@@ -397,6 +398,7 @@ export interface Database {
           dek?: string
           reading_time?: string
           body_md?: string
+          blocks?: unknown[]
           takeaways?: string[]
           slug?: string
           status?: string

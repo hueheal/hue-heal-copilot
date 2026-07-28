@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
@@ -31,6 +32,7 @@ const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textT
 export default function NewsletterPage() {
   const auth = useAuth()
   const { current: brand } = useBrand()
+  const [params, setParams] = useSearchParams()
   const gated = auth.mode === 'connected' && !auth.session
 
   const [subject, setSubject] = useState('This month from Hue & Heal')
@@ -60,6 +62,15 @@ export default function NewsletterPage() {
     try { setNewsletters(await listNewsletters()); setSubs(await listSubscribers()) } catch { /* ignore */ }
   }
   useEffect(() => { reload(); if (auth.email) setTestEmail(auth.email) /* eslint-disable-next-line */ }, [auth.session, auth.mode])
+
+  // Arriving from the Journal ("Create newsletter") opens that teaser draft.
+  useEffect(() => {
+    const openId = params.get('open')
+    if (!openId || !newsletters.length) return
+    const nl = newsletters.find((n) => n.id === openId)
+    if (nl) { openNl(nl); setParams({}, { replace: true }) }
+    /* eslint-disable-next-line */
+  }, [newsletters])
 
   // Render in the current brand world's identity — its name/logo, accent and,
   // for the Hue & Heal parent, its tagline.

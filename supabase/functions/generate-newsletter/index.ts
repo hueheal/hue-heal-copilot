@@ -19,6 +19,8 @@ interface Body {
   toneOfVoice?: string
   writingGuidelines?: string
   template?: string
+  /** 'teaser' writes a short email that entices readers to click through to a full journal article. */
+  mode?: string
 }
 
 const TOOL = {
@@ -65,18 +67,26 @@ Deno.serve(async (req) => {
   const guides = (body.writingGuidelines ?? '').trim()
   const notes = (body.notes ?? '').trim()
 
-  const prompt =
-    `Write a newsletter for ${brand} on this topic: "${topic}".\n` +
-    (notes ? `Notes and raw material to work from: ${notes}\n` : '') +
-    (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
-    (guides ? `\nWRITING GUIDELINES (follow them):\n${guides}\n` : '') +
-    (body.template ? `\nThis is a "${body.template}" style edition.\n` : '') +
-    '\nRules: one clear idea, developed simply. Short paragraphs. Concrete and sensory over abstract claims. ' +
-    'No hype, no buzzwords, no exclamation marks, no emoji. British English. ' +
-    'Never use em dashes or en dashes anywhere. Use full stops, commas, colons, or the word "and" instead. ' +
-    'Structure: a heading, 2 to 4 short text blocks, one image placeholder where a photo belongs, and exactly one button CTA at the end. ' +
-    'Do not invent statistics, testimonials or facts. If a link is unknown, leave href empty. ' +
-    'Call the newsletter tool with the result.'
+  const prompt = body.mode === 'teaser'
+    ? `Write a SHORT email teaser for ${brand} that entices readers to click through and read a full journal article titled "${topic}".\n` +
+      (notes ? `The article, to draw a hook from (open a loop, do not give it all away or list the takeaways): ${notes}\n` : '') +
+      (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
+      (guides ? `\nWRITING GUIDELINES (follow them):\n${guides}\n` : '') +
+      '\nRules: captivating and warm. Structure: a heading (you may reuse or sharpen the article title), then 1 to 2 very short paragraphs (3 to 4 sentences total) that make the reader curious, and exactly one button CTA labelled "Read the full piece". ' +
+      'Leave the reader wanting the full piece, do not summarise the whole article or reveal the takeaways. No image block. No hype, no exclamation marks, no emoji. British English. ' +
+      'Never use em dashes or en dashes anywhere. Use full stops, commas, colons, or the word "and" instead. Leave the button href empty. ' +
+      'Call the newsletter tool with the result.'
+    : `Write a newsletter for ${brand} on this topic: "${topic}".\n` +
+      (notes ? `Notes and raw material to work from: ${notes}\n` : '') +
+      (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
+      (guides ? `\nWRITING GUIDELINES (follow them):\n${guides}\n` : '') +
+      (body.template ? `\nThis is a "${body.template}" style edition.\n` : '') +
+      '\nRules: one clear idea, developed simply. Short paragraphs. Concrete and sensory over abstract claims. ' +
+      'No hype, no buzzwords, no exclamation marks, no emoji. British English. ' +
+      'Never use em dashes or en dashes anywhere. Use full stops, commas, colons, or the word "and" instead. ' +
+      'Structure: a heading, 2 to 4 short text blocks, one image placeholder where a photo belongs, and exactly one button CTA at the end. ' +
+      'Do not invent statistics, testimonials or facts. If a link is unknown, leave href empty. ' +
+      'Call the newsletter tool with the result.'
 
   let resp: Response
   try {

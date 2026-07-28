@@ -1,8 +1,17 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
 import { filterByBrand, withBrandInsert } from './brandScope'
+import { generateNewsletter, saveNewsletter, bid, type Block } from './newsletter'
 import type { Database } from './database.types'
 
 export type JournalArticle = Database['public']['Tables']['journal_articles']['Row']
+
+/** Where a published article will live on the site. Slug-based; the new site
+    will serve these paths. Adjust here if the journal path changes. */
+const JOURNAL_BASE = 'https://www.hueandheal.com/journal'
+export function journalUrl(a: { slug?: string | null; title?: string | null }): string {
+  const s = (a.slug && a.slug.trim()) ? a.slug.trim() : slugify(a.title || 'article')
+  return `${JOURNAL_BASE}/${s}`
+}
 
 export interface GeneratedJournal {
   title: string
@@ -12,9 +21,33 @@ export interface GeneratedJournal {
   takeaways: string[]
 }
 
-/** Assemble the structured article into editable markdown. */
-export function journalToMarkdown(a: GeneratedJournal): string {
-  return a.sections.map((s) => `## ${s.heading}\n\n${s.body}`).join('\n\n')
+/** Map a generated article into editable, reorderable blocks (heading + text
+    per section). Images are added by hand in the editor. */
+export function journalToBlocks(a: GeneratedJournal): Block[] {
+  const out: Block[] = []
+  for (const s of a.sections) {
+    if (s.heading?.trim()) out.push({ id: bid(), type: 'heading', text: s.heading })
+    if (s.body?.trim()) out.push({ id: bid(), type: 'text', text: s.body })
+  }
+  return out
+}
+
+/** Flatten blocks to plain text (for body_md, search, and the teaser hook). */
+export function blocksToText(blocks: Block[]): string {
+  return blocks.map((b) => (b.type === 'heading' || b.type === 'text' ? b.text : '')).filter(Boolean).join('\n\n')
+}
+
+/** Upload a journal image to the social-assets bucket, returning a public URL. */
+export async function uploadJournalImage(file: File): Promise<{ url?: string; error?: string }> {
+  if (!(isSupabaseConfigured && supabase)) return { error: 'Not connected' }
+  const { data: s } = await supabase.auth.getSession()
+  const uid = s.session?.user.id
+  if (!uid) return { error: 'Sign in first' }
+  const safe = file.name.replace(/[^a-zA-Z0-9.]/g, '')
+  const path = `${uid}/journal/img-${Date.now()}-${safe}`
+  const { error } = await supabase.storage.from('social-assets').upload(path, file, { upsert: true, contentType: file.type || 'image/png' })
+  if (error) return { error: error.message }
+  return { url: supabase.storage.from('social-assets').getPublicUrl(path).data.publicUrl }
 }
 
 /** Turn a title into a url slug for the website journal. */
@@ -72,4 +105,37 @@ export async function updateJournal(id: string, patch: Partial<JournalInput>): P
 export async function deleteJournal(id: string): Promise<void> {
   if (!(isSupabaseConfigured && supabase)) return
   await supabase.from('journal_articles').delete().eq('id', id)
+}
+
+interface BrandVoice { name?: string; tone_of_voice?: string | null; writing_guidelines?: string | null }
+
+/* Turn a finished article into a newsletter draft: AI writes a short captivating
+   teaser, and a "Read the full piece" button links to the article on the site.
+   Returns the new newsletter's id so the caller can open it in the composer. */
+export async function createNewsletterFromArticle(
+  article: { slug?: string | null; title: string; dek?: string; body_md?: string },
+  brand: BrandVoice | null | undefined,
+): Promise<{ id?: string; error?: string }> {
+  const summary = [article.dek, article.body_md].filter(Boolean).join('\n\n').slice(0, 1800)
+  const { result, error } = await generateNewsletter({
+    mode: 'teaser',
+    topic: article.title,
+    notes: summary,
+    brandName: brand?.name,
+    toneOfVoice: brand?.tone_of_voice ?? undefined,
+    writingGuidelines: brand?.writing_guidelines ?? undefined,
+    template: 'The Journal',
+  })
+  if (error || !result) return { error: error ?? 'Could not write the teaser' }
+  const url = journalUrl(article)
+  let blocks = result.blocks
+  const hasButton = blocks.some((b) => b.type === 'button')
+  blocks = blocks.map((b) => (b.type === 'button' ? { ...b, label: b.label || 'Read the full piece', href: url } : b))
+  if (!hasButton) blocks = [...blocks, { id: bid(), type: 'button', label: 'Read the full piece', href: url } as Block]
+  try {
+    const nl = await saveNewsletter({ subject: result.subject || article.title, preheader: result.preheader || article.dek || '', template: 'journal', blocks: blocks as unknown[] })
+    return { id: nl.id }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) }
+  }
 }
