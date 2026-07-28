@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 4000, tools: [TOOL], tool_choice: { type: 'tool', name: 'journal_article' }, messages: [{ role: 'user', content: prompt }] }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 8000, tools: [TOOL], tool_choice: { type: 'tool', name: 'journal_article' }, messages: [{ role: 'user', content: prompt }] }),
     })
   } catch (e) {
     return json({ error: `Request failed: ${e instanceof Error ? e.message : e}` }, 502)
@@ -81,6 +81,8 @@ Deno.serve(async (req) => {
   if (!resp.ok) return json({ error: `Anthropic ${resp.status}: ${(await resp.text()).slice(0, 300)}` }, 502)
   const data = await resp.json()
   const use = (data.content ?? []).find((b: { type: string }) => b.type === 'tool_use')
-  if (!use?.input?.title) return json({ error: 'No article returned' }, 502)
-  return json({ result: use.input })
+  const article = use?.input as { title?: string; sections?: unknown[] } | undefined
+  if (!article || !Array.isArray(article.sections) || !article.sections.length) return json({ error: 'No article returned' }, 502)
+  if (!article.title || !article.title.trim()) article.title = topic // model sometimes omits the title; fall back to the topic
+  return json({ result: article })
 })
