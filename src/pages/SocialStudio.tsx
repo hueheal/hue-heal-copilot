@@ -283,11 +283,11 @@ export default function SocialStudio() {
   }
   function setBackground(bg: Slide['background']) { updateSlide({ background: bg }) }
   function addText() {
-    const el: DesignElement = { id: eid('t'), type: 'text', box: { x: 10, y: 45, w: 60, h: 10 }, style: { color: '#F4F0E7', fontKey: 'serif', fontSize: 67, fontWeight: 300 }, content: 'New text' }
+    const el: DesignElement = { id: eid('t'), type: 'text', box: { x: 10, y: 45, w: 60, h: 10 }, style: { color: '#F4F0E7', fontKey: 'serif', fontSize: CANVAS_TYPE_SIZE.H2, fontWeight: 300 }, content: 'New text' }
     updateSlide({ elements: [...slide.elements, el] }); setSelId(el.id)
   }
   function addPill() {
-    const el: DesignElement = { id: eid('pill'), type: 'pill', box: { x: 30, y: 46, w: 40, h: 6 }, style: { color: '#F4F0E7', fontKey: 'voice', fontSize: 41, align: 'center' }, content: 'Part 1: Classrooms', role: 'pill' }
+    const el: DesignElement = { id: eid('pill'), type: 'pill', box: { x: 30, y: 46, w: 40, h: 6 }, style: { color: '#F4F0E7', fontKey: 'voice', fontSize: CANVAS_TYPE_SIZE.Body, align: 'center' }, content: 'Part 1: Classrooms', role: 'pill' }
     updateSlide({ elements: [...slide.elements, el] }); setSelId(el.id)
   }
   function deleteEl(elId: string) { updateSlide({ elements: slide.elements.filter((e) => e.id !== elId) }); setSelId(null) }

@@ -6,9 +6,11 @@
 export const TYPE_ROLES = ['Headline', 'H1', 'H2', 'Subtitle', 'Body', 'Small'] as const
 export type TypeRole = (typeof TYPE_ROLES)[number]
 
-/** Social canvas px (on a 1080-wide export). Matches the template scale. */
+/** Social canvas px (on a 1080-wide export). Anchored at the editorial cover's
+    large headline (150, the biggest text anywhere) and stepping down by ~1.4x.
+    Every template references these tiers, so all templates share one scale. */
 export const CANVAS_TYPE_SIZE: Record<TypeRole, number> = {
-  Headline: 125, H1: 101, H2: 82, Subtitle: 53, Body: 36, Small: 26,
+  Headline: 150, H1: 108, H2: 78, Subtitle: 56, Body: 40, Small: 28,
 }
 
 /** Email px (rendered at real screen size in inboxes). */
