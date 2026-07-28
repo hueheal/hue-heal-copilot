@@ -248,27 +248,48 @@ export default function SocialStudio() {
   }
 
   /* ---- actions ---- */
-  const contentSlides = (post.slides ?? []) as ContentSlideInput[]
-  function applyFormat(f: InstaFormat) {
-    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined) }
-    setDesign(buildDesign(f, design!.templateId, seed, 3, contentSlides))
-    setActive(0); setSelId(null)
+  // What the user has actually typed, keyed by element role, so switching
+  // template or format carries it straight through instead of resetting.
+  function coverContent(): Record<string, string> {
+    const m: Record<string, string> = {}
+    for (const el of design!.slides[0].elements) if (el.role && (el.type === 'text' || el.type === 'pill')) m[el.role] = el.content
+    return m
   }
-  // Switching template only restyles the COVER — content slides are left intact,
-  // and edited text is carried over by matching element roles + the current accent.
-  function applyTemplate(tid: string) {
-    const seed = { headline: post!.headline || post!.topic, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined) }
-    const cover = templateById(tid).build(design!.format, seed)
-    const old = design!.slides[0]
-    const accNew = accentHex(design!.accent)
-    const elements = cover.elements.map((ne) => {
-      const preserved = ne.role ? old.elements.find((oe) => oe.role === ne.role) : undefined
-      let el = preserved ? { ...ne, content: preserved.content } : ne
-      if (el.accentRef) el = { ...el, style: { ...el.style, ...(el.type === 'shape' ? { bg: accNew } : { color: accNew }) } }
+  function liveContentSlides(): ContentSlideInput[] {
+    return design!.slides.slice(1).map((s) => ({
+      heading: s.elements.find((e) => e.role === 'heading')?.content ?? '',
+      body: s.elements.find((e) => e.role === 'body')?.content ?? '',
+    }))
+  }
+  function seedFrom(headline: string) {
+    return { headline, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined) }
+  }
+  // Rebuild a cover in a new template/format but keep the edited text (matched by
+  // role), any manually-added elements, and the current background + accent.
+  function mergeCover(next: Slide, prev: Slide): Slide {
+    const accHex = accentHex(design!.accent)
+    const nextRoles = new Set(next.elements.map((e) => e.role).filter(Boolean))
+    const elements = next.elements.map((ne) => {
+      const was = ne.role ? prev.elements.find((oe) => oe.role === ne.role) : undefined
+      let el = was ? { ...ne, content: was.content } : ne
+      if (el.accentRef) el = { ...el, style: { ...el.style, ...(el.type === 'shape' ? { bg: accHex } : { color: accHex }) } }
       return el
     })
-    const mergedCover: Slide = { ...cover, elements, background: old.background, scrim: old.scrim, scrimStrength: old.scrimStrength }
-    commit({ ...design!, templateId: tid, slides: [mergedCover, ...design!.slides.slice(1)] })
+    const orphans = prev.elements.filter((oe) => !oe.role || !nextRoles.has(oe.role))
+    return { ...next, elements: [...elements, ...orphans], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength }
+  }
+  function applyFormat(f: InstaFormat) {
+    const map = coverContent()
+    const built = buildDesign(f, design!.templateId, seedFrom(map.headline || post!.headline || post!.topic), Math.max(design!.slides.length, 1), liveContentSlides())
+    commit({ ...built, slides: [mergeCover(built.slides[0], design!.slides[0]), ...built.slides.slice(1)] })
+    setActive(0); setSelId(null)
+  }
+  // Switching template restyles the cover; content slides are left intact, and
+  // edited text carries over by role.
+  function applyTemplate(tid: string) {
+    const map = coverContent()
+    const cover = templateById(tid).build(design!.format, seedFrom(map.headline || post!.headline || post!.topic))
+    commit({ ...design!, templateId: tid, slides: [mergeCover(cover, design!.slides[0]), ...design!.slides.slice(1)] })
     setSelId(null)
   }
   // Accent switch recolours every accent-driven element across all slides.

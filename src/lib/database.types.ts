@@ -373,6 +373,40 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['subscribers']['Insert']>
         Relationships: []
       }
+      journal_articles: {
+        Row: {
+          id: string
+          owner: string
+          brand_id: string | null
+          title: string
+          dek: string
+          reading_time: string
+          body_md: string
+          takeaways: string[]
+          slug: string
+          status: string
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner?: string
+          brand_id?: string | null
+          title?: string
+          dek?: string
+          reading_time?: string
+          body_md?: string
+          takeaways?: string[]
+          slug?: string
+          status?: string
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['journal_articles']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

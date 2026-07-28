@@ -2,7 +2,7 @@
    Stand-in for the operations backend. Shapes are designed to map cleanly
    onto a real API later (clients, proposals, invoices, social content). */
 
-export type NavKey = 'dashboard' | 'calendar' | 'clients' | 'proposals' | 'social' | 'newsletter' | 'reports' | 'settings' | 'research' | 'linkedin'
+export type NavKey = 'dashboard' | 'calendar' | 'clients' | 'proposals' | 'social' | 'newsletter' | 'journal' | 'reports' | 'settings' | 'research' | 'linkedin'
 
 export interface NavItem {
   key: NavKey
@@ -18,6 +18,7 @@ export const NAV: NavItem[] = [
   { key: 'proposals', label: 'Proposals & Invoices', glyph: '✦', path: '/proposals' },
   { key: 'social', label: 'Social Copilot', glyph: '▦', path: '/social' },
   { key: 'newsletter', label: 'Newsletter', glyph: '✉', path: '/newsletter' },
+  { key: 'journal', label: 'Journal', glyph: '✎', path: '/journal' },
   { key: 'reports', label: 'Reports', glyph: '◈', path: '/reports' },
   { key: 'research', label: 'Research', glyph: '⌕', path: '/research' },
   { key: 'linkedin', label: 'LinkedIn', glyph: 'in', path: '/linkedin' },

@@ -9,6 +9,7 @@ import InvoiceEditor from './pages/InvoiceEditor'
 import SocialCopilot from './pages/SocialCopilot'
 import SocialStudio from './pages/SocialStudio'
 import NewsletterPage from './pages/Newsletter'
+import Journal from './pages/Journal'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import ComingSoon from './pages/ComingSoon'
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="social" element={<SocialCopilot />} />
         <Route path="social/studio/:id" element={<SocialStudio />} />
         <Route path="newsletter" element={<NewsletterPage />} />
+        <Route path="journal" element={<Journal />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
         <Route path="research" element={<ComingSoon title="Research" blurb="Audience & market insight for this brand." />} />
