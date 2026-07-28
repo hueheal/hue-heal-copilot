@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useIsMobile } from '../lib/useIsMobile'
 
 interface Props {
   eyebrow: string
@@ -8,13 +9,16 @@ interface Props {
 }
 
 export default function PageHeader({ eyebrow, title, subtitle, action }: Props) {
+  const isMobile = useIsMobile()
   return (
     <header
       style={{
-        padding: '34px 40px',
+        padding: isMobile ? '20px 16px' : '34px 40px',
         borderBottom: '1px solid var(--hh-line)',
         display: 'flex',
-        alignItems: 'flex-end',
+        alignItems: isMobile ? 'stretch' : 'flex-end',
+        flexWrap: 'wrap',
+        rowGap: 14,
         gap: 24,
       }}
     >

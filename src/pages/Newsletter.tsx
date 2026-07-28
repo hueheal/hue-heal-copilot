@@ -4,6 +4,8 @@ import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
 import { useBrand } from '../lib/brandContext'
+import { useDraft } from '../lib/useDraft'
+import { useIsMobile } from '../lib/useIsMobile'
 import { TYPE_ROLES, EMAIL_TYPE_SIZE } from '../lib/typeScale'
 import {
   type Block,
@@ -33,6 +35,7 @@ export default function NewsletterPage() {
   const auth = useAuth()
   const { current: brand } = useBrand()
   const [params, setParams] = useSearchParams()
+  const isMobile = useIsMobile()
   const gated = auth.mode === 'connected' && !auth.session
 
   const [subject, setSubject] = useState('This month from Hue & Heal')
@@ -71,6 +74,18 @@ export default function NewsletterPage() {
     if (nl) { openNl(nl); setParams({}, { replace: true }) }
     /* eslint-disable-next-line */
   }, [newsletters])
+
+  // Autosave the composer buffer so leaving and returning never loses work.
+  // Skip restoring when arriving via ?open (the linked draft takes precedence).
+  useDraft(
+    `hh-newsletter-draft:${brand?.id ?? 'x'}`,
+    { currentId, subject, preheader, templateId, eyebrow, blocks },
+    (v) => {
+      setCurrentId(v.currentId ?? null); setSubject(v.subject ?? ''); setPreheader(v.preheader ?? '')
+      setTemplateId(v.templateId ?? 'journal'); setEyebrow(v.eyebrow ?? ''); setBlocks(Array.isArray(v.blocks) ? v.blocks : [])
+    },
+    !gated && !params.get('open'),
+  )
 
   // Render in the current brand world's identity — its name/logo, accent and,
   // for the Hue & Heal parent, its tagline.
@@ -213,11 +228,11 @@ export default function NewsletterPage() {
         }
       />
 
-      <div style={{ padding: '24px 40px' }}>
+      <div style={{ padding: isMobile ? '16px' : '24px 40px' }}>
         {gated ? (
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to compose and send.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 24, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '360px 1fr', gap: 24, alignItems: 'start' }}>
             {/* ---- Editor ---- */}
             <div>
               {/* Write with AI — drafts in this brand world's voice */}

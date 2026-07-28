@@ -6,20 +6,22 @@ import { useBrand } from '../lib/brandContext'
 import { CORE_NAV, DEFAULT_MODULES } from '../lib/modules'
 import BrandSwitcher from './BrandSwitcher'
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
   const { current } = useBrand()
   const enabled = current?.modules ?? DEFAULT_MODULES
   const nav = NAV.filter((item) => CORE_NAV.includes(item.key) || enabled.includes(item.key))
   return (
     <aside
       style={{
-        width: 248,
+        width: onNavigate ? '100%' : 248,
+        height: '100%',
         flexShrink: 0,
         background: 'var(--hh-anthracite)',
         color: 'var(--text-on-ink)',
         display: 'flex',
         flexDirection: 'column',
         padding: '22px 16px',
+        boxSizing: 'border-box',
       }}
     >
       {/* Brand-world switcher */}
@@ -43,6 +45,7 @@ export default function Sidebar() {
           key={item.key}
           to={item.path}
           end={item.path === '/'}
+          onClick={onNavigate}
           className="hh-nav"
           style={({ isActive }) => ({
             display: 'flex',

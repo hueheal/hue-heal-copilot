@@ -4,6 +4,8 @@ import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
 import { useBrand } from '../lib/brandContext'
+import { useDraft } from '../lib/useDraft'
+import { useIsMobile } from '../lib/useIsMobile'
 import { type Block, bid } from '../lib/newsletter'
 import {
   type JournalArticle,
@@ -27,6 +29,7 @@ export default function Journal() {
   const auth = useAuth()
   const { current: brand } = useBrand()
   const nav = useNavigate()
+  const isMobile = useIsMobile()
   const gated = auth.mode === 'connected' && !auth.session
 
   const [aiTopic, setAiTopic] = useState('')
@@ -49,6 +52,17 @@ export default function Journal() {
     try { setArticles(await listJournal()) } catch { /* ignore */ }
   }
   useEffect(() => { reload() /* eslint-disable-next-line */ }, [auth.session, auth.mode, brand?.id])
+
+  // Autosave the editor buffer so an in-app tab switch never loses work.
+  useDraft(
+    `hh-journal-draft:${brand?.id ?? 'x'}`,
+    { currentId, title, dek, readingTime, blocks, takeaways },
+    (v) => {
+      setCurrentId(v.currentId ?? null); setTitle(v.title ?? ''); setDek(v.dek ?? '')
+      setReadingTime(v.readingTime ?? ''); setBlocks(Array.isArray(v.blocks) ? v.blocks : []); setTakeaways(v.takeaways ?? '')
+    },
+    !gated,
+  )
 
   async function write() {
     if (!aiTopic.trim()) return
@@ -134,11 +148,11 @@ export default function Journal() {
         }
       />
 
-      <div style={{ padding: '24px 40px' }}>
+      <div style={{ padding: isMobile ? '16px' : '24px 40px' }}>
         {gated ? (
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to write and save articles.</p>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 24, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '360px 1fr', gap: 24, alignItems: 'start' }}>
             {/* ---- Editor ---- */}
             <div>
               <div style={{ border: '1px solid var(--hh-line)', borderRadius: 12, padding: 14, background: 'var(--hh-bone)' }}>
