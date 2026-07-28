@@ -41,6 +41,28 @@ export async function exportPng(node: HTMLElement, realW: number, filename: stri
   downloadDataUrl(await captureNode(node, realW), filename)
 }
 
+/** Capture a DOM node to a JPEG data URL. Instagram's Graph API only accepts
+    JPEG image URLs, so publishing uses this rather than the PNG path. The slide
+    background is opaque, so flattening to JPEG loses nothing. */
+export async function captureNodeJpeg(node: HTMLElement, realW: number, quality = 0.92): Promise<string> {
+  const { default: html2canvas } = await import('html2canvas')
+  if (document.fonts?.ready) await document.fonts.ready
+  const rect = node.getBoundingClientRect()
+  const scale = rect.width > 0 ? realW / rect.width : 2
+  const canvas = await html2canvas(node, { scale, useCORS: true, backgroundColor: '#1E1B18', logging: false })
+  return canvas.toDataURL('image/jpeg', quality)
+}
+
+/** Convert a data URL to a Blob (for uploading to storage). */
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const [meta, b64] = dataUrl.split(',')
+  const mime = /:(.*?);/.exec(meta)?.[1] ?? 'image/jpeg'
+  const bin = atob(b64)
+  const arr = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
+  return new Blob([arr], { type: mime })
+}
+
 /** Bundle already-captured PNG data URLs into a numbered zip (for carousels). */
 export async function zipPngs(dataUrls: string[], baseName: string): Promise<void> {
   const JSZip = (await import('jszip')).default

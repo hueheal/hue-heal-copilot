@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { PillButton } from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { getPost, updatePost, generateImage, analyzeReference, IMAGE_PRESETS, SECTOR_LABEL, type Post } from '../lib/socialCopilot'
+import { getPost, updatePost, generateImage, analyzeReference, publishToInstagram, IMAGE_PRESETS, SECTOR_LABEL, type Post } from '../lib/socialCopilot'
+import ConfirmButton from '../components/ConfirmButton'
 import { listBrands, resolveActiveBrand, getActiveBrandId, setActiveBrandId, type BrandProfile } from '../lib/brand'
 import { useBrand } from '../lib/brandContext'
 import { INSTAGRAM_FORMAT_LIST, INSTAGRAM_FORMATS, type InstaFormat } from '../lib/social/formats'
 import { TEMPLATES, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
 import { resolveStyle } from '../lib/social/style'
 import { TYPE_ROLES, CANVAS_TYPE_SIZE } from '../lib/typeScale'
-import { captureNode, downloadDataUrl, zipPngs } from '../lib/social/exportImage'
+import { captureNode, captureNodeJpeg, dataUrlToBlob, downloadDataUrl, zipPngs } from '../lib/social/exportImage'
 import {
   type Design, type Slide, type DesignElement, type ElStyle, type FontKey,
   accentHex, fontVar, eid, isDesign,
@@ -367,6 +368,39 @@ export default function SocialStudio() {
     } catch (e) { setStatus(`Export failed: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
   }
 
+  /* Render each slide to JPEG, host it in the bucket, then publish to Instagram
+     via the edge function (caption = post caption + hashtags). */
+  async function postToInstagram() {
+    if (!canvasRef.current) return
+    if (!supabase || !auth.session) { setStatus('Sign in first'); return }
+    setBusy(true); setStatus('Rendering slides…')
+    try {
+      const uid = auth.session.user.id
+      const ts = Date.now()
+      const n = design!.format === 'carousel' ? design!.slides.length : 1
+      const orig = active
+      const urls: string[] = []
+      for (let i = 0; i < n; i++) {
+        if (n > 1) { setActive(i); await new Promise((r) => setTimeout(r, 200)) }
+        if (!canvasRef.current) continue
+        const blob = dataUrlToBlob(await captureNodeJpeg(canvasRef.current, spec.w))
+        const path = `published/${uid}/${post!.id}/${ts}-${i + 1}.jpg`
+        const { error } = await supabase.storage.from('social-assets').upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+        if (error) throw error
+        urls.push(supabase.storage.from('social-assets').getPublicUrl(path).data.publicUrl)
+      }
+      if (n > 1) setActive(orig)
+      setStatus('Posting to Instagram…')
+      const caption = [post!.caption, (post!.hashtags ?? []).join(' ')].map((s) => (s ?? '').trim()).filter(Boolean).join('\n\n')
+      const { ok, permalink, error } = await publishToInstagram(urls, caption)
+      if (!ok) { setStatus(`Post failed: ${error}`); return }
+      await updatePost(post!.id, { status: 'published' })
+      setPost((p) => (p ? { ...p, status: 'published' } : p))
+      setStatus('Posted to Instagram ✓')
+      if (permalink) window.open(permalink, '_blank', 'noopener')
+    } catch (e) { setStatus(`Post failed: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
+  }
+
   const railLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '18px 0 8px' }
   const chip = (activeC: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '7px 13px', fontSize: 12, border: activeC ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: activeC ? 'var(--hh-anthracite)' : 'transparent', color: activeC ? 'var(--text-on-ink)' : 'var(--text-body)' })
 
@@ -379,7 +413,11 @@ export default function SocialStudio() {
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
           <PillButton tone="ghost" onClick={save}>{busy ? '…' : 'Save'}</PillButton>
-          <PillButton tone="ink" onClick={exportImages}>↧ Export {design.format === 'carousel' ? 'ZIP' : 'PNG'}</PillButton>
+          <PillButton tone="ghost" onClick={exportImages}>↧ Export {design.format === 'carousel' ? 'ZIP' : 'PNG'}</PillButton>
+          <ConfirmButton onConfirm={postToInstagram} confirmLabel="Post now?"
+            style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: '1px solid var(--hh-copper)', borderRadius: 999, padding: '11px 22px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
+            ↗ Post to Instagram
+          </ConfirmButton>
         </div>
       </div>
 

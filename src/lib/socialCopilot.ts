@@ -123,6 +123,26 @@ export const IMAGE_PRESETS: { key: string; label: string }[] = [
   { key: 'detail', label: 'Material detail' },
 ]
 
+/** Publish already-hosted JPEG(s) to Instagram with a caption (single or carousel). */
+export async function publishToInstagram(imageUrls: string[], caption: string): Promise<{ ok: boolean; permalink?: string | null; error?: string }> {
+  if (!(isSupabaseConfigured && supabase && functionsBase)) return { ok: false, error: 'Not connected — add Supabase keys' }
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) return { ok: false, error: 'Sign in first (bottom-left)' }
+  try {
+    const res = await fetch(`${functionsBase}/publish-instagram`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ imageUrls, caption }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, error: data?.error ? String(data.error) : `Publish ${res.status}` }
+    return { ok: true, permalink: data?.permalink ?? null }
+  } catch (e) {
+    return { ok: false, error: String(e) }
+  }
+}
+
 /** Claude Vision → art-direction description from a pasted reference image. */
 export async function analyzeReference(file: File): Promise<{ description: string | null; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { description: null, error: 'Not connected — add Supabase keys' }
