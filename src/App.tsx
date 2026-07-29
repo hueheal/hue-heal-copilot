@@ -10,6 +10,7 @@ import SocialCopilot from './pages/SocialCopilot'
 import SocialStudio from './pages/SocialStudio'
 import NewsletterPage from './pages/Newsletter'
 import Journal from './pages/Journal'
+import Create from './pages/Create'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import ComingSoon from './pages/ComingSoon'
@@ -25,6 +26,7 @@ export default function App() {
 
       <Route element={<StudioLayout />}>
         <Route index element={<Dashboard />} />
+        <Route path="create" element={<Create />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="clients" element={<Clients />} />
         <Route path="proposals" element={<Proposals />} />

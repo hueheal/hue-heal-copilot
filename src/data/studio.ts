@@ -2,7 +2,7 @@
    Stand-in for the operations backend. Shapes are designed to map cleanly
    onto a real API later (clients, proposals, invoices, social content). */
 
-export type NavKey = 'dashboard' | 'calendar' | 'clients' | 'proposals' | 'social' | 'newsletter' | 'journal' | 'reports' | 'settings' | 'research' | 'linkedin'
+export type NavKey = 'dashboard' | 'create' | 'calendar' | 'clients' | 'proposals' | 'social' | 'newsletter' | 'journal' | 'reports' | 'settings' | 'research' | 'linkedin'
 
 export interface NavItem {
   key: NavKey
@@ -13,12 +13,10 @@ export interface NavItem {
 
 export const NAV: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', glyph: '◳', path: '/' },
+  { key: 'create', label: 'Create', glyph: '✦', path: '/create' },
   { key: 'calendar', label: 'Calendar', glyph: '⊞', path: '/calendar' },
   { key: 'clients', label: 'Clients', glyph: '◎', path: '/clients' },
-  { key: 'proposals', label: 'Proposals & Invoices', glyph: '✦', path: '/proposals' },
-  { key: 'social', label: 'Social Copilot', glyph: '▦', path: '/social' },
-  { key: 'newsletter', label: 'Newsletter', glyph: '✉', path: '/newsletter' },
-  { key: 'journal', label: 'Journal', glyph: '✎', path: '/journal' },
+  { key: 'proposals', label: 'Proposals & Invoices', glyph: '◇', path: '/proposals' },
   { key: 'reports', label: 'Analytics', glyph: '◈', path: '/reports' },
   { key: 'research', label: 'Research', glyph: '⌕', path: '/research' },
   { key: 'linkedin', label: 'LinkedIn', glyph: 'in', path: '/linkedin' },
