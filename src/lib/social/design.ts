@@ -71,7 +71,7 @@ export function accentHex(accent: Accent): string {
    /public/fonts/ivyora and registered as HHSerif, exports become true Ivy Ora too. */
 export function fontVar(key: FontKey | undefined): string {
   if (key === 'sans') return "'HHSans', 'Poppins', system-ui, sans-serif"
-  return "'ivyora-display', 'HHSerif', Georgia, serif" // serif + voice (voice adds font-style:italic)
+  return "'Romie', 'ivyora-display', 'HHSerif', Georgia, serif" // serif + voice (voice adds font-style:italic)
 }
 
 let idc = 0

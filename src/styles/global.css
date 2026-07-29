@@ -11,6 +11,15 @@
 @font-face { font-family: 'HHSans'; src: url('/fonts/pdf/Poppins-Medium.ttf') format('truetype'); font-weight: 500; font-display: swap; }
 @font-face { font-family: 'HHSans'; src: url('/fonts/pdf/Poppins-SemiBold.ttf') format('truetype'); font-weight: 600; font-display: swap; }
 
+/* ---- Romie (display serif) ----
+   Drop the LICENSED Romie .woff2 files into /public/fonts/romie/ with these
+   names to activate. Until then, --font-serif falls back to Ivy Ora. Do not
+   commit trial fonts. */
+@font-face { font-family: 'Romie'; src: url('/fonts/romie/Romie-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Romie'; src: url('/fonts/romie/Romie-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Romie'; src: url('/fonts/romie/Romie-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Romie'; src: url('/fonts/romie/Romie-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+
 /* ---- Reset ---- */
 *, *::before, *::after { box-sizing: border-box; }
 html, body, #root { height: 100%; }

@@ -9,7 +9,7 @@
 /* ---- Webfonts ----
    Poppins (structure/body) from Google. Ivy Ora (headline/display + italic voice)
    loads from Adobe Fonts via the <link> in index.html (family: "ivyora-display"). */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
   /* ---- Warm neutrals (material names) ---- */
@@ -64,8 +64,8 @@
 
   /* ---- Type ---- */
   --font-sans:  'Poppins', system-ui, sans-serif;
-  --font-serif: 'ivyora-display', Georgia, serif;          /* headline / display */
-  --font-voice: 'ivyora-display', Georgia, serif;          /* editorial italic voice (use font-style:italic) */
+  --font-serif: 'Romie', 'ivyora-display', Georgia, serif;          /* headline / display (Romie once licensed files are added; Ivy Ora fallback) */
+  --font-voice: 'Instrument Serif', 'ivyora-display', Georgia, serif; /* editorial italic voice (use font-style:italic) */
 
   --fw-light: 300;  --fw-regular: 400;  --fw-medium: 500;  --fw-semibold: 600;
 
