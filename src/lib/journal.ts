@@ -62,6 +62,8 @@ export async function generateJournal(input: {
   brandName?: string
   toneOfVoice?: string
   writingGuidelines?: string
+  /** 'report' writes in the wider-publication register (state-of-the-sector). */
+  kind?: 'article' | 'report'
 }): Promise<{ result: GeneratedJournal | null; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { result: null, error: 'Not connected' }
   const { data: sessionData } = await supabase.auth.getSession()
@@ -81,10 +83,12 @@ export async function generateJournal(input: {
   }
 }
 
-export async function listJournal(): Promise<JournalArticle[]> {
+export async function listJournal(kind?: 'article' | 'report'): Promise<JournalArticle[]> {
   if (!(isSupabaseConfigured && supabase)) return []
   const { data } = await filterByBrand(supabase.from('journal_articles').select('*')).order('created_at', { ascending: false })
-  return (data as JournalArticle[] | null) ?? []
+  const all = (data as JournalArticle[] | null) ?? []
+  // kind column may not exist until migration 0014 runs; treat missing as 'article'.
+  return kind ? all.filter((a) => (a.kind ?? 'article') === kind) : all
 }
 
 type JournalInput = Database['public']['Tables']['journal_articles']['Insert']

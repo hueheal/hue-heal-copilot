@@ -385,6 +385,7 @@ export interface Database {
           blocks: unknown[]
           takeaways: string[]
           slug: string
+          kind: string
           status: string
           published_at: string | null
           created_at: string
@@ -401,6 +402,7 @@ export interface Database {
           blocks?: unknown[]
           takeaways?: string[]
           slug?: string
+          kind?: string
           status?: string
           published_at?: string | null
           created_at?: string

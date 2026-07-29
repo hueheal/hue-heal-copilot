@@ -13,7 +13,7 @@ import { corsHeaders, json } from '../_shared/cors.ts'
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
 
-interface Body { topic: string; notes?: string; brandName?: string; toneOfVoice?: string; writingGuidelines?: string }
+interface Body { topic: string; notes?: string; brandName?: string; toneOfVoice?: string; writingGuidelines?: string; kind?: string }
 
 const TOOL = {
   name: 'journal_article',
@@ -53,8 +53,11 @@ Deno.serve(async (req) => {
   const guides = (body.writingGuidelines ?? '').trim()
   const notes = (body.notes ?? '').trim()
 
+  const isReport = body.kind === 'report'
   const prompt =
-    `Write a full journal article for ${brand}, a wellness experience design studio working across digital and physical experiences, for the studio's website Journal.\n\n` +
+    (isReport
+      ? `Write a full studio report for ${brand}, a wellness experience design studio working across digital and physical experiences. This is a wider publication (a "state of" style piece) the studio publishes under its own name: broader in scope than a journal article, surveying a territory and taking a clear editorial position. Structure it as a report with distinct chapters.\n\n`
+      : `Write a full journal article for ${brand}, a wellness experience design studio working across digital and physical experiences, for the studio's website Journal.\n\n`) +
     `Topic: "${topic}".\n` +
     (notes ? `Notes and raw material to work from: ${notes}\n` : '') +
     (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +

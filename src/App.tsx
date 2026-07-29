@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import StudioLayout from './components/StudioLayout'
 import Dashboard from './pages/Dashboard'
 import Calendar from './pages/Calendar'
@@ -9,8 +9,8 @@ import InvoiceEditor from './pages/InvoiceEditor'
 import SocialCopilot from './pages/SocialCopilot'
 import SocialStudio from './pages/SocialStudio'
 import NewsletterPage from './pages/Newsletter'
-import Journal from './pages/Journal'
 import Create from './pages/Create'
+import CreateEditor from './pages/CreateEditor'
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import ComingSoon from './pages/ComingSoon'
@@ -27,6 +27,7 @@ export default function App() {
       <Route element={<StudioLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="create" element={<Create />} />
+        <Route path="create/:family" element={<CreateEditor />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="clients" element={<Clients />} />
         <Route path="proposals" element={<Proposals />} />
@@ -35,7 +36,7 @@ export default function App() {
         <Route path="social" element={<SocialCopilot />} />
         <Route path="social/studio/:id" element={<SocialStudio />} />
         <Route path="newsletter" element={<NewsletterPage />} />
-        <Route path="journal" element={<Journal />} />
+        <Route path="journal" element={<Navigate to="/create/journal" replace />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
         <Route path="research" element={<ComingSoon title="Research" blurb="Audience & market insight for this brand." />} />
