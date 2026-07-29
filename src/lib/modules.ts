@@ -17,7 +17,7 @@ export const MODULE_OPTIONS: ModuleOption[] = [
   { key: 'newsletter', label: 'Newsletter', description: 'Branded email campaigns' },
   { key: 'proposals', label: 'Proposals & Invoices', description: 'Priced proposals and billing' },
   { key: 'clients', label: 'CRM', description: 'Clients & pipeline' },
-  { key: 'reports', label: 'Reports', description: 'Performance & insight decks' },
+  { key: 'reports', label: 'Analytics', description: 'Performance & insight decks' },
   { key: 'calendar', label: 'Calendar', description: 'Schedule across everything' },
   { key: 'research', label: 'Research', description: 'Audience & market insight', comingSoon: true },
   { key: 'linkedin', label: 'LinkedIn', description: 'Long-form professional posts', comingSoon: true },

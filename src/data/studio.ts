@@ -19,7 +19,7 @@ export const NAV: NavItem[] = [
   { key: 'social', label: 'Social Copilot', glyph: '▦', path: '/social' },
   { key: 'newsletter', label: 'Newsletter', glyph: '✉', path: '/newsletter' },
   { key: 'journal', label: 'Journal', glyph: '✎', path: '/journal' },
-  { key: 'reports', label: 'Reports', glyph: '◈', path: '/reports' },
+  { key: 'reports', label: 'Analytics', glyph: '◈', path: '/reports' },
   { key: 'research', label: 'Research', glyph: '⌕', path: '/research' },
   { key: 'linkedin', label: 'LinkedIn', glyph: 'in', path: '/linkedin' },
   { key: 'settings', label: 'Settings', glyph: '⚙', path: '/settings' },

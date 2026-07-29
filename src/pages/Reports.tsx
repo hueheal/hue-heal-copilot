@@ -18,7 +18,7 @@ export default function Reports() {
     <>
       <PageHeader
         eyebrow="Insight"
-        title="Reports"
+        title="Analytics"
         subtitle="Studio performance and social reach, wrapped in the Hue & Heal brand — ready to export for a client or the monthly review."
         action={<PillButton tone="ink">↧ Export report</PillButton>}
       />
