@@ -24,6 +24,8 @@ import {
 const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13.5, fontFamily: 'var(--font-sans)', boxSizing: 'border-box' }
 const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '18px 0 8px' }
 const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 24, height: 22, color: 'var(--text-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
+const segWrap: React.CSSProperties = { display: 'flex', gap: 6, background: 'var(--hh-bone)', border: '1px solid var(--hh-line)', borderRadius: 999, padding: 4, marginBottom: 14 }
+const seg = (active: boolean): React.CSSProperties => ({ flex: 1, textAlign: 'center', padding: '9px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-muted)' })
 
 export default function Journal() {
   const auth = useAuth()
@@ -42,6 +44,7 @@ export default function Journal() {
   const [readingTime, setReadingTime] = useState('')
   const [blocks, setBlocks] = useState<Block[]>([])
   const [takeaways, setTakeaways] = useState('')
+  const [mView, setMView] = useState<'edit' | 'preview'>('edit')
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
@@ -152,9 +155,16 @@ export default function Journal() {
         {gated ? (
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to write and save articles.</p>
         ) : (
+          <>
+            {isMobile && (
+              <div style={segWrap}>
+                <button onClick={() => setMView('edit')} style={seg(mView === 'edit')}>Edit</button>
+                <button onClick={() => setMView('preview')} style={seg(mView === 'preview')}>Preview</button>
+              </div>
+            )}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '360px 1fr', gap: 24, alignItems: 'start' }}>
             {/* ---- Editor ---- */}
-            <div>
+            <div style={{ display: isMobile && mView !== 'edit' ? 'none' : undefined }}>
               <div style={{ border: '1px solid var(--hh-line)', borderRadius: 12, padding: 14, background: 'var(--hh-bone)' }}>
                 <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>✦ Write the article</div>
                 <input style={{ ...inp, marginBottom: 8 }} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder="Topic — e.g. designing calm into a waiting room" onKeyDown={(e) => { if (e.key === 'Enter') write() }} />
@@ -234,7 +244,7 @@ export default function Journal() {
             </div>
 
             {/* ---- Designed preview ---- */}
-            <div>
+            <div style={{ display: isMobile && mView !== 'preview' ? 'none' : undefined }}>
               <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 8 }}>Preview</div>
               <article style={{ background: '#FBFAF6', border: '1px solid var(--hh-line-card, var(--hh-line))', borderRadius: 14, overflow: 'hidden', maxWidth: 760 }}>
                 <div style={{ padding: '48px 56px 8px' }}>
@@ -268,6 +278,7 @@ export default function Journal() {
               </article>
             </div>
           </div>
+          </>
         )}
       </div>
     </>

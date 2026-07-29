@@ -280,15 +280,18 @@ export default function SocialStudio() {
   // role), any manually-added elements, and the current background + accent.
   function mergeCover(next: Slide, prev: Slide): Slide {
     const accHex = accentHex(design!.accent)
-    const nextRoles = new Set(next.elements.map((e) => e.role).filter(Boolean))
+    // Carry over ONLY edited text, matched by role. Rules, quote marks, accents,
+    // pills and any other decoration come from the new template, so a switch
+    // resembles that template cleanly with no leftover marks from the old one.
     const elements = next.elements.map((ne) => {
-      const was = ne.role ? prev.elements.find((oe) => oe.role === ne.role) : undefined
+      const was = (ne.type === 'text' || ne.type === 'pill') && ne.role
+        ? prev.elements.find((oe) => oe.role === ne.role && (oe.type === 'text' || oe.type === 'pill'))
+        : undefined
       let el = was ? { ...ne, content: was.content } : ne
       if (el.accentRef) el = { ...el, style: { ...el.style, ...(el.type === 'shape' ? { bg: accHex } : { color: accHex }) } }
       return el
     })
-    const orphans = prev.elements.filter((oe) => !oe.role || !nextRoles.has(oe.role))
-    return { ...next, elements: [...elements, ...orphans], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength }
+    return { ...next, elements, background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength }
   }
   function applyFormat(f: InstaFormat) {
     const map = coverContent()

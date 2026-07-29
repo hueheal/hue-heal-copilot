@@ -53,6 +53,7 @@ export default function NewsletterPage() {
   const [copied, setCopied] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [mView, setMView] = useState<'edit' | 'preview'>('edit')
   const [sending, setSending] = useState(false)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [aiTopic, setAiTopic] = useState('')
@@ -232,9 +233,16 @@ export default function NewsletterPage() {
         {gated ? (
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to compose and send.</p>
         ) : (
+          <>
+            {isMobile && (
+              <div style={segWrap}>
+                <button onClick={() => setMView('edit')} style={seg(mView === 'edit')}>Compose</button>
+                <button onClick={() => setMView('preview')} style={seg(mView === 'preview')}>Preview</button>
+              </div>
+            )}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '360px 1fr', gap: 24, alignItems: 'start' }}>
             {/* ---- Editor ---- */}
-            <div>
+            <div style={{ display: isMobile && mView !== 'edit' ? 'none' : undefined }}>
               {/* Write with AI — drafts in this brand world's voice */}
               <div style={{ border: '1px solid var(--hh-line)', borderRadius: 12, padding: 14, background: 'var(--hh-bone)' }}>
                 <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>
@@ -371,7 +379,7 @@ export default function NewsletterPage() {
             </div>
 
             {/* ---- Live preview + drafts ---- */}
-            <div>
+            <div style={{ display: isMobile && mView !== 'preview' ? 'none' : undefined }}>
               <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 8 }}>Preview</div>
               <iframe title="preview" srcDoc={html} style={{ width: '100%', height: 620, border: '1px solid var(--hh-line-card)', borderRadius: 12, background: '#fff' }} />
 
@@ -392,6 +400,7 @@ export default function NewsletterPage() {
               )}
             </div>
           </div>
+          </>
         )}
       </div>
     </>
@@ -399,3 +408,5 @@ export default function NewsletterPage() {
 }
 
 const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 24, height: 22, color: 'var(--text-faint)', fontSize: 12, lineHeight: 1 }
+const segWrap: React.CSSProperties = { display: 'flex', gap: 6, background: 'var(--hh-bone)', border: '1px solid var(--hh-line)', borderRadius: 999, padding: 4, marginBottom: 14 }
+const seg = (active: boolean): React.CSSProperties => ({ flex: 1, textAlign: 'center', padding: '9px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-muted)' })
