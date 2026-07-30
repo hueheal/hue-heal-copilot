@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { PillButton } from '../components/PageHeader'
+import { useParams } from 'react-router-dom'
+import EditorShell from '../components/EditorShell'
 import { useAuth } from '../lib/auth'
 import { supabase } from '../lib/supabase'
-import { getPost, updatePost, generateImage, analyzeReference, publishToInstagram, IMAGE_PRESETS, SECTOR_LABEL, type Post } from '../lib/socialCopilot'
+import { getPost, updatePost, generateCopy, generateImage, analyzeReference, publishToInstagram, IMAGE_PRESETS, SECTOR_LABEL, type Post } from '../lib/socialCopilot'
 import ConfirmButton from '../components/ConfirmButton'
 import { listBrands, resolveActiveBrand, getActiveBrandId, type BrandProfile } from '../lib/brand'
 import { useBrand } from '../lib/brandContext'
@@ -145,7 +145,6 @@ function SlideCanvas({
 /* ---------- Editor ---------- */
 export default function SocialStudio() {
   const { id } = useParams()
-  const nav = useNavigate()
   const auth = useAuth()
   const [post, setPost] = useState<Post | null>(null)
   const [design, setDesign] = useState<Design | null>(null)
@@ -157,6 +156,9 @@ export default function SocialStudio() {
   const [imgNotes, setImgNotes] = useState('')
   const [brands, setBrands] = useState<BrandProfile[]>([])
   const [brandId] = useState<string | null>(getActiveBrandId())
+  const [mView, setMView] = useState<'edit' | 'preview'>('preview') // mobile opens on the canvas
+  const [copyTopic, setCopyTopic] = useState('')
+  const [copyBusy, setCopyBusy] = useState(false)
   const { current: brandWorld } = useBrand()
 
   useEffect(() => { listBrands().then(setBrands).catch(() => {}) }, [])
@@ -169,6 +171,7 @@ export default function SocialStudio() {
     getPost(id).then((p) => {
       if (!p) { setStatus('Could not load post'); return }
       setPost(p)
+      setCopyTopic(p.topic || '')
       const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined), coverImage: p.image_url ?? undefined }
       const fmt: InstaFormat = (p.format === 'square' || p.format === 'portrait' || p.format === 'story' || p.format === 'carousel') ? p.format : 'portrait'
       const content = (p.slides ?? []) as ContentSlideInput[]
@@ -375,10 +378,31 @@ export default function SocialStudio() {
     } finally { setBusy(false) }
   }
 
+  /* Brief the copilot: write headline + caption + hashtags (and carousel content)
+     for the topic, lay it into the canvas, and keep the current background. */
+  async function generateCopyNow() {
+    if (!copyTopic.trim() || !post || !design) return
+    setCopyBusy(true); setStatus('Writing copy…')
+    try {
+      const { copy, source } = await generateCopy({ topic: copyTopic, format: design.format, sector: post.sector, accent: design.accent })
+      setPost((p) => (p ? { ...p, topic: copyTopic, headline: copy.headline, caption: copy.caption, hashtags: copy.hashtags, slides: copy.slides as unknown as Post['slides'] } : p))
+      const built = buildDesign(design.format, design.templateId, seedFrom(copy.headline), Math.max(design.slides.length, 1), (copy.slides ?? []) as ContentSlideInput[])
+      const prev = design.slides[0]
+      const cover = { ...built.slides[0], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength }
+      commit({ ...built, slides: [cover, ...built.slides.slice(1)] })
+      setActive(0); setSelId(null)
+      setStatus(source === 'claude' ? 'Copy drafted with Claude' : 'Drafted on-device')
+      if (isMobile) setMView('preview')
+    } finally { setCopyBusy(false) }
+  }
+
   async function save() {
     setBusy(true); setStatus(null)
     try {
-      await updatePost(post!.id, { design: design as unknown as Record<string, unknown>, format: design!.format, platform: 'instagram', accent: design!.accent })
+      await updatePost(post!.id, {
+        design: design as unknown as Record<string, unknown>, format: design!.format, platform: 'instagram', accent: design!.accent,
+        topic: post!.topic, headline: post!.headline, caption: post!.caption, hashtags: post!.hashtags ?? [], slides: post!.slides ?? [],
+      })
       setStatus('Saved')
     } catch (e) { setStatus(`Couldn’t save: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
   }
@@ -441,25 +465,32 @@ export default function SocialStudio() {
   const chip = (activeC: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '7px 13px', fontSize: 12, border: activeC ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: activeC ? 'var(--hh-anthracite)' : 'transparent', color: activeC ? 'var(--text-on-ink)' : 'var(--text-body)' })
 
   return (
-    <div>
-      {/* toolbar */}
-      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', rowGap: 8, gap: 12, padding: isMobile ? '12px 16px' : '18px 32px', borderBottom: '1px solid var(--hh-line)' }}>
-        <button onClick={() => nav('/social')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13 }}>⟵ Social</button>
-        <div style={{ fontSize: 13, color: 'var(--text-faint)' }}>{spec.label} · {spec.w}×{spec.h}</div>
-        <div style={{ marginLeft: isMobile ? 0 : 'auto', width: isMobile ? '100%' : 'auto', display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-          {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
-          <PillButton tone="ghost" onClick={save}>{busy ? '…' : 'Save'}</PillButton>
-          <PillButton tone="ghost" onClick={exportImages}>↧ Export {design.format === 'carousel' ? 'ZIP' : 'PNG'}</PillButton>
-          <ConfirmButton onConfirm={postToInstagram} confirmLabel="Post now?"
-            style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: '1px solid var(--hh-copper)', borderRadius: 999, padding: '11px 22px', fontSize: 13, fontWeight: 500, cursor: 'pointer' }}>
-            ↗ Post to Instagram
-          </ConfirmButton>
-        </div>
-      </div>
+    <EditorShell
+      ctype={spec.label}
+      subline={`${spec.w}×${spec.h} · ${brandWorld?.name ?? 'Hue & Heal'}`}
+      status={status}
+      busy={busy}
+      onDone={save}
+      doneLabel="Save"
+      view={mView}
+      onViewChange={setMView}
+      editLabel="Controls"
+      previewLabel="Canvas"
+      railWidth={320}
+      rail={
+        <div>
+          {/* Brief the copilot */}
+          <div style={{ border: '1px solid var(--hh-line)', borderRadius: 14, padding: 14, background: 'var(--hh-bone)', marginTop: 4 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>✦ Brief the copilot</div>
+            <input value={copyTopic} onChange={(e) => setCopyTopic(e.target.value)} placeholder="Topic — e.g. wellness design in hotels" onKeyDown={(e) => { if (e.key === 'Enter') generateCopyNow() }}
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13, fontFamily: 'var(--font-sans)' }} />
+            <button className="hh-btn" onClick={generateCopyNow} disabled={copyBusy || !copyTopic.trim()}
+              style={{ marginTop: 8, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '10px 16px', fontSize: 12.5, fontWeight: 500, cursor: copyBusy || !copyTopic.trim() ? 'default' : 'pointer', opacity: copyBusy || !copyTopic.trim() ? 0.55 : 1 }}>
+              {copyBusy ? 'Writing…' : '✦ Generate copy'}
+            </button>
+            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Headline, caption, hashtags and carousel content — laid into the canvas.</div>
+          </div>
 
-      <div style={{ display: isMobile ? 'flex' : 'grid', flexDirection: isMobile ? 'column' : undefined, gridTemplateColumns: isMobile ? undefined : '300px 1fr', gap: 0, minHeight: isMobile ? undefined : 'calc(100vh - 60px)' }}>
-        {/* control rail (drops below the canvas on mobile) */}
-        <div style={{ order: isMobile ? 2 : 0, borderRight: isMobile ? 'none' : '1px solid var(--hh-line)', borderTop: isMobile ? '1px solid var(--hh-line)' : 'none', padding: isMobile ? '4px 16px 32px' : '4px 20px 40px', overflowY: isMobile ? 'visible' : 'auto', maxHeight: isMobile ? undefined : 'calc(100vh - 60px)' }}>
           <div style={railLabel}>Format</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {INSTAGRAM_FORMAT_LIST.map((f) => (
@@ -588,10 +619,30 @@ export default function SocialStudio() {
                 style={{ width: 24, height: 24, borderRadius: '50%', background: accentHex(a), border: design.accent === a ? '2px solid var(--hh-anthracite)' : '1px solid var(--hh-line)' }} />
             ))}
           </div>
-        </div>
 
-        {/* canvas stage (shown first on mobile) */}
-        <div style={{ order: isMobile ? 1 : 0, padding: isMobile ? '20px 16px' : 32, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, overflowY: isMobile ? 'visible' : 'auto', maxHeight: isMobile ? undefined : 'calc(100vh - 60px)', background: 'var(--hh-monterey)' }}>
+          <div style={railLabel}>Caption</div>
+          <textarea value={post.caption ?? ''} onChange={(e) => setPost((p) => (p ? { ...p, caption: e.target.value } : p))} rows={4}
+            placeholder="The post description that ships with the image."
+            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13, fontFamily: 'var(--font-sans)', resize: 'vertical', lineHeight: 1.5 }} />
+          <div style={railLabel}>Hashtags</div>
+          <textarea value={(post.hashtags ?? []).join(' ')} onChange={(e) => setPost((p) => (p ? { ...p, hashtags: e.target.value.split(/\s+/).filter(Boolean) } : p))} rows={2}
+            placeholder="#WellnessDesign #ExperienceDesign"
+            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 12.5, fontFamily: 'var(--font-sans)', resize: 'vertical', lineHeight: 1.5, color: 'var(--text-accent)' }} />
+
+          <div style={railLabel}>Publish</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <button className="hh-btn" onClick={exportImages} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '10px 16px', fontSize: 12.5, color: 'var(--text-body)', cursor: 'pointer' }}>
+              ↧ Export {design.format === 'carousel' ? 'ZIP' : 'PNG'}
+            </button>
+            <ConfirmButton onConfirm={postToInstagram} confirmLabel="Post now?"
+              style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: '1px solid var(--hh-copper)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }}>
+              ↗ Post to Instagram
+            </ConfirmButton>
+          </div>
+        </div>
+      }
+      canvas={
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
           <div style={{ boxShadow: 'var(--shadow-raised)', borderRadius: 4, overflow: 'hidden' }}>
             <SlideCanvas
               slide={slide} spec={spec} displayW={displayW} interactive
@@ -616,8 +667,7 @@ export default function SocialStudio() {
             </div>
           )}
         </div>
-      </div>
-
-    </div>
+      }
+    />
   )
 }

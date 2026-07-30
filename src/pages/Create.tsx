@@ -5,6 +5,8 @@ import { useAuth } from '../lib/auth'
 import { useBrand } from '../lib/brandContext'
 import { useIsMobile } from '../lib/useIsMobile'
 import { FAMILIES, familyOf, recentContent, type FamilyKey, type RecentItem } from '../lib/create'
+import { generateIdeas, listIdeas, saveIdea, deleteIdea, savePost, type GeneratedIdea, type Idea } from '../lib/socialCopilot'
+import type { PostFormat } from '../lib/database.types'
 
 const STATUS_TONE: Record<string, string> = { draft: 'var(--status-neutral)', scheduled: 'var(--status-warning)', published: 'var(--status-positive)', sent: 'var(--status-positive)' }
 
@@ -17,18 +19,44 @@ export default function Create() {
 
   const [family, setFamily] = useState<FamilyKey>('social')
   const [recent, setRecent] = useState<RecentItem[]>([])
+  const [creating, setCreating] = useState<string | null>(null)
   const fam = familyOf(family)
+
+  // Ideas (social): theme → hooks, saved to a backlog, one tap into the editor.
+  const [theme, setTheme] = useState('')
+  const [ideas, setIdeas] = useState<GeneratedIdea[]>([])
+  const [ideasBusy, setIdeasBusy] = useState(false)
+  const [backlog, setBacklog] = useState<Idea[]>([])
 
   useEffect(() => {
     if (gated) return
     recentContent().then(setRecent).catch(() => setRecent([]))
+    listIdeas().then(setBacklog).catch(() => {})
   }, [gated, brand?.id])
 
   const inFamily = useMemo(() => recent.filter((r) => r.family === family).slice(0, 6), [recent, family])
 
-  function openFormat(to?: string, soon?: boolean) {
-    if (soon || !to) return
-    nav(to)
+  /* Start a post: social formats create the draft and open the editor directly. */
+  async function newPost(format: PostFormat, topic = '', headline = '') {
+    setCreating(format)
+    try {
+      const post = await savePost({
+        topic, format, sector: 'hospitality', accent: 'copper', platform: 'instagram',
+        headline, caption: '', hashtags: [], slides: [], image_url: null, status: 'draft',
+      })
+      nav(`/create/social/${post.id}`)
+    } catch { setCreating(null) }
+  }
+  function openFormat(f: { to?: string; soon?: boolean; postFormat?: string; key: string }) {
+    if (f.soon) return
+    if (f.postFormat) { newPost(f.postFormat as PostFormat); return }
+    if (f.to) nav(f.to)
+  }
+
+  async function onIdeas() {
+    if (!theme.trim()) return
+    setIdeasBusy(true)
+    try { const { ideas: g } = await generateIdeas(theme); setIdeas(g) } finally { setIdeasBusy(false) }
   }
 
   const pad = isMobile ? '16px' : '28px 40px'
@@ -70,14 +98,14 @@ export default function Create() {
             <div style={railLabel}>Format</div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
               {fam.formats.map((c) => (
-                <button key={c.key} onClick={() => openFormat(c.to, c.soon)} disabled={c.soon}
+                <button key={c.key} onClick={() => openFormat(c)} disabled={c.soon || creating !== null}
                   style={{ textAlign: 'left', display: 'flex', gap: 14, alignItems: 'center', padding: '18px 18px',
                     background: 'var(--hh-lotus)', border: '1px solid var(--hh-line-card)', borderRadius: 14,
-                    cursor: c.soon ? 'default' : 'pointer', opacity: c.soon ? 0.7 : 1 }}>
+                    cursor: c.soon ? 'default' : 'pointer', opacity: c.soon || (creating && creating !== c.postFormat) ? 0.7 : 1 }}>
                   <span style={{ width: 44, height: 44, flexShrink: 0, borderRadius: 12, background: 'var(--hh-bone)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color: 'var(--text-accent)' }}>{c.icon}</span>
                   <span style={{ minWidth: 0 }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--text-strong)' }}>{c.label}</span>
+                      <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, color: 'var(--text-strong)' }}>{creating && creating === c.postFormat ? 'Opening…' : c.label}</span>
                       {c.soon && <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--status-neutral)', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '2px 7px' }}>Soon</span>}
                     </span>
                     <span style={{ display: 'block', fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>{c.sub}</span>
@@ -86,6 +114,49 @@ export default function Create() {
               ))}
             </div>
           </div>
+
+          {/* Ideas (social): a theme becomes hooks; a hook becomes a draft in the editor */}
+          {family === 'social' && (
+            <div>
+              <div style={railLabel}>Ideas</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input value={theme} onChange={(e) => setTheme(e.target.value)} placeholder="Theme — e.g. rest as a luxury" onKeyDown={(e) => { if (e.key === 'Enter') onIdeas() }}
+                  style={{ flex: 1, border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 10, padding: '11px 13px', fontSize: 14, fontFamily: 'var(--font-sans)' }} />
+                <button className="hh-btn" onClick={onIdeas} disabled={ideasBusy || !theme.trim()}
+                  style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '11px 20px', fontSize: 13, fontWeight: 500, cursor: ideasBusy || !theme.trim() ? 'default' : 'pointer', opacity: ideasBusy || !theme.trim() ? 0.55 : 1, whiteSpace: 'nowrap' }}>
+                  {ideasBusy ? '…' : '✦ Ideas'}
+                </button>
+              </div>
+              {(ideas.length > 0 || backlog.length > 0) && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column' }}>
+                  {ideas.map((g, i) => (
+                    <div key={`g-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 4px', borderTop: '1px solid var(--hh-line)' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-strong)' }}>{g.hook}</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{g.angle}</div>
+                      </div>
+                      <button className="hh-btn" onClick={async () => { await saveIdea(theme, g); setBacklog(await listIdeas()) }} title="Save for later"
+                        style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 14, cursor: 'pointer' }}>☆</button>
+                      <button className="hh-btn" onClick={() => newPost(g.format, theme.trim() || g.hook, g.hook)}
+                        style={{ background: 'none', border: '1px solid var(--hh-copper)', color: 'var(--text-accent)', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>Use ⟶</button>
+                    </div>
+                  ))}
+                  {backlog.map((b) => (
+                    <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 4px', borderTop: '1px solid var(--hh-line)' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, color: 'var(--text-strong)' }}>{b.hook}</div>
+                        <div style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>Saved · {b.theme || 'idea'}</div>
+                      </div>
+                      <button className="hh-btn" onClick={async () => { await deleteIdea(b.id); setBacklog(await listIdeas()) }}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 14, cursor: 'pointer' }}>×</button>
+                      <button className="hh-btn" onClick={() => newPost(b.format ?? 'carousel', b.theme || b.hook, b.hook)}
+                        style={{ background: 'none', border: '1px solid var(--hh-copper)', color: 'var(--text-accent)', borderRadius: 999, padding: '7px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>Use ⟶</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Recent in family */}
           <div>

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import StudioLayout from './components/StudioLayout'
 import Dashboard from './pages/Dashboard'
 import Calendar from './pages/Calendar'
@@ -6,7 +6,6 @@ import Clients from './pages/Clients'
 import Proposals from './pages/Proposals'
 import ProposalEditor from './pages/ProposalEditor'
 import InvoiceEditor from './pages/InvoiceEditor'
-import SocialCopilot from './pages/SocialCopilot'
 import SocialStudio from './pages/SocialStudio'
 import NewsletterEditor from './pages/NewsletterEditor'
 import Create from './pages/Create'
@@ -16,6 +15,12 @@ import CreateEditor from './pages/CreateEditor'
 function RedirectWithSearch({ to }: { to: string }) {
   const { search } = useLocation()
   return <Navigate to={`${to}${search}`} replace />
+}
+
+/* Old studio links (e.g. from daily digest emails) land in the new editor. */
+function StudioRedirect() {
+  const { id } = useParams()
+  return <Navigate to={`/create/social/${id}`} replace />
 }
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
@@ -40,8 +45,9 @@ export default function App() {
         <Route path="proposals" element={<Proposals />} />
         <Route path="proposals/:id" element={<ProposalEditor />} />
         <Route path="invoices/:id" element={<InvoiceEditor />} />
-        <Route path="social" element={<SocialCopilot />} />
-        <Route path="social/studio/:id" element={<SocialStudio />} />
+        <Route path="social" element={<Navigate to="/create" replace />} />
+        <Route path="social/studio/:id" element={<StudioRedirect />} />
+        <Route path="create/social/:id" element={<SocialStudio />} />
         <Route path="newsletter" element={<RedirectWithSearch to="/create/newsletter" />} />
         <Route path="journal" element={<Navigate to="/create/journal" replace />} />
         <Route path="reports" element={<Reports />} />

@@ -7,7 +7,7 @@ import { listJournal } from './journal'
    new authored publication family. */
 export type FamilyKey = 'social' | 'journal' | 'newsletter' | 'report'
 
-export interface CFormat { key: string; label: string; sub: string; icon: string; to?: string; soon?: boolean }
+export interface CFormat { key: string; label: string; sub: string; icon: string; to?: string; soon?: boolean; postFormat?: string }
 export interface CFamily { key: FamilyKey; label: string; blurb: string; formats: CFormat[] }
 
 export const FAMILIES: CFamily[] = [
@@ -15,9 +15,9 @@ export const FAMILIES: CFamily[] = [
     key: 'social', label: 'Social',
     blurb: 'On-brand posts, carousels and stories for Instagram.',
     formats: [
-      { key: 'carousel', label: 'Carousel', sub: 'Multi-slide guide', icon: '▤', to: '/social' },
-      { key: 'single', label: 'Single post', sub: 'One clear statement', icon: '▦', to: '/social' },
-      { key: 'story', label: 'Story', sub: '9:16 vertical', icon: '▯', to: '/social' },
+      { key: 'carousel', label: 'Carousel', sub: 'Multi-slide guide', icon: '▤', postFormat: 'carousel' },
+      { key: 'single', label: 'Single post', sub: 'One clear statement', icon: '▦', postFormat: 'portrait' },
+      { key: 'story', label: 'Story', sub: '9:16 vertical', icon: '▯', postFormat: 'story' },
     ],
   },
   {
@@ -68,7 +68,7 @@ export async function recentContent(): Promise<RecentItem[]> {
     listNewsletters().catch(() => []),
     listJournal().catch(() => []),
   ])
-  for (const p of posts) out.push({ id: p.id, family: 'social', title: p.headline || p.topic || 'Untitled', type: FORMAT_LABEL[p.format] ?? 'Post', status: p.status, when: ts(p.created_at), to: `/social/studio/${p.id}` })
+  for (const p of posts) out.push({ id: p.id, family: 'social', title: p.headline || p.topic || 'Untitled', type: FORMAT_LABEL[p.format] ?? 'Post', status: p.status, when: ts(p.created_at), to: `/create/social/${p.id}` })
   for (const n of newsletters) out.push({ id: n.id, family: 'newsletter', title: n.subject || 'Untitled', type: 'Edition', status: n.status, when: ts(n.created_at), to: `/create/newsletter?open=${n.id}` })
   for (const a of journal) {
     const isReport = (a.kind ?? 'article') === 'report'
