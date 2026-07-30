@@ -31,7 +31,7 @@ export const FAMILIES: CFamily[] = [
     key: 'newsletter', label: 'Newsletter',
     blurb: 'Branded email editions sent through Resend.',
     formats: [
-      { key: 'edition', label: 'Edition', sub: 'Full email newsletter', icon: '✉', to: '/newsletter' },
+      { key: 'edition', label: 'Edition', sub: 'Full email newsletter', icon: '✉', to: '/create/newsletter' },
     ],
   },
   {
@@ -69,7 +69,7 @@ export async function recentContent(): Promise<RecentItem[]> {
     listJournal().catch(() => []),
   ])
   for (const p of posts) out.push({ id: p.id, family: 'social', title: p.headline || p.topic || 'Untitled', type: FORMAT_LABEL[p.format] ?? 'Post', status: p.status, when: ts(p.created_at), to: `/social/studio/${p.id}` })
-  for (const n of newsletters) out.push({ id: n.id, family: 'newsletter', title: n.subject || 'Untitled', type: 'Edition', status: n.status, when: ts(n.created_at), to: `/newsletter?open=${n.id}` })
+  for (const n of newsletters) out.push({ id: n.id, family: 'newsletter', title: n.subject || 'Untitled', type: 'Edition', status: n.status, when: ts(n.created_at), to: `/create/newsletter?open=${n.id}` })
   for (const a of journal) {
     const isReport = (a.kind ?? 'article') === 'report'
     out.push({ id: a.id, family: isReport ? 'report' : 'journal', title: a.title || 'Untitled', type: isReport ? 'Publication' : 'Article', status: a.status, when: ts(a.created_at), to: isReport ? '/create/report' : '/create/journal' })

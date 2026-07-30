@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import StudioLayout from './components/StudioLayout'
 import Dashboard from './pages/Dashboard'
 import Calendar from './pages/Calendar'
@@ -8,9 +8,15 @@ import ProposalEditor from './pages/ProposalEditor'
 import InvoiceEditor from './pages/InvoiceEditor'
 import SocialCopilot from './pages/SocialCopilot'
 import SocialStudio from './pages/SocialStudio'
-import NewsletterPage from './pages/Newsletter'
+import NewsletterEditor from './pages/NewsletterEditor'
 import Create from './pages/Create'
 import CreateEditor from './pages/CreateEditor'
+
+/* Redirect an old path into the Content Studio, keeping ?open= etc. */
+function RedirectWithSearch({ to }: { to: string }) {
+  const { search } = useLocation()
+  return <Navigate to={`${to}${search}`} replace />
+}
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import ComingSoon from './pages/ComingSoon'
@@ -27,6 +33,7 @@ export default function App() {
       <Route element={<StudioLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="create" element={<Create />} />
+        <Route path="create/newsletter" element={<NewsletterEditor />} />
         <Route path="create/:family" element={<CreateEditor />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="clients" element={<Clients />} />
@@ -35,7 +42,7 @@ export default function App() {
         <Route path="invoices/:id" element={<InvoiceEditor />} />
         <Route path="social" element={<SocialCopilot />} />
         <Route path="social/studio/:id" element={<SocialStudio />} />
-        <Route path="newsletter" element={<NewsletterPage />} />
+        <Route path="newsletter" element={<RedirectWithSearch to="/create/newsletter" />} />
         <Route path="journal" element={<Navigate to="/create/journal" replace />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import ConfirmButton from '../components/ConfirmButton'
+import EditorShell from '../components/EditorShell'
 import { useAuth } from '../lib/auth'
 import { useBrand } from '../lib/brandContext'
 import { useDraft } from '../lib/useDraft'
@@ -89,8 +90,6 @@ const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--hh-li
 const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '20px 0 10px' }
 const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--text-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
 const chip = (active: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-body)' })
-const segWrap: React.CSSProperties = { display: 'flex', gap: 6, background: 'var(--hh-bone)', border: '1px solid var(--hh-line)', borderRadius: 999, padding: 4, margin: '0 0 16px' }
-const seg = (active: boolean): React.CSSProperties => ({ flex: 1, textAlign: 'center', padding: '9px 12px', borderRadius: 999, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-muted)' })
 
 const BLOCK_LABEL: Record<string, string> = { heading: 'Heading', text: 'Text', image: 'Image' }
 
@@ -212,12 +211,11 @@ export default function CreateEditor() {
       if (!id) return
       const { id: nlId, error } = await createNewsletterFromArticle({ slug: slugify(title || 'untitled'), title, dek, body_md: blocksToText(blocks) }, brand)
       if (error || !nlId) { setStatus(`Couldn’t create newsletter: ${error ?? ''}`); return }
-      nav(`/newsletter?open=${nlId}`)
+      nav(`/create/newsletter?open=${nlId}`)
     } finally { setBusy(false) }
   }
 
   const year = new Date().getFullYear()
-  const pad = isMobile ? '16px' : '24px 40px'
 
   /* ---------- the designed canvas ---------- */
   const canvas = family === 'report' ? (
@@ -245,38 +243,26 @@ export default function CreateEditor() {
     </article>
   )
 
-  return (
-    <div>
-      {/* Editor header — back, family label, Done */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: isMobile ? '12px 16px' : '16px 40px', borderBottom: '1px solid var(--hh-line)', position: 'sticky', top: 0, background: 'var(--hh-monterey)', zIndex: 5 }}>
-        <button onClick={() => nav('/create')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 15, cursor: 'pointer', padding: 4 }}>‹</button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Editor · {meta.ctype}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{brand?.name ?? 'Hue & Heal'} · autosaved</div>
-        </div>
-        {status && !isMobile && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{status}</span>}
-        <button className="hh-btn" onClick={blank} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, color: 'var(--text-muted)', cursor: 'pointer' }}>New</button>
-        <button className="hh-btn" onClick={save} disabled={busy || !title.trim()}
-          style={{ background: 'var(--hh-anthracite)', color: 'var(--text-on-ink)', border: '1px solid var(--hh-anthracite)', borderRadius: 999, padding: '8px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() ? 0.55 : 1 }}>
-          {busy ? '…' : 'Done'}
-        </button>
-      </div>
+  if (gated) {
+    return (
+      <EditorShell ctype={meta.ctype} subline="Sign in to write and save" onDone={() => {}} doneDisabled
+        rail={<p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to write and save.</p>} canvas={<div />} />
+    )
+  }
 
-      <div style={{ padding: pad }}>
-        {gated ? (
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to write and save.</p>
-        ) : (
-          <>
-            {isMobile && status && <div style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: '0 0 10px' }}>{status}</div>}
-            {isMobile && (
-              <div style={segWrap}>
-                <button onClick={() => setMView('edit')} style={seg(mView === 'edit')}>Edit</button>
-                <button onClick={() => setMView('preview')} style={seg(mView === 'preview')}>Preview</button>
-              </div>
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '380px 1fr', gap: 28, alignItems: 'start' }}>
-              {/* ---- rail ---- */}
-              <div style={{ display: isMobile && mView !== 'edit' ? 'none' : undefined }}>
+  return (
+    <EditorShell
+      ctype={meta.ctype}
+      subline={`${brand?.name ?? 'Hue & Heal'} · autosaved`}
+      status={status}
+      busy={busy}
+      onNew={blank}
+      onDone={save}
+      doneDisabled={!title.trim()}
+      view={mView}
+      onViewChange={setMView}
+      rail={
+        <div>
                 {/* Copilot brief */}
                 <div style={{ border: '1px solid var(--hh-line)', borderRadius: 14, padding: 16, background: 'var(--hh-bone)' }}>
                   <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
@@ -363,13 +349,9 @@ export default function CreateEditor() {
                 )}
               </div>
 
-              {/* ---- canvas ---- */}
-              <div style={{ display: isMobile && mView !== 'preview' ? 'none' : undefined }}>{canvas}</div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+      }
+      canvas={canvas}
+    />
   )
 }
 
