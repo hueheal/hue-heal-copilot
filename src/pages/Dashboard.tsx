@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { USER, greeting, longDate } from '../data/studio'
 import { useBrand } from '../lib/brandContext'
+import { useIsMobile } from '../lib/useIsMobile'
 import { listClients, listProposals, listInvoices, gbpCompact, type Client, type Proposal, type Invoice } from '../lib/studioOps'
 import { listPosts, type Post } from '../lib/socialCopilot'
 
@@ -21,6 +22,7 @@ interface Attention {
 export default function Dashboard() {
   const firstName = USER.name.split(' ')[0]
   const { current } = useBrand()
+  const isMobile = useIsMobile()
   const [clients, setClients] = useState<Client[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -91,7 +93,7 @@ export default function Dashboard() {
         glyph: '▦', title: p.headline || p.topic,
         meta: p.scheduled_for ? `Scheduled · ${new Date(p.scheduled_for).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Scheduled',
         action: 'Ready', tone: 'positive', chipBg: 'var(--hh-mushroom)', chipFg: '#2A211A',
-        to: `/social/studio/${p.id}`,
+        to: `/create/social/${p.id}`,
       }))
 
     clients
@@ -113,7 +115,7 @@ export default function Dashboard() {
   return (
     <>
       {/* ---- Header ---- */}
-      <header style={{ padding: '34px 40px', borderBottom: '1px solid var(--hh-line)' }}>
+      <header style={{ padding: isMobile ? '22px 16px' : '34px 40px', borderBottom: '1px solid var(--hh-line)' }}>
         <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-accent)' }}>
           {longDate(now)}{current ? ` · ${current.name}` : ''}
         </div>
@@ -126,43 +128,46 @@ export default function Dashboard() {
         <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '14px 0 0' }}>{summary}</p>
       </header>
 
-      <div style={{ padding: '30px 40px' }}>
-        {/* ---- Metric row ---- */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div style={{ padding: isMobile ? '18px 16px' : '30px 40px' }}>
+        {/* ---- Metric tiles ---- */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 16, marginBottom: isMobile ? 18 : 28 }}>
           {metrics.map((m) => (
             <div
               key={m.label}
               className="hh-card-hover"
-              style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 22 }}
+              style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: isMobile ? 16 : 22 }}
             >
-              <div className="hh-serif" style={{ fontWeight: 300, fontSize: 48, lineHeight: 1, color: 'var(--text-accent)' }}>
+              <div className="hh-serif" style={{ fontWeight: 300, fontSize: isMobile ? 32 : 48, lineHeight: 1, color: 'var(--text-accent)' }}>
                 {m.value}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 10 }}>{m.label}</div>
+              <div style={{ fontSize: isMobile ? 12 : 13, color: 'var(--text-muted)', marginTop: isMobile ? 7 : 10 }}>{m.label}</div>
             </div>
           ))}
         </div>
 
-        {/* ---- Two-column body ---- */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
+        {/* ---- Body (stacks on mobile) ---- */}
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.4fr 1fr', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Link
-              to="/social"
+              to="/create"
               className="hh-atmos hh-card-hover"
-              style={{ display: 'block', color: 'var(--text-on-ink)', borderRadius: 16, padding: 30, position: 'relative', overflow: 'hidden' }}
+              style={{ display: 'block', color: 'var(--text-on-ink)', borderRadius: 16, padding: isMobile ? 22 : 30, position: 'relative', overflow: 'hidden' }}
             >
               <div style={{ position: 'relative' }}>
                 <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-on-ink-faint)' }}>
-                  Social Copilot
+                  Copilot
                 </div>
-                <div className="hh-serif" style={{ fontWeight: 300, fontSize: 32, lineHeight: 1.1, margin: '12px 0', maxWidth: '20ch' }}>
+                <div className="hh-serif" style={{ fontWeight: 300, fontSize: isMobile ? 26 : 32, lineHeight: 1.1, margin: '12px 0', maxWidth: '20ch' }}>
                   Draft this week’s “guide to” in a minute
                 </div>
+                <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text-on-ink-muted, rgba(244,240,231,0.72))', margin: '0 0 16px', maxWidth: '42ch' }}>
+                  Brief a topic once: social, newsletter, journal or report, and the copilot lays it out in the brand.
+                </p>
                 <span
                   className="hh-btn"
                   style={{ display: 'inline-flex', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', borderRadius: 999, padding: '11px 22px', fontSize: 13, fontWeight: 500 }}
                 >
-                  ✦ Open
+                  ✦ Start creating
                 </span>
               </div>
             </Link>
@@ -185,10 +190,11 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Right column — Needs attention */}
-          <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 16, padding: 24 }}>
-            <div style={{ fontSize: 12, letterSpacing: '0.04em', color: 'var(--text-faint)', marginBottom: 16 }}>
-              Needs attention
+          {/* Up next — the day's threads, each one tap away */}
+          <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 16, padding: isMobile ? 18 : 24 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 16 }}>
+              <div style={{ fontSize: 12, letterSpacing: '0.04em', color: 'var(--text-faint)', flex: 1 }}>Up next</div>
+              <Link to="/calendar" style={{ fontSize: 12, color: 'var(--text-accent)', textDecoration: 'none' }}>Calendar ›</Link>
             </div>
             {attention.map((item, i) => (
               <Link

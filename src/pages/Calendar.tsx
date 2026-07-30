@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
+import { useIsMobile } from '../lib/useIsMobile'
 import { listPosts, type Post } from '../lib/socialCopilot'
 import { listInvoices, listProposals, type Invoice, type Proposal } from '../lib/studioOps'
 
@@ -29,6 +30,7 @@ function sameDay(a: Date, b: Date) {
 export default function Calendar() {
   const auth = useAuth()
   const nav = useNavigate()
+  const isMobile = useIsMobile()
   const [cursor, setCursor] = useState(() => new Date())
   const [events, setEvents] = useState<CalEvent[]>([])
   const gated = auth.mode === 'connected' && !auth.session
@@ -41,7 +43,7 @@ export default function Calendar() {
         const evs: CalEvent[] = []
         posts.forEach((p: Post) => {
           if (p.status === 'scheduled' && p.scheduled_for)
-            evs.push({ date: new Date(p.scheduled_for), label: p.headline || p.topic, kind: 'post', href: `/social/studio/${p.id}` })
+            evs.push({ date: new Date(p.scheduled_for), label: p.headline || p.topic, kind: 'post', href: `/create/social/${p.id}` })
         })
         invoices.forEach((i: Invoice) => {
           if (i.due_date) evs.push({ date: new Date(i.due_date), label: `${i.client_name} · invoice due`, kind: 'invoice', href: `/invoices/${i.id}` })
@@ -70,6 +72,13 @@ export default function Calendar() {
   }, [year, month])
 
   const today = new Date()
+  // This month's events, ordered — the mobile "Scheduled" list.
+  const monthEvents = useMemo(
+    () => events
+      .filter((e) => e.date.getFullYear() === year && e.date.getMonth() === month)
+      .sort((a, b) => a.date.getTime() - b.date.getTime()),
+    [events, year, month],
+  )
 
   return (
     <>
@@ -85,28 +94,48 @@ export default function Calendar() {
           </div>
         }
       />
-      <div style={{ padding: '24px 40px' }}>
+      <div style={{ padding: isMobile ? '18px 16px' : '24px 40px' }}>
         {gated ? (
           <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to see your calendar.</p>
         ) : (
           <>
-            {/* Legend */}
-            <div style={{ display: 'flex', gap: 18, marginBottom: 16 }}>
+            {/* Legend + month count */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 18px', marginBottom: 16 }}>
               {(['post', 'invoice', 'proposal'] as EventKind[]).map((k) => (
                 <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--text-muted)' }}>
                   <span style={{ width: 9, height: 9, borderRadius: 3, background: KIND_COLOR[k] }} />
                   {KIND_LABEL[k]}
                 </span>
               ))}
+              <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-faint)' }}>{monthEvents.length} scheduled</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 1, background: 'var(--hh-line)', border: '1px solid var(--hh-line)', borderRadius: 12, overflow: 'hidden' }}>
               {WEEKDAYS.map((w) => (
-                <div key={w} style={{ background: 'var(--hh-bone)', padding: '10px 12px', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>{w}</div>
+                <div key={w} style={{ background: 'var(--hh-bone)', padding: isMobile ? '8px 0' : '10px 12px', fontSize: isMobile ? 10 : 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', textAlign: isMobile ? 'center' : 'left' }}>{isMobile ? w[0] : w}</div>
               ))}
               {cells.map((day, i) => {
                 const dayEvents = day ? events.filter((e) => sameDay(e.date, day)).sort((a, b) => a.date.getTime() - b.date.getTime()) : []
                 const isToday = day && sameDay(day, today)
+                if (isMobile) {
+                  // Compact month: day number + event dots; details live in the list below.
+                  return (
+                    <div key={i} style={{ background: 'var(--surface-raised)', minHeight: 46, padding: '6px 0 5px', opacity: day ? 1 : 0.5, textAlign: 'center' }}>
+                      {day && (
+                        <>
+                          <div style={{ fontSize: 12.5, color: isToday ? 'var(--hh-on-accent, #F6EFE4)' : 'var(--text-body)', fontWeight: isToday ? 600 : 400, width: 24, height: 24, borderRadius: '50%', background: isToday ? 'var(--hh-copper)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {day.getDate()}
+                          </div>
+                          <div style={{ display: 'flex', gap: 3, justifyContent: 'center', marginTop: 3, minHeight: 5 }}>
+                            {dayEvents.slice(0, 3).map((e, j) => (
+                              <span key={j} style={{ width: 5, height: 5, borderRadius: '50%', background: KIND_COLOR[e.kind] }} />
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )
+                }
                 return (
                   <div key={i} style={{ background: 'var(--surface-raised)', minHeight: 104, padding: 8, opacity: day ? 1 : 0.5 }}>
                     {day && (
@@ -136,9 +165,36 @@ export default function Calendar() {
                 )
               })}
             </div>
+
+            {/* Scheduled list (mobile): the month's events, one tap into each */}
+            {isMobile && monthEvents.length > 0 && (
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6 }}>Scheduled</div>
+                {monthEvents.map((e, i) => (
+                  <div key={i} onClick={() => e.href && nav(e.href)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0', borderTop: '1px solid var(--hh-line)', cursor: e.href ? 'pointer' : 'default' }}>
+                    <div style={{ width: 42, flexShrink: 0, textAlign: 'center' }}>
+                      <div className="hh-serif" style={{ fontSize: 19, lineHeight: 1, color: 'var(--text-strong)' }}>{e.date.getDate()}</div>
+                      <div style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', marginTop: 2 }}>{e.date.toLocaleDateString('en-GB', { month: 'short' })}</div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.label}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: KIND_COLOR[e.kind] }} />
+                        {KIND_LABEL[e.kind]}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>
+                      {e.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) !== '00:00' ? e.date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {events.length === 0 && (
               <p style={{ fontSize: 13, color: 'var(--text-faint)', marginTop: 16 }}>
-                Nothing dated yet — schedule a post (Social Copilot) or set invoice due dates and they’ll appear here.
+                Nothing dated yet — schedule a post, or set invoice due dates, and they’ll appear here.
               </p>
             )}
           </>

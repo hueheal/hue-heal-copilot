@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
+import { useIsMobile } from '../lib/useIsMobile'
 import {
   type Client,
   STAGES,
@@ -16,8 +17,13 @@ import type { ClientStage } from '../lib/database.types'
 
 const STAGE_KEYS = STAGES.map((s) => s.key)
 
+function initials(name: string): string {
+  return name.split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '·'
+}
+
 export default function Clients() {
   const auth = useAuth()
+  const isMobile = useIsMobile()
   const [clients, setClients] = useState<Client[]>([])
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ name: '', sector: '', value: '', note: '' })
@@ -90,17 +96,15 @@ export default function Clients() {
   return (
     <>
       <PageHeader
-        eyebrow="Workspace"
-        title="Clients"
-        subtitle="Your book of work across hospitality, F&B, health & fitness and education — from first lead to delivery."
-        action={<PillButton tone="accent" onClick={() => setAdding((v) => !v)}>{adding ? 'Close' : '＋ Add client'}</PillButton>}
+        eyebrow="CRM"
+        title="Client pipeline"
+        subtitle="Your book of work across hospitality, F&B, health & fitness and education, from first lead to delivery."
+        action={<PillButton tone="accent" onClick={() => setAdding((v) => !v)}>{adding ? 'Close' : '＋ New client'}</PillButton>}
       />
 
-      <div style={{ padding: '30px 40px' }}>
+      <div style={{ padding: isMobile ? '18px 16px' : '30px 40px' }}>
         {gated && (
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-            Sign in on the <strong>Social Copilot</strong> page to load your clients.
-          </p>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in to load your clients.</p>
         )}
 
         {err && (
@@ -131,9 +135,10 @@ export default function Clients() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 22 : 16, alignItems: 'start' }}>
           {STAGES.map((col, colIdx) => {
             const list = clients.filter((c) => c.stage === col.key)
+            if (isMobile && list.length === 0) return null // stacked view: skip empty stages
             return (
               <div key={col.key}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', padding: '0 4px 14px' }}>
@@ -143,13 +148,16 @@ export default function Clients() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {list.map((c) => (
                     <div key={c.id} className="hh-card-hover" style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                        <div style={{ fontSize: 14.5, fontWeight: 600 }}>{c.name}</div>
-                        <div className="hh-serif" style={{ fontSize: 16, color: 'var(--hh-copper)' }}>{gbpCompact(c.value_gbp)}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ width: 34, height: 34, flexShrink: 0, borderRadius: '50%', background: 'var(--hh-mushroom)', color: '#2A211A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>
+                          {initials(c.name)}
+                        </span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                          {c.sector && <div style={{ fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', marginTop: 2 }}>{c.sector}</div>}
+                        </div>
+                        <div className="hh-serif" style={{ fontSize: 16, color: 'var(--hh-copper)', flexShrink: 0 }}>{gbpCompact(c.value_gbp)}</div>
                       </div>
-                      {c.sector && (
-                        <div style={{ fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', marginTop: 6 }}>{c.sector}</div>
-                      )}
                       {c.note && <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 10, lineHeight: 1.5 }}>{c.note}</div>}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, opacity: 0.9 }}>
                         <button className="hh-btn" onClick={() => move(c, -1)} disabled={colIdx === 0} title="Move back"
