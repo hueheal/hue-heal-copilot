@@ -34,7 +34,7 @@ export default function Create() {
     listIdeas().then(setBacklog).catch(() => {})
   }, [gated, brand?.id])
 
-  const inFamily = useMemo(() => recent.filter((r) => r.family === family).slice(0, 6), [recent, family])
+  const inFamily = useMemo(() => recent.filter((r) => r.family === family).slice(0, 20), [recent, family])
 
   /* Start a post: social formats create the draft and open the editor directly. */
   async function newPost(format: PostFormat, topic = '', headline = '') {
@@ -158,9 +158,9 @@ export default function Create() {
             </div>
           )}
 
-          {/* Recent in family */}
+          {/* Library — scoped to the family you're in */}
           <div>
-            <div style={railLabel}>Recent in {fam.label}</div>
+            <div style={railLabel}>{fam.label} library{inFamily.length ? ` · ${inFamily.length}` : ''}</div>
             {inFamily.length === 0 ? (
               <div style={{ fontSize: 13.5, color: 'var(--text-faint)', padding: '10px 0' }}>Nothing yet — create something and it lands here.</div>
             ) : (
@@ -171,24 +171,6 @@ export default function Create() {
                       <span style={{ display: 'block', fontSize: 14, fontWeight: 500, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
                       <span style={{ fontSize: 11.5, color: 'var(--text-faint)' }}>{r.type}</span>
                     </span>
-                    <span style={{ fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: STATUS_TONE[r.status] ?? 'var(--status-neutral)' }}>{r.status}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Content library (all families) */}
-          <div>
-            <div style={railLabel}>Content library</div>
-            {recent.length === 0 ? (
-              <div style={{ fontSize: 13.5, color: 'var(--text-faint)', padding: '10px 0' }}>Nothing here yet — compose something and it lands in the library.</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {recent.slice(0, 12).map((r) => (
-                  <button key={r.family + r.id} onClick={() => nav(r.to)} style={rowStyle}>
-                    <span style={{ width: 74, flexShrink: 0, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>{familyOf(r.family).label}</span>
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
                     <span style={{ fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: STATUS_TONE[r.status] ?? 'var(--status-neutral)' }}>{r.status}</span>
                   </button>
                 ))}
