@@ -8,6 +8,7 @@ import {
   STAGES, listClients, updateClient, listProposals, listInvoices, addProposal, addInvoice, gbpCompact, statusTone,
 } from '../lib/studioOps'
 import { type ClientDoc, DOC_KINDS, docKind, listClientDocs, addClientDoc, deleteClientDoc } from '../lib/clientDocs'
+import { deckTemplate } from '../lib/decks'
 import type { ClientStage } from '../lib/database.types'
 
 /* The client room: one place for a client's pipeline stage and every document
@@ -62,7 +63,11 @@ export default function ClientRoom() {
     setCreating(kindKey)
     try {
       const k = docKind(kindKey)
-      const doc = await addClientDoc({ client_id: client.id, kind: k.key, title: `${k.label} · ${client.name}`, is_form: !!k.form })
+      const doc = await addClientDoc({
+        client_id: client.id, kind: k.key, title: `${k.label} · ${client.name}`, is_form: !!k.form,
+        // Deck kinds arrive with their inbuilt structure ready to fill.
+        blocks: k.deck ? (deckTemplate(k.key, client.name) as unknown[]) : [],
+      })
       nav(`/clients/${client.id}/doc/${doc.id}`)
     } catch (e) { setStatus(`Couldn’t create: ${e instanceof Error ? e.message : e}`); setCreating(null) }
   }

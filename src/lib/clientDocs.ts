@@ -26,17 +26,19 @@ export interface DocKind {
   blurb: string
   group: 'admin' | 'design'
   form?: boolean
+  /** Renders as a 1920×1080 presentation deck with an inbuilt structure. */
+  deck?: boolean
 }
 
 export const DOC_KINDS: DocKind[] = [
   { key: 'contract', label: 'Contract', icon: '§', blurb: 'Engagement terms, scope and signatures', group: 'admin' },
   { key: 'onboarding', label: 'Onboarding', icon: '✦', blurb: 'Welcome questionnaire the client completes step by step', group: 'admin', form: true },
-  { key: 'brand-guidelines', label: 'Brand guidelines', icon: '◐', blurb: 'Voice, colour, type and use of the brand', group: 'design' },
+  { key: 'brand-guidelines', label: 'Brand guidelines', icon: '◐', blurb: 'Voice, colour, type and use of the brand', group: 'design', deck: true },
   { key: 'discovery', label: 'Design discovery', icon: '⌕', blurb: 'Discovery questions to unearth the brief', group: 'design', form: true },
-  { key: 'research', label: 'Research findings', icon: '◈', blurb: 'What we learned and what it means', group: 'design' },
-  { key: 'sprint-showcase', label: 'Sprint showcase', icon: '▹', blurb: 'What shipped this sprint, and why it matters', group: 'design' },
-  { key: 'ux-review', label: 'UX review', icon: '◳', blurb: 'Journey and usability findings with recommendations', group: 'design' },
-  { key: 'product-spec', label: 'Product spec', icon: '▤', blurb: 'UI and product design documentation', group: 'design' },
+  { key: 'research', label: 'Research findings', icon: '◈', blurb: 'What we learned and what it means', group: 'design', deck: true },
+  { key: 'sprint-showcase', label: 'Sprint showcase', icon: '▹', blurb: 'What shipped this sprint, and why it matters', group: 'design', deck: true },
+  { key: 'ux-review', label: 'UX review', icon: '◳', blurb: 'Journey and usability findings with recommendations', group: 'design', deck: true },
+  { key: 'product-spec', label: 'Product spec', icon: '▤', blurb: 'UI and product design documentation', group: 'design', deck: true },
 ]
 
 export function docKind(key: string): DocKind {

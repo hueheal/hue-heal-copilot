@@ -64,12 +64,12 @@ export default function InvoiceEditor() {
   return (
     <div>
       <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 40px', borderBottom: '1px solid var(--hh-line)' }}>
-        <button onClick={() => nav('/proposals')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13 }}>⟵ Proposals &amp; Invoices</button>
+        <button onClick={() => nav(inv?.client_id ? `/clients/${inv.client_id}` : '/clients')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13 }}>⟵ {inv?.client_name || 'Clients'}</button>
         <div style={{ fontSize: 13, color: 'var(--text-faint)' }}>{inv.client_name} · {inv.status}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
           <ConfirmButton
-            onConfirm={async () => { await deleteInvoice(inv!.id); nav('/proposals') }}
+            onConfirm={async () => { const home = inv?.client_id ? `/clients/${inv.client_id}` : '/clients'; await deleteInvoice(inv!.id); nav(home) }}
             confirmLabel="Delete invoice?"
             style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '11px 18px', fontSize: 13, color: 'var(--text-muted)' }}
           >

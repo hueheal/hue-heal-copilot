@@ -18,6 +18,7 @@ export default function EditorShell({
   subline,
   status,
   busy,
+  backTo = '/create',
   onNew,
   onDone,
   doneLabel = 'Done',
@@ -35,6 +36,8 @@ export default function EditorShell({
   subline: string
   status?: string | null
   busy?: boolean
+  /** Where the ‹ back button leads. Defaults to the Content Studio. */
+  backTo?: string
   onNew?: () => void
   onDone: () => void
   doneLabel?: string
@@ -93,7 +96,7 @@ export default function EditorShell({
 
   const header = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: isMobile ? '12px 16px' : '16px 40px', borderBottom: '1px solid var(--hh-line)', position: 'sticky', top: 0, background: 'var(--hh-monterey)', zIndex: 5 }}>
-      <button onClick={() => nav('/create')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 15, cursor: 'pointer', padding: 4 }}>‹</button>
+      <button onClick={() => nav(backTo)} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 15, cursor: 'pointer', padding: 4 }}>‹</button>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Editor · {ctype}</div>
         <div style={{ fontSize: 11, color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{status && isMobile ? status : subline}</div>

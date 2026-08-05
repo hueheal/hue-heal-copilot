@@ -91,12 +91,12 @@ export default function ProposalEditor() {
     <div>
       {/* Toolbar (hidden in print) */}
       <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 40px', borderBottom: '1px solid var(--hh-line)' }}>
-        <button onClick={() => nav('/proposals')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13 }}>⟵ Proposals</button>
+        <button onClick={() => nav(p?.client_id ? `/clients/${p.client_id}` : '/clients')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13 }}>⟵ {p?.client_name || 'Clients'}</button>
         <div style={{ fontSize: 13, color: 'var(--text-faint)' }}>{p.client_name} · {p.status}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
           <ConfirmButton
-            onConfirm={async () => { await deleteProposal(p!.id); nav('/proposals') }}
+            onConfirm={async () => { const home = p?.client_id ? `/clients/${p.client_id}` : '/clients'; await deleteProposal(p!.id); nav(home) }}
             confirmLabel="Delete proposal?"
             style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '11px 18px', fontSize: 13, color: 'var(--text-muted)' }}
           >
