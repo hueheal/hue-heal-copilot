@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import PageHeader, { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import { useAuth } from '../lib/auth'
@@ -23,6 +24,7 @@ function initials(name: string): string {
 
 export default function Clients() {
   const auth = useAuth()
+  const nav = useNavigate()
   const isMobile = useIsMobile()
   const [clients, setClients] = useState<Client[]>([])
   const [adding, setAdding] = useState(false)
@@ -147,7 +149,8 @@ export default function Clients() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {list.map((c) => (
-                    <div key={c.id} className="hh-card-hover" style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 16 }}>
+                    <div key={c.id} className="hh-card-hover" onClick={() => nav(`/clients/${c.id}`)}
+                      style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 16, cursor: 'pointer' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ width: 34, height: 34, flexShrink: 0, borderRadius: '50%', background: 'var(--hh-mushroom)', color: '#2A211A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>
                           {initials(c.name)}
@@ -160,9 +163,9 @@ export default function Clients() {
                       </div>
                       {c.note && <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 10, lineHeight: 1.5 }}>{c.note}</div>}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, opacity: 0.9 }}>
-                        <button className="hh-btn" onClick={() => move(c, -1)} disabled={colIdx === 0} title="Move back"
+                        <button className="hh-btn" onClick={(e) => { e.stopPropagation(); move(c, -1) }} disabled={colIdx === 0} title="Move back"
                           style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 24, height: 22, color: colIdx === 0 ? 'var(--hh-line)' : 'var(--text-faint)' }}>◀</button>
-                        <button className="hh-btn" onClick={() => move(c, 1)} disabled={colIdx === STAGES.length - 1} title="Move forward"
+                        <button className="hh-btn" onClick={(e) => { e.stopPropagation(); move(c, 1) }} disabled={colIdx === STAGES.length - 1} title="Move forward"
                           style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 24, height: 22, color: colIdx === STAGES.length - 1 ? 'var(--hh-line)' : 'var(--text-faint)' }}>▶</button>
                         <ConfirmButton onConfirm={() => remove(c.id)} title="Remove client"
                           style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 16, lineHeight: 1 }}>×</ConfirmButton>

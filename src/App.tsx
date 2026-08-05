@@ -3,6 +3,8 @@ import StudioLayout from './components/StudioLayout'
 import Dashboard from './pages/Dashboard'
 import Calendar from './pages/Calendar'
 import Clients from './pages/Clients'
+import ClientRoom from './pages/ClientRoom'
+import ClientDocEditor from './pages/ClientDocEditor'
 import Proposals from './pages/Proposals'
 import ProposalEditor from './pages/ProposalEditor'
 import InvoiceEditor from './pages/InvoiceEditor'
@@ -42,6 +44,8 @@ export default function App() {
         <Route path="create/:family" element={<CreateEditor />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="clients" element={<Clients />} />
+        <Route path="clients/:id" element={<ClientRoom />} />
+        <Route path="clients/:id/doc/:docId" element={<ClientDocEditor />} />
         <Route path="proposals" element={<Proposals />} />
         <Route path="proposals/:id" element={<ProposalEditor />} />
         <Route path="invoices/:id" element={<InvoiceEditor />} />

@@ -8,7 +8,7 @@ import { CORE_NAV, DEFAULT_MODULES } from '../lib/modules'
 /* App-style bottom tab bar for mobile: four primary destinations plus a More
    sheet for the rest, workspace switching and sign out. Replaces the desktop
    sidebar on small screens. */
-const PRIMARY_ORDER = ['dashboard', 'create', 'clients', 'calendar', 'proposals', 'reports']
+const PRIMARY_ORDER = ['dashboard', 'create', 'clients', 'calendar', 'reports']
 
 const bar: React.CSSProperties = {
   position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 40,

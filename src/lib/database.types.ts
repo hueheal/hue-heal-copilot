@@ -128,6 +128,7 @@ export interface Database {
           stage: ClientStage
           value_gbp: number | null
           note: string
+          share_token?: string
           created_at: string
           updated_at: string
         }
@@ -156,6 +157,7 @@ export interface Database {
           status: ProposalStatus
           phases: ProposalPhase[]
           content: ProposalContent
+          shared?: boolean
           sent_at: string | null
           created_at: string
           updated_at: string
@@ -170,6 +172,7 @@ export interface Database {
           status?: ProposalStatus
           phases?: ProposalPhase[]
           content?: ProposalContent
+          shared?: boolean
           sent_at?: string | null
           created_at?: string
           updated_at?: string
@@ -191,6 +194,7 @@ export interface Database {
           issued_at: string | null
           line_items: LineItem[]
           notes: string
+          shared?: boolean
           created_at: string
           updated_at: string
         }
@@ -207,6 +211,7 @@ export interface Database {
           issued_at?: string | null
           line_items?: LineItem[]
           notes?: string
+          shared?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -409,6 +414,44 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['journal_articles']['Insert']>
+        Relationships: []
+      }
+      client_docs: {
+        Row: {
+          id: string
+          owner: string
+          brand_id: string | null
+          client_id: string
+          kind: string
+          title: string
+          dek: string
+          blocks: unknown[]
+          form: unknown[]
+          responses: unknown[]
+          is_form: boolean
+          shared: boolean
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner?: string
+          brand_id?: string | null
+          client_id: string
+          kind?: string
+          title?: string
+          dek?: string
+          blocks?: unknown[]
+          form?: unknown[]
+          responses?: unknown[]
+          is_form?: boolean
+          shared?: boolean
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['client_docs']['Insert']>
         Relationships: []
       }
     }

@@ -16,7 +16,6 @@ export const NAV: NavItem[] = [
   { key: 'create', label: 'Create', glyph: '✦', path: '/create' },
   { key: 'calendar', label: 'Calendar', glyph: '⊞', path: '/calendar' },
   { key: 'clients', label: 'Clients', glyph: '◎', path: '/clients' },
-  { key: 'proposals', label: 'Proposals & Invoices', glyph: '◇', path: '/proposals' },
   { key: 'reports', label: 'Analytics', glyph: '◈', path: '/reports' },
   { key: 'research', label: 'Research', glyph: '⌕', path: '/research' },
   { key: 'linkedin', label: 'LinkedIn', glyph: 'in', path: '/linkedin' },
