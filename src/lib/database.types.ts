@@ -7,7 +7,7 @@ export type Sector = 'hospitality' | 'food_beverage' | 'health_fitness' | 'educa
 export type Accent = 'lime' | 'terracotta' | 'copper'
 export type PostStatus = 'draft' | 'scheduled' | 'published'
 
-export type ClientStage = 'lead' | 'proposal' | 'active' | 'delivered'
+export type ClientStage = 'lead' | 'proposal' | 'active' | 'delivered' | 'archive'
 export type ProposalStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'declined'
 export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue'
 

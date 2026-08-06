@@ -137,7 +137,7 @@ export default function Clients() {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: isMobile ? 22 : 16, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : `repeat(${STAGES.length}, 1fr)`, gap: isMobile ? 22 : 16, alignItems: 'start' }}>
           {STAGES.map((col, colIdx) => {
             const list = clients.filter((c) => c.stage === col.key)
             if (isMobile && list.length === 0) return null // stacked view: skip empty stages

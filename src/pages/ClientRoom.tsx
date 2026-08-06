@@ -59,6 +59,8 @@ export default function ClientRoom() {
   const [phaseKey, setPhaseKey] = useState<Phase['key']>('engage')
   const [creating, setCreating] = useState<string | null>(null)
   const [status, setStatus] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState(false)
+  const [valueDraft, setValueDraft] = useState('')
 
   async function reload() {
     if (gated || !id) return
@@ -97,6 +99,17 @@ export default function ClientRoom() {
     if (!client) return
     await updateClient(client.id, { stage })
     setClient({ ...client, stage })
+  }
+
+  async function saveValue() {
+    if (!client) { setEditingValue(false); return }
+    const n = parseInt(valueDraft.replace(/[^0-9]/g, ''), 10)
+    const v = Number.isFinite(n) && n > 0 ? n : null
+    try {
+      await updateClient(client.id, { value_gbp: v })
+      setClient({ ...client, value_gbp: v })
+    } catch (e) { setStatus(`Couldn’t save: ${e instanceof Error ? e.message : e}`) }
+    setEditingValue(false)
   }
 
   async function shareSpace() {
@@ -166,11 +179,8 @@ export default function ClientRoom() {
   const totalDocs = docs.length + proposals.length + invoices.length
   const stageLabel = STAGES.find((s) => s.key === client.stage)?.label ?? '—'
 
-  const heroStats = [
-    { num: gbpCompact(client.value_gbp), label: 'Value' },
-    { num: String(totalDocs), label: 'Documents' },
-    { num: String(sharedCount), label: 'Shared' },
-  ]
+  const statNum: React.CSSProperties = { fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 32 : 40, lineHeight: 1, color: pal.accent }
+  const statLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(244,239,226,0.55)', marginTop: 8 }
   const facts = [
     { k: 'Owner', v: USER.name },
     { k: 'Started', v: client.created_at ? new Date(client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
@@ -212,12 +222,31 @@ export default function ClientRoom() {
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(96px, 1fr))', gap: 26 }}>
-            {heroStats.map((s) => (
-              <div key={s.label}>
-                <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 32 : 40, lineHeight: 1, color: pal.accent }}>{s.num}</div>
-                <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(244,239,226,0.55)', marginTop: 8 }}>{s.label}</div>
-              </div>
-            ))}
+            <div>
+              {editingValue ? (
+                <input
+                  autoFocus value={valueDraft} inputMode="numeric" placeholder="64000"
+                  onChange={(e) => setValueDraft(e.target.value)}
+                  onBlur={saveValue}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveValue(); if (e.key === 'Escape') setEditingValue(false) }}
+                  style={{ ...statNum, width: '100%', maxWidth: 140, background: 'transparent', border: 'none', borderBottom: `1px solid ${pal.accent}`, padding: '0 0 2px', outline: 'none' }}
+                />
+              ) : (
+                <button onClick={() => { setValueDraft(client.value_gbp ? String(client.value_gbp) : ''); setEditingValue(true) }} title="Edit engagement value"
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', display: 'block' }}>
+                  <span style={statNum}>{gbpCompact(client.value_gbp)}</span>
+                </button>
+              )}
+              <div style={statLabel}>Value <span style={{ opacity: 0.75 }}>✎</span></div>
+            </div>
+            <div>
+              <div style={statNum}>{totalDocs}</div>
+              <div style={statLabel}>Documents</div>
+            </div>
+            <div>
+              <div style={statNum}>{sharedCount}</div>
+              <div style={statLabel}>Shared</div>
+            </div>
           </div>
         </div>
       </div>

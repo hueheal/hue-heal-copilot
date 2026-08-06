@@ -19,6 +19,7 @@ export const STAGES: { key: ClientStage; label: string }[] = [
   { key: 'proposal', label: 'Proposal out' },
   { key: 'active', label: 'Active' },
   { key: 'delivered', label: 'Delivered' },
+  { key: 'archive', label: 'Archive' },
 ]
 
 export const PROPOSAL_STATUSES: ProposalStatus[] = ['draft', 'sent', 'viewed', 'accepted', 'declined']
