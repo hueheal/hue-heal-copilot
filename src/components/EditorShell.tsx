@@ -135,14 +135,14 @@ export default function EditorShell({
     )
   }
 
+  // Desktop: the rail and the canvas scroll independently, so the form entry
+  // area can line up with whichever part of the document you're editing.
   return (
-    <div>
-      {header}
-      <div style={{ padding: '24px 40px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: `${railWidth}px 1fr`, gap: 28, alignItems: 'start' }}>
-          <div style={{ minWidth: 0 }}>{rail}</div>
-          <div style={{ minWidth: 0 }}>{canvas}</div>
-        </div>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flexShrink: 0 }}>{header}</div>
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: `${railWidth + 64}px 1fr` }}>
+        <div style={{ minWidth: 0, overflowY: 'auto', padding: '20px 24px 48px 40px', borderRight: '1px solid var(--hh-line)' }}>{rail}</div>
+        <div style={{ minWidth: 0, overflowY: 'auto', padding: '24px 40px 48px 32px', background: 'var(--hh-monterey)' }}>{canvas}</div>
       </div>
     </div>
   )
