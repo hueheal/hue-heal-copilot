@@ -75,6 +75,14 @@ button { font-family: inherit; cursor: pointer; }
 .hh-link-underline:hover { gap: 10px; }
 
 /* ---- Print → PDF: show only the .print-doc, hide app chrome & editor ---- */
+/* Client-document PDF export: a portal outside #root that only exists in print. */
+#hh-doc-print { display: none; }
+@media print {
+  body.hh-print-doc #root { display: none !important; }
+  body.hh-print-doc #hh-doc-print { display: block !important; }
+  body.hh-print-doc #hh-doc-print .hh-print-page { page-break-after: always; break-inside: avoid; }
+}
+
 @media print {
   @page { size: A4; margin: 14mm; }
   html, body { background: #fff !important; height: auto !important; overflow: visible !important; }

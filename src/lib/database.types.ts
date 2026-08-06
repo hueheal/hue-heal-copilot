@@ -423,6 +423,8 @@ export interface Database {
           brand_id: string | null
           client_id: string
           kind: string
+          phase?: string
+          format?: string
           title: string
           dek: string
           blocks: unknown[]
@@ -440,6 +442,8 @@ export interface Database {
           brand_id?: string | null
           client_id: string
           kind?: string
+          phase?: string
+          format?: string
           title?: string
           dek?: string
           blocks?: unknown[]

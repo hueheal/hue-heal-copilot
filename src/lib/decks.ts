@@ -7,9 +7,14 @@
    added, reordered or deleted freely.
    ============================================================ */
 
+export type SlideLayout = 'cover' | 'content' | 'list' | 'statement' | 'split' | 'terms' | 'timeline'
+export type SlideTheme = 'paper' | 'ink' | 'clay' | 'bone'
+
 export interface DeckSlide {
   id: string
-  layout: 'cover' | 'content' | 'list' | 'statement'
+  layout: SlideLayout
+  /** Page surface: paper (near-white), ink (near-black), clay (copper-brown), bone (sand). */
+  theme?: SlideTheme
   eyebrow?: string
   title?: string
   body?: string
