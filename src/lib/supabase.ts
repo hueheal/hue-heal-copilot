@@ -16,7 +16,12 @@ const url = 'https://dxniwcwoacyrjlyhymoh.supabase.co'
 const anonKey =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4bml3Y3dvYWN5cmpseWh5bW9oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2MjAzNjgsImV4cCI6MjEwMDE5NjM2OH0.290XlpQot76lTQIWWkVxHzTbWWS4Pxd4Rds7eM5BkWE'
 
-export const isSupabaseConfigured = Boolean(url && anonKey)
+/* Verification escape hatch: VITE_FORCE_LOCAL=1 runs the app in local mode
+   (in-memory data, no auth) so screens can be exercised without a magic link.
+   A literal "1" flag is immune to the paste-corruption issue above. */
+const forceLocal = import.meta.env.VITE_FORCE_LOCAL === '1'
+
+export const isSupabaseConfigured = Boolean(url && anonKey) && !forceLocal
 
 export const supabase: SupabaseClient<Database> | null = isSupabaseConfigured
   ? createClient<Database>(url, anonKey, {

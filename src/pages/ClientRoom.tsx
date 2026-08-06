@@ -7,17 +7,43 @@ import {
   type Client, type Proposal, type Invoice,
   STAGES, listClients, updateClient, listProposals, listInvoices, addProposal, addInvoice, gbpCompact,
 } from '../lib/studioOps'
-import { type ClientDoc, listClientDocs, addClientDoc, deleteClientDoc } from '../lib/clientDocs'
+import { type ClientDoc, listClientDocs, addClientDoc, deleteClientDoc, spaceLink } from '../lib/clientDocs'
 import { PHASES, phaseOf, blankDeck, blankA4, type Phase, type PhaseTemplate } from '../lib/phases'
-import { HUE_HEAL_LOGO_PATH, HUE_HEAL_LOGO_VIEWBOX } from '../lib/logoPath'
+import { USER } from '../data/studio'
 import type { ClientStage } from '../lib/database.types'
 
-/* The client room, to the design: hero, the five design phases, documents and
-   branded template starting points per phase, engagement facts and activity. */
+/* ============================================================
+   The client room, to the design: immersive gradient hero with
+   the engagement palette, the five design phases as a progress
+   timeline, cover-art document cards, branded template starting
+   points, and the Engagement / Activity rail.
+   ============================================================ */
 
-const railLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)' }
-const COVER_GRADS = ['linear-gradient(135deg,#2A2620,#14110E)', 'linear-gradient(135deg,#8A4A22,#2A2620)', 'linear-gradient(135deg,#4A3B2E,#1E1B18)']
-const DOC_STATUS: Record<string, string> = { draft: 'var(--text-faint)', shared: 'var(--status-positive)' }
+const CREAM = '#F4EFE2'
+const DOC_COVERS = ['linear-gradient(135deg,#2A2620,#14110E)', 'linear-gradient(135deg,#8A4A22,#2A2620)', 'linear-gradient(135deg,#4A3B2E,#1E1B18)']
+
+/* Engagement palettes (from onboarding in the design). Until a client picks
+   one, assignment is deterministic by name so a room always keeps its look. */
+const PALETTES = [
+  { accent: '#D8894E', hero: 'linear-gradient(120deg,#2A2620,#4A3B2E)', chips: [{ n: 'Stone', h: '#C6B7A2' }, { n: 'Teak', h: '#8A6A52' }, { n: 'Ink', h: '#2A2620' }, { n: 'Ember', h: '#D8894E' }] },
+  { accent: '#F0CBA6', hero: 'linear-gradient(120deg,#3A1E12,#8A4A22)', chips: [{ n: 'Ember', h: '#D8894E' }, { n: 'Clay', h: '#B5632F' }, { n: 'Char', h: '#2A2620' }, { n: 'Bone', h: '#F4EFE2' }] },
+  { accent: '#D2DC4E', hero: 'linear-gradient(120deg,#1E1B18,#3A2E25)', chips: [{ n: 'Moss', h: '#6E7A3E' }, { n: 'Mushroom', h: '#C6B7A2' }, { n: 'Anthracite', h: '#1E1B18' }, { n: 'Lime', h: '#D2DC4E' }] },
+  { accent: '#C6B7A2', hero: 'linear-gradient(120deg,#4A4238,#1E1B18)', chips: [{ n: 'Bone', h: '#B7AE9A' }, { n: 'Ash', h: '#6E6456' }, { n: 'Char', h: '#2A2620' }, { n: 'Lotus', h: '#ECE6DA' }] },
+]
+function paletteFor(name: string) {
+  let h = 0
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return PALETTES[h % PALETTES.length]
+}
+
+const DOT = {
+  positive: 'var(--status-positive)', copper: 'var(--hh-copper)', ember: 'var(--hh-ember)',
+  faint: 'var(--text-faint)', off: 'var(--hh-line-card)', warn: 'var(--hh-terracotta)',
+}
+const PROPOSAL_DOT: Record<string, string> = { draft: DOT.faint, sent: DOT.ember, viewed: DOT.copper, accepted: DOT.positive, declined: DOT.warn }
+const INVOICE_DOT: Record<string, string> = { draft: DOT.faint, sent: DOT.ember, paid: DOT.positive, overdue: DOT.warn }
+
+const eyebrow: React.CSSProperties = { fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-faint)' }
 
 export default function ClientRoom() {
   const { id } = useParams()
@@ -59,10 +85,27 @@ export default function ClientRoom() {
     return m
   }, [docs, proposals.length, invoices.length])
 
+  /* Phase progress: the furthest phase with documents is in progress,
+     everything before it is complete, everything after upcoming. */
+  const currentIdx = useMemo(() => {
+    let idx = 0
+    PHASES.forEach((p, i) => { if ((docCountByPhase[p.key] ?? 0) > 0) idx = i })
+    return idx
+  }, [docCountByPhase])
+
   async function setStage(stage: ClientStage) {
     if (!client) return
     await updateClient(client.id, { stage })
     setClient({ ...client, stage })
+  }
+
+  async function shareSpace() {
+    const token = (client as (Client & { share_token?: string }) | null)?.share_token
+    if (!token) { setStatus('The space link appears once this client is synced.'); return }
+    try {
+      await navigator.clipboard.writeText(spaceLink(token))
+      setStatus('Private space link copied.')
+    } catch { setStatus(spaceLink(token)) }
   }
 
   async function newFromTemplate(t: PhaseTemplate) {
@@ -115,182 +158,218 @@ export default function ClientRoom() {
     return items.sort((a, b) => b.ts - a.ts).slice(0, 6)
   }, [docs, proposals, invoices])
 
-  const initials = (client?.name ?? '·').split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
-  const pad = isMobile ? '18px 16px' : '28px 40px'
+  if (gated) return <p style={{ padding: isMobile ? '18px 16px' : '28px 40px', fontSize: 14, color: 'var(--text-muted)' }}>Sign in to open this client.</p>
+  if (!client) return <p style={{ padding: isMobile ? '18px 16px' : '28px 40px', fontSize: 14, color: 'var(--text-faint)' }}>Loading client…</p>
 
-  if (gated) return <p style={{ padding: pad, fontSize: 14, color: 'var(--text-muted)' }}>Sign in to open this client.</p>
-  if (!client) return <p style={{ padding: pad, fontSize: 14, color: 'var(--text-faint)' }}>Loading client…</p>
-
+  const pal = paletteFor(client.name)
   const sharedCount = docs.filter((d) => d.shared).length + proposals.filter((p) => p.shared).length + invoices.filter((i) => i.shared).length
+  const totalDocs = docs.length + proposals.length + invoices.length
+  const stageLabel = STAGES.find((s) => s.key === client.stage)?.label ?? '—'
+
+  const heroStats = [
+    { num: gbpCompact(client.value_gbp), label: 'Value' },
+    { num: String(totalDocs), label: 'Documents' },
+    { num: String(sharedCount), label: 'Shared' },
+  ]
+  const facts = [
+    { k: 'Owner', v: USER.name },
+    { k: 'Started', v: client.created_at ? new Date(client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
+    { k: 'Sector', v: client.sector || '—' },
+    { k: 'Fee', v: gbpCompact(client.value_gbp) },
+    { k: 'Shared to space', v: String(sharedCount) },
+  ]
 
   return (
     <div>
-      {/* Breadcrumb + hero */}
-      <div style={{ padding: isMobile ? '16px 16px 20px' : '24px 40px 30px', borderBottom: '1px solid var(--hh-line)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-          <button onClick={() => nav('/clients')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13, cursor: 'pointer', padding: 0 }}>‹ Clients</button>
-          <span style={{ color: 'var(--text-faint)', fontSize: 13 }}>/ {client.name}</span>
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 14, padding: isMobile ? '12px 16px' : '14px 28px', borderBottom: '1px solid var(--hh-line)', background: 'rgba(236,230,218,0.72)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 6 }}>
+        <button onClick={() => nav('/clients')} className="hh-btn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, flexShrink: 0, borderRadius: '50%', border: '1px solid var(--hh-line-card)', background: 'var(--hh-bone)', fontSize: 14, cursor: 'pointer', color: 'var(--text-strong)' }}>‹</button>
+        {!isMobile && <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>Clients</span>}
+        {!isMobile && <span style={{ fontSize: 12, color: 'var(--text-faint)' }}>/</span>}
+        <span style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.name}</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, flexShrink: 0 }}>
+          <button onClick={shareSpace} className="hh-btn" style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 999, padding: '8px 16px', fontSize: 12.5, cursor: 'pointer', color: 'var(--text-strong)' }}>Share</button>
+          <button onClick={() => newBlank('deck')} className="hh-btn" style={{ background: 'var(--hh-copper)', color: '#F6EFE4', border: 'none', borderRadius: 999, padding: '9px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }}>＋ New document</button>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{ width: isMobile ? 44 : 54, height: isMobile ? 44 : 54, flexShrink: 0, borderRadius: '50%', background: 'var(--hh-mushroom)', color: '#2A211A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? 15 : 18, fontWeight: 600 }}>{initials}</span>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)' }}>{[client.sector, STAGES.find((s) => s.key === client.stage)?.label].filter(Boolean).join(' · ')}</div>
-            <h1 className="hh-serif" style={{ fontWeight: 400, fontSize: isMobile ? 27 : 38, letterSpacing: '-0.01em', margin: '4px 0 0', lineHeight: 1.08 }}>{client.name}</h1>
+      </div>
+
+      {/* Immersive hero */}
+      <div style={{ position: 'relative', background: pal.hero, color: CREAM, padding: isMobile ? '30px 20px 26px' : '44px 40px 36px', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(105deg, rgba(16,15,13,0.86), rgba(16,15,13,0.42))' }} />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 32, flexWrap: 'wrap' }}>
+          <div style={{ minWidth: isMobile ? 0 : 280, flex: 1 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: pal.accent }}>{[client.sector, stageLabel].filter(Boolean).join(' · ')}</div>
+            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 38 : 60, lineHeight: 0.98, margin: '14px 0 0', letterSpacing: '-0.01em' }}>{client.name}</div>
+            <p style={{ fontSize: 14.5, lineHeight: 1.7, color: 'rgba(244,239,226,0.72)', maxWidth: '52ch', margin: '16px 0 0', textWrap: 'pretty' }}>
+              {client.note || 'Engagement brief not written yet. Add the scope, the spaces in play, and what success looks like.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 22, flexWrap: 'wrap' }}>
+              {pal.chips.map((c) => (
+                <span key={c.n} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(244,239,226,0.1)', border: '1px solid rgba(244,239,226,0.22)', borderRadius: 999, padding: '7px 13px', fontSize: 11, letterSpacing: '0.04em' }}>
+                  <span style={{ width: 12, height: 12, borderRadius: 3, background: c.h }} />{c.n}
+                </span>
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 18 }}>
-            {[{ num: gbpCompact(client.value_gbp), label: 'Value' }, { num: String(docs.length + proposals.length + invoices.length), label: 'Documents' }, { num: String(sharedCount), label: 'Shared' }].map((f) => (
-              <div key={f.label} style={{ textAlign: isMobile ? 'left' : 'right' }}>
-                <div className="hh-serif" style={{ fontSize: isMobile ? 20 : 24, color: 'var(--text-accent)', lineHeight: 1 }}>{f.num}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>{f.label}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(96px, 1fr))', gap: 26 }}>
+            {heroStats.map((s) => (
+              <div key={s.label}>
+                <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 32 : 40, lineHeight: 1, color: pal.accent }}>{s.num}</div>
+                <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(244,239,226,0.55)', marginTop: 8 }}>{s.label}</div>
               </div>
             ))}
           </div>
         </div>
-        {client.note && <p style={{ fontSize: 13.5, color: 'var(--text-muted)', margin: '14px 0 0', maxWidth: '64ch', lineHeight: 1.6 }}>{client.note}</p>}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 16 }}>
-          {STAGES.map((st) => {
-            const active = st.key === client.stage
+      </div>
+
+      {/* Phase timeline */}
+      <div style={{ padding: isMobile ? '22px 16px 6px' : '26px 40px 6px' }}>
+        <div style={{ ...eyebrow, marginBottom: 14 }}>Design phases</div>
+        <div style={isMobile
+          ? { display: 'flex', gap: 10, overflowX: 'auto', WebkitOverflowScrolling: 'touch', margin: '0 -16px', padding: '0 16px 6px' }
+          : { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+          {PHASES.map((p, i) => {
+            const active = p.key === phaseKey
+            const state = i < currentIdx ? 'Complete' : i === currentIdx ? 'In progress' : 'Upcoming'
+            const n = docCountByPhase[p.key] ?? 0
+            const pct = state === 'Complete' ? 100 : state === 'Upcoming' ? 0 : Math.min(88, 24 + n * 16)
+            const dot = state === 'Complete' ? DOT.positive : pct === 0 ? DOT.off : DOT.copper
+            const metaFg = active ? 'var(--text-on-ink-faint)' : 'var(--text-faint)'
             return (
-              <button key={st.key} className="hh-btn" onClick={() => setStage(st.key)}
-                style={{ borderRadius: 999, padding: '7px 13px', fontSize: 11.5, fontWeight: 500, cursor: 'pointer', border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-faint)' }}>
-                {st.label}
+              <button key={p.key} onClick={() => setPhaseKey(p.key)} className="hh-card-hover"
+                style={{ textAlign: 'left', cursor: 'pointer', minWidth: isMobile ? 150 : 0, flexShrink: 0, background: active ? 'var(--hh-anthracite)' : 'var(--hh-bone)', border: `1px solid ${active ? 'var(--hh-anthracite)' : 'var(--hh-line-card)'}`, borderRadius: 13, padding: '14px 15px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot }} />
+                  <span style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: metaFg }}>{p.num}</span>
+                </div>
+                <div style={{ fontSize: 14, fontWeight: active ? 600 : 500, color: active ? 'var(--text-on-ink)' : 'var(--text-strong)', marginTop: 10 }}>{p.label}</div>
+                <div style={{ fontSize: 11, color: metaFg, marginTop: 4 }}>{state}</div>
+                <div style={{ height: 3, borderRadius: 2, background: active ? 'rgba(244,240,231,0.18)' : 'var(--hh-line)', marginTop: 12, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: dot }} />
+                </div>
               </button>
             )
           })}
         </div>
-        {status && <p style={{ fontSize: 12.5, color: 'var(--hh-terracotta)', margin: '10px 0 0' }}>{status}</p>}
+        {status && <p style={{ fontSize: 12.5, color: 'var(--hh-terracotta)', margin: '12px 0 0' }}>{status}</p>}
       </div>
 
-      <div style={{ padding: pad, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 300px', gap: 32, alignItems: 'start', maxWidth: 1180 }}>
+      {/* Phase body */}
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) 300px', gap: 22, padding: isMobile ? '22px 16px 40px' : '26px 40px 48px', alignItems: 'start' }}>
         <div>
-          {/* Design phases */}
-          <div style={{ ...railLabel, marginBottom: 12 }}>Design phases</div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(5, 1fr)', gap: 8 }}>
-            {PHASES.map((p) => {
-              const active = p.key === phaseKey
-              const n = docCountByPhase[p.key] ?? 0
-              return (
-                <button key={p.key} onClick={() => setPhaseKey(p.key)}
-                  style={{ textAlign: 'left', padding: '12px 13px', borderRadius: 12, cursor: 'pointer', border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line-card)', background: active ? 'var(--hh-anthracite)' : 'var(--hh-bone)', color: active ? 'var(--text-on-ink)' : 'var(--text-strong)' }}>
-                  <div style={{ fontSize: 10, letterSpacing: '0.14em', color: active ? 'var(--text-on-ink-faint)' : 'var(--text-faint)' }}>{p.num}</div>
-                  <div style={{ fontSize: 13.5, fontWeight: active ? 600 : 500, marginTop: 3 }}>{p.label}</div>
-                  <div style={{ fontSize: 10.5, marginTop: 3, color: active ? 'var(--text-on-ink-faint)' : 'var(--text-faint)' }}>{n} doc{n === 1 ? '' : 's'}</div>
-                </button>
-              )
-            })}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: 26, lineHeight: 1 }}>{phase.label}</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{phase.blurb}</div>
           </div>
-          <div style={{ fontFamily: 'var(--font-voice)', fontStyle: 'italic', fontSize: 16.5, color: 'var(--text-muted)', margin: '14px 0 0' }}>{phase.blurb}</div>
 
-          {/* Documents in this phase */}
-          <div style={{ ...railLabel, margin: '26px 0 12px' }}>{phase.label} documents</div>
-          {phaseDocs.length === 0 && (phaseKey !== 'engage' || (proposals.length === 0 && invoices.length === 0)) && (
-            <div style={{ fontSize: 13.5, color: 'var(--text-faint)', padding: '4px 0 8px' }}>Nothing yet — start from a template below.</div>
-          )}
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(232px, 1fr))', gap: 14 }}>
             {phaseDocs.map((d, i) => (
-              <div key={d.id} style={{ display: 'flex', gap: 12, alignItems: 'stretch', background: 'var(--hh-lotus)', border: '1px solid var(--hh-line-card)', borderRadius: 12, overflow: 'hidden' }}>
-                <button onClick={() => nav(`/clients/${client.id}/doc/${d.id}`)} style={{ width: 64, flexShrink: 0, border: 'none', cursor: 'pointer', background: COVER_GRADS[i % COVER_GRADS.length], display: 'flex', alignItems: 'flex-end', padding: 8 }}>
-                  <svg viewBox={HUE_HEAL_LOGO_VIEWBOX} style={{ width: 40, display: 'block', color: '#F4EFE2', opacity: 0.92 }} fill="none"><path fill="currentColor" d={HUE_HEAL_LOGO_PATH} /></svg>
-                </button>
-                <button onClick={() => nav(`/clients/${client.id}/doc/${d.id}`)} style={{ flex: 1, minWidth: 0, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', padding: '12px 0' }}>
-                  <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.title || 'Untitled'}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{d.format === 'a4' ? 'A4' : d.format === 'form' ? 'Form' : 'Deck'}{d.is_form ? ' · step-by-step' : ''}</span>
-                </button>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', padding: '12px 12px' }}>
-                  <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: d.shared ? DOC_STATUS.shared : DOC_STATUS.draft }}>{d.shared ? 'Shared' : 'Private'}</span>
-                  <ConfirmButton onConfirm={async () => { await deleteClientDoc(d.id); reload() }} style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 14, lineHeight: 1, cursor: 'pointer', padding: 0 }}>×</ConfirmButton>
-                </div>
-              </div>
+              <DocCard key={d.id}
+                onOpen={() => nav(`/clients/${client.id}/doc/${d.id}`)}
+                cover={DOC_COVERS[i % DOC_COVERS.length]}
+                coverTitle={/contract|agreement/.test(d.kind ?? '') ? 'Agreement' : phase.label}
+                tag={d.format === 'a4' ? 'A4' : d.format === 'form' ? 'Form' : 'Deck'}
+                title={d.title || 'Untitled'}
+                statusLabel={d.shared ? 'Shared' : 'Draft'}
+                dot={d.shared ? DOT.positive : DOT.faint}
+                meta={`${d.format === 'a4' ? 'A4' : d.format === 'form' ? 'Form' : 'Deck'}${Array.isArray(d.blocks) && d.blocks.length ? ` · ${d.blocks.length}pp` : ''}`}
+                justify={i % 2 === 0 ? 'flex-end' : 'center'}
+                onDelete={async () => { await deleteClientDoc(d.id); reload() }}
+              />
             ))}
-            {phaseKey === 'engage' && proposals.map((p) => (
-              <button key={p.id} onClick={() => nav(`/proposals/${p.id}`)} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--hh-lotus)', border: '1px solid var(--hh-line-card)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left' }}>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.title}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Proposal · {gbpCompact(p.amount_gbp)}</span>
-                </span>
-                <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{p.status}</span>
-              </button>
+            {phaseKey === 'engage' && proposals.map((p, i) => (
+              <DocCard key={p.id}
+                onOpen={() => nav(`/proposals/${p.id}`)}
+                cover={DOC_COVERS[(phaseDocs.length + i) % DOC_COVERS.length]}
+                coverTitle="Proposal" tag="Proposal"
+                title={p.title}
+                statusLabel={cap(p.status)} dot={PROPOSAL_DOT[p.status] ?? DOT.faint}
+                meta={gbpCompact(p.amount_gbp)}
+                justify={(phaseDocs.length + i) % 2 === 0 ? 'flex-end' : 'center'}
+              />
             ))}
-            {phaseKey === 'engage' && invoices.map((i) => (
-              <button key={i.id} onClick={() => nav(`/invoices/${i.id}`)} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--hh-lotus)', border: '1px solid var(--hh-line-card)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left' }}>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.title}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Invoice · {gbpCompact(i.amount_gbp)}</span>
-                </span>
-                <span style={{ fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>{i.status}</span>
-              </button>
+            {phaseKey === 'engage' && invoices.map((inv, i) => (
+              <DocCard key={inv.id}
+                onOpen={() => nav(`/invoices/${inv.id}`)}
+                cover={DOC_COVERS[(phaseDocs.length + proposals.length + i) % DOC_COVERS.length]}
+                coverTitle="Invoice" tag="Invoice"
+                title={inv.title}
+                statusLabel={cap(inv.status)} dot={INVOICE_DOT[inv.status] ?? DOT.faint}
+                meta={gbpCompact(inv.amount_gbp)}
+                justify={(phaseDocs.length + proposals.length + i) % 2 === 0 ? 'flex-end' : 'center'}
+              />
             ))}
+            <button onClick={() => newBlank('deck')} disabled={creating !== null} className="hh-btn"
+              style={{ cursor: 'pointer', background: 'none', border: '1px dashed var(--hh-line-card)', borderRadius: 14, minHeight: 180, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, color: 'var(--text-faint)' }}>
+              <span style={{ fontSize: 22 }}>＋</span>
+              <span style={{ fontSize: 12.5 }}>New {phase.docWord}</span>
+            </button>
           </div>
 
           {/* Templates */}
-          <div style={{ ...railLabel, margin: '26px 0 4px' }}>Templates</div>
-          <div style={{ fontSize: 12.5, color: 'var(--text-faint)', marginBottom: 12 }}>Branded starting points for {phase.label}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, margin: '34px 0 14px', flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: 22, lineHeight: 1 }}>Templates</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Branded starting points for {phase.label}</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
             {phase.templates.map((t, i) => (
-              <button key={t.title} onClick={() => newFromTemplate(t)} disabled={creating !== null}
-                style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--hh-lotus)', border: '1px solid var(--hh-line-card)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left', opacity: creating && creating !== t.title ? 0.6 : 1 }}>
-                <span style={{ width: t.format === 'a4' ? 26 : 44, height: t.format === 'a4' ? 36 : 26, flexShrink: 0, borderRadius: 4, background: COVER_GRADS[i % COVER_GRADS.length] }} />
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)' }}>{creating === t.title ? 'Opening…' : t.title}</span>
-                  <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>{t.desc}</span>
+              <button key={t.title} onClick={() => newFromTemplate(t)} disabled={creating !== null} className="hh-card-hover"
+                style={{ cursor: 'pointer', background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 13, padding: 13, display: 'flex', gap: 12, textAlign: 'left', opacity: creating && creating !== t.title ? 0.6 : 1 }}>
+                <span style={{ width: t.format === 'a4' ? 26 : 44, height: t.format === 'a4' ? 36 : 26, borderRadius: 4, background: DOC_COVERS[i % DOC_COVERS.length], flexShrink: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 3, padding: 6 }}>
+                  <span style={{ width: '76%', height: 3, borderRadius: 2, background: 'rgba(244,239,226,0.85)' }} />
+                  <span style={{ width: '46%', height: 3, borderRadius: 2, background: 'rgba(244,239,226,0.45)' }} />
                 </span>
-                <span style={{ fontSize: 9.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', whiteSpace: 'nowrap' }}>{t.format === 'a4' ? 'A4' : t.format === 'form' ? 'Form' : '1920×1080'}</span>
+                <span style={{ minWidth: 0, lineHeight: 1.4 }}>
+                  <span style={{ display: 'block', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)' }}>{t.format === 'a4' ? 'A4 · portrait' : t.format === 'form' ? 'Form · step-by-step' : '1920×1080 · deck'}</span>
+                  <span style={{ display: 'block', fontSize: 13, fontWeight: 500, marginTop: 4, color: 'var(--text-strong)', textWrap: 'pretty' }}>{creating === t.title ? 'Opening…' : t.title}</span>
+                  <span style={{ display: 'block', fontSize: 11, color: 'var(--text-faint)', marginTop: 3, textWrap: 'pretty' }}>{t.desc}</span>
+                </span>
               </button>
             ))}
             {phaseKey === 'engage' && (
               <>
-                <button onClick={newProposal} disabled={creating !== null} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--hh-lotus)', border: '1px dashed var(--hh-line)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left' }}>
-                  <span style={{ width: 44, height: 26, flexShrink: 0, borderRadius: 4, border: '1px dashed var(--hh-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)' }}>＋</span>
-                  <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)' }}>Priced proposal (PDF)</span>
-                </button>
-                <button onClick={newInvoice} disabled={creating !== null} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--hh-lotus)', border: '1px dashed var(--hh-line)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left' }}>
-                  <span style={{ width: 44, height: 26, flexShrink: 0, borderRadius: 4, border: '1px dashed var(--hh-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)' }}>＋</span>
-                  <span style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)' }}>Invoice (PDF)</span>
-                </button>
+                <BlankCard onClick={newProposal} disabled={creating !== null} thumbW={44} thumbH={26} eyebrowText="Priced · PDF" title="New proposal" />
+                <BlankCard onClick={newInvoice} disabled={creating !== null} thumbW={44} thumbH={26} eyebrowText="Priced · PDF" title="New invoice" />
               </>
             )}
-            <button onClick={() => newBlank('deck')} disabled={creating !== null} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'none', border: '1px dashed var(--hh-line)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ width: 44, height: 26, flexShrink: 0, borderRadius: 4, border: '1px dashed var(--hh-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)' }}>＋</span>
-              <span style={{ minWidth: 0 }}>
-                <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)' }}>New presentation</span>
-                <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Blank · 1920×1080</span>
-              </span>
-            </button>
-            <button onClick={() => newBlank('a4')} disabled={creating !== null} style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'none', border: '1px dashed var(--hh-line)', borderRadius: 12, padding: '12px 14px', cursor: 'pointer', textAlign: 'left' }}>
-              <span style={{ width: 26, height: 36, flexShrink: 0, borderRadius: 4, border: '1px dashed var(--hh-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-faint)' }}>＋</span>
-              <span style={{ minWidth: 0 }}>
-                <span style={{ display: 'block', fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)' }}>New document</span>
-                <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Blank · A4 portrait</span>
-              </span>
-            </button>
+            <BlankCard onClick={() => newBlank('deck')} disabled={creating !== null} thumbW={44} thumbH={26} eyebrowText="Blank · 1920×1080" title="New presentation" />
+            <BlankCard onClick={() => newBlank('a4')} disabled={creating !== null} thumbW={26} thumbH={36} eyebrowText="Blank · A4 portrait" title="New document" />
           </div>
         </div>
 
-        {/* Right rail: engagement + activity */}
-        <div>
-          <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 18 }}>
-            <div style={{ ...railLabel, marginBottom: 10 }}>Engagement</div>
-            {[
-              { k: 'Stage', v: STAGES.find((s) => s.key === client.stage)?.label ?? '—' },
-              { k: 'Sector', v: client.sector || '—' },
-              { k: 'Value', v: gbpCompact(client.value_gbp) },
-              { k: 'Documents', v: String(docs.length + proposals.length + invoices.length) },
-              { k: 'Shared to space', v: String(sharedCount) },
-            ].map((f) => (
-              <div key={f.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderTop: '1px solid var(--hh-line)', fontSize: 13 }}>
-                <span style={{ color: 'var(--text-faint)' }}>{f.k}</span>
-                <span style={{ color: 'var(--text-strong)', fontWeight: 500, textAlign: 'right' }}>{f.v}</span>
+        {/* Client rail */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 16 }}>
+            <div style={{ ...eyebrow, letterSpacing: '0.16em', marginBottom: 12 }}>Engagement</div>
+            {facts.map((f) => (
+              <div key={f.k} style={{ display: 'flex', alignItems: 'baseline', gap: 12, padding: '8px 0', borderTop: '1px solid var(--hh-line)' }}>
+                <span style={{ fontSize: 11.5, color: 'var(--text-faint)', width: 82, flexShrink: 0 }}>{f.k}</span>
+                <span style={{ fontSize: 12.5, color: 'var(--text-body)', textAlign: 'right', flex: 1 }}>{f.v}</span>
               </div>
             ))}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, paddingTop: 12, borderTop: '1px solid var(--hh-line)', marginTop: 4 }}>
+              {STAGES.map((st) => {
+                const active = st.key === client.stage
+                return (
+                  <button key={st.key} className="hh-btn" onClick={() => setStage(st.key)}
+                    style={{ borderRadius: 999, padding: '6px 11px', fontSize: 11, fontWeight: 500, cursor: 'pointer', border: `1px solid ${active ? 'var(--hh-anthracite)' : 'var(--hh-line-card)'}`, background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-faint)' }}>
+                    {st.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
-          <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 18, marginTop: 14 }}>
-            <div style={{ ...railLabel, marginBottom: 10 }}>Activity</div>
+          <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 16 }}>
+            <div style={{ ...eyebrow, letterSpacing: '0.16em', marginBottom: 12 }}>Activity</div>
             {activity.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-faint)' }}>Nothing yet.</div>}
             {activity.map((a, i) => (
-              <div key={i} style={{ padding: '8px 0', borderTop: '1px solid var(--hh-line)' }}>
-                <div style={{ fontSize: 12.5, color: 'var(--text-strong)', lineHeight: 1.4 }}>{a.what}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 2 }}>{a.when}</div>
+              <div key={i} style={{ display: 'flex', gap: 11, padding: '9px 0', borderTop: '1px solid var(--hh-line)' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--hh-copper)', marginTop: 6, flexShrink: 0 }} />
+                <div style={{ lineHeight: 1.45, minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5 }}>{a.what}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{a.when}</div>
+                </div>
               </div>
             ))}
           </div>
@@ -299,6 +378,65 @@ export default function ClientRoom() {
     </div>
   )
 }
+
+/* Cover-art document card, to the design. */
+function DocCard({ onOpen, cover, coverTitle, tag, title, statusLabel, dot, meta, justify, onDelete }: {
+  onOpen: () => void
+  cover: string
+  coverTitle: string
+  tag: string
+  title: string
+  statusLabel: string
+  dot: string
+  meta: string
+  justify: 'flex-end' | 'center'
+  onDelete?: () => Promise<void>
+}) {
+  return (
+    <div className="hh-card-hover" style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, overflow: 'hidden' }}>
+      <button onClick={onOpen} style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', padding: 0, cursor: 'pointer', background: 'none' }}>
+        <div style={{ height: 116, background: cover, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: justify, padding: 14 }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: 19, lineHeight: 1.1, color: CREAM, maxWidth: '88%' }}>{coverTitle}</div>
+          <div style={{ position: 'absolute', top: 12, right: 14, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,239,226,0.6)' }}>{tag}</div>
+        </div>
+        <div style={{ padding: '13px 14px 0' }}>
+          <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--text-strong)', textWrap: 'pretty' }}>{title}</div>
+        </div>
+      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px 13px' }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+        <span style={{ fontSize: 11.5, color: 'var(--text-body)' }}>{statusLabel}</span>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-faint)' }}>{meta}</span>
+        {onDelete && (
+          <ConfirmButton onConfirm={onDelete} style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 14, lineHeight: 1, cursor: 'pointer', padding: '0 0 0 4px' }}>×</ConfirmButton>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* Dashed "start blank" template card. */
+function BlankCard({ onClick, disabled, thumbW, thumbH, eyebrowText, title }: {
+  onClick: () => void
+  disabled: boolean
+  thumbW: number
+  thumbH: number
+  eyebrowText: string
+  title: string
+}) {
+  return (
+    <button onClick={onClick} disabled={disabled} className="hh-btn"
+      style={{ cursor: 'pointer', background: 'none', border: '1px dashed var(--hh-line-card)', borderRadius: 13, padding: 13, display: 'flex', alignItems: 'center', gap: 12, color: 'var(--text-muted)', textAlign: 'left' }}>
+      <span style={{ width: thumbW, height: thumbH, borderRadius: 4, border: '1px dashed var(--hh-line-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>＋</span>
+      <span style={{ lineHeight: 1.4, minWidth: 0 }}>
+        <span style={{ display: 'block', fontSize: 9.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>{eyebrowText}</span>
+        <span style={{ display: 'block', fontSize: 13, fontWeight: 500, marginTop: 4, color: 'var(--text-strong)' }}>{title}</span>
+      </span>
+    </button>
+  )
+}
+
+function cap(s: string): string { return s ? s[0].toUpperCase() + s.slice(1) : s }
 
 function rel(iso: string): string {
   const d = Date.now() - Date.parse(iso)

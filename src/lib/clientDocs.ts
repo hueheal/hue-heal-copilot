@@ -45,34 +45,57 @@ export function docKind(key: string): DocKind {
   return DOC_KINDS.find((k) => k.key === key) ?? { key, label: key, icon: '·', blurb: '', group: 'design' }
 }
 
+/* ---- Local-mode fallback (in-memory, matches studioOps) ---- */
+let dseq = 1
+const localDocs: ClientDoc[] = []
+const iso = () => new Date().toISOString()
+
 /* ---- CRUD ---- */
 export async function listClientDocs(clientId: string): Promise<ClientDoc[]> {
-  if (!(isSupabaseConfigured && supabase)) return []
+  if (!(isSupabaseConfigured && supabase)) return localDocs.filter((d) => d.client_id === clientId)
   const { data } = await supabase.from('client_docs').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
   return (data as ClientDoc[] | null) ?? []
 }
 
 export async function getClientDoc(id: string): Promise<ClientDoc | null> {
-  if (!(isSupabaseConfigured && supabase)) return null
+  if (!(isSupabaseConfigured && supabase)) return localDocs.find((d) => d.id === id) ?? null
   const { data } = await supabase.from('client_docs').select('*').eq('id', id).maybeSingle()
   return (data as ClientDoc | null) ?? null
 }
 
 export async function addClientDoc(input: DocInsert): Promise<ClientDoc> {
-  if (!(isSupabaseConfigured && supabase)) throw new Error('Not connected')
+  if (!(isSupabaseConfigured && supabase)) {
+    const doc: ClientDoc = {
+      id: `local-d${dseq++}`, owner: 'local', brand_id: null, client_id: input.client_id,
+      kind: input.kind ?? 'document', phase: input.phase ?? 'engage', format: input.format ?? 'deck',
+      title: input.title ?? 'Untitled', dek: input.dek ?? '', blocks: input.blocks ?? [],
+      form: input.form ?? [], responses: [], is_form: input.is_form ?? false,
+      shared: false, status: 'draft', created_at: iso(), updated_at: iso(),
+    }
+    localDocs.unshift(doc)
+    return doc
+  }
   const { data, error } = await supabase.from('client_docs').insert(withBrandInsert(input)).select('*').single()
   if (error) throw error
   return data as ClientDoc
 }
 
 export async function updateClientDoc(id: string, patch: Partial<DocInsert>): Promise<void> {
-  if (!(isSupabaseConfigured && supabase)) throw new Error('Not connected')
+  if (!(isSupabaseConfigured && supabase)) {
+    const d = localDocs.find((x) => x.id === id)
+    if (d) Object.assign(d, patch, { updated_at: iso() })
+    return
+  }
   const { error } = await supabase.from('client_docs').update(patch).eq('id', id)
   if (error) throw error
 }
 
 export async function deleteClientDoc(id: string): Promise<void> {
-  if (!(isSupabaseConfigured && supabase)) return
+  if (!(isSupabaseConfigured && supabase)) {
+    const i = localDocs.findIndex((x) => x.id === id)
+    if (i >= 0) localDocs.splice(i, 1)
+    return
+  }
   await supabase.from('client_docs').delete().eq('id', id)
 }
 
