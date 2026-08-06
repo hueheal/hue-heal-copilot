@@ -217,7 +217,7 @@ export default function ClientDocEditor() {
       {!isForm && (
         <button className="hh-btn" onClick={() => setPrinting(true)}
           style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-          ↧ PDF
+          {isMobile ? '↧ PDF' : '↧ Download PDF'}
         </button>
       )}
       <button className="hh-btn" onClick={toggleShare}
@@ -276,6 +276,7 @@ export default function ClientDocEditor() {
         status={status}
         busy={busy}
         onDone={save}
+        doneLabel="Save draft"
         view={mView}
         onViewChange={setMView}
         headerExtra={headerExtra}
@@ -367,12 +368,13 @@ export default function ClientDocEditor() {
         canvas={isForm ? formCanvas : pagesCanvas}
       />
 
-      {/* PDF export: pages rendered full-bleed in print only */}
+      {/* PDF export: pages rendered full-bleed in print only. The wrapper holds
+          the exact page size (a hair under @page to defeat rounding spill). */}
       {printing && createPortal(
         <div id="hh-doc-print">
-          <style>{`@media print { @page { size: ${isA4 ? '210mm 297mm' : '296mm 166.5mm'}; margin: 0; } }`}</style>
+          <style>{`@media print { @page { size: ${isA4 ? '210mm 297mm' : '297mm 167.1mm'}; margin: 0; } }`}</style>
           {slides.map((sl, i) => (
-            <div key={sl.id} className="hh-print-page" style={{ width: isA4 ? '210mm' : '296mm' }}>
+            <div key={sl.id} className="hh-print-page" style={{ width: isA4 ? '210mm' : '297mm', height: isA4 ? '296.6mm' : '166.7mm' }}>
               <SlideView slide={sl} index={i} total={slides.length} clientName={client?.name ?? 'Client'} format={format} />
             </div>
           ))}

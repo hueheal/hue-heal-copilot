@@ -78,9 +78,16 @@ button { font-family: inherit; cursor: pointer; }
 /* Client-document PDF export: a portal outside #root that only exists in print. */
 #hh-doc-print { display: none; }
 @media print {
+  body.hh-print-doc { margin: 0 !important; }
   body.hh-print-doc #root { display: none !important; }
   body.hh-print-doc #hh-doc-print { display: block !important; }
-  body.hh-print-doc #hh-doc-print .hh-print-page { page-break-after: always; break-inside: avoid; }
+  /* Print the surfaces exactly as previewed (dark covers, clay pages). */
+  #hh-doc-print, #hh-doc-print * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  #hh-doc-print .hh-print-page { page-break-after: always; break-inside: avoid; overflow: hidden; }
+  #hh-doc-print .hh-print-page:last-child { page-break-after: auto; }
+  /* The wrapper carries the exact mm size; kill aspect rounding + radii so a
+     page never spills onto a blank sheet and corners print square. */
+  #hh-doc-print .hh-print-page > div { aspect-ratio: auto !important; width: 100% !important; height: 100% !important; border-radius: 0 !important; }
 }
 
 @media print {
