@@ -74,7 +74,8 @@ export default function SlideView({ slide, index, total, clientName, format = 'd
     return (
       <div style={base}>
         <div style={{ position: 'absolute', top: fz(5), left: pad, fontSize: fz(1.15), letterSpacing: '0.22em', textTransform: 'uppercase', color: t.accent }}>{slide.eyebrow}</div>
-        <div style={{ position: 'absolute', left: pad, right: pad, top: '50%', transform: 'translateY(-50%)' }}>
+        {/* Bounded and vertically centred, so long copy never reaches the footer. */}
+        <div style={{ position: 'absolute', left: pad, right: pad, top: fz(10), bottom: fz(9), display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: fz(3.6), lineHeight: 1.15, maxWidth: '80%' }}>{slide.title}</div>
           {slide.body && <div style={{ fontFamily: 'var(--font-voice)', fontStyle: 'italic', fontSize: fz(1.6), color: t.meta, marginTop: fz(2), maxWidth: '64%' }}>{slide.body}</div>}
         </div>
@@ -90,13 +91,13 @@ export default function SlideView({ slide, index, total, clientName, format = 'd
           <div style={{ fontSize: fz(1.15), letterSpacing: '0.22em', textTransform: 'uppercase', color: t.accent }}>{slide.eyebrow}</div>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: fz(2.8), lineHeight: 1.14, marginTop: fz(1.2) }}>{slide.title}</div>
         </div>
-        <div style={{ position: 'absolute', right: pad, top: fz(5.4), width: '44%', bottom: fz(7), overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', right: pad, top: fz(5.4), width: '44%', bottom: fz(8.5), overflow: 'hidden' }}>
           {slide.image
             ? <img src={slide.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: fz(0.8) }} />
             : <div style={{ fontSize: fz(1.5), lineHeight: 1.75, whiteSpace: 'pre-line', color: t.ink, opacity: 0.92 }}>{slide.body}</div>}
         </div>
         {slide.image && slide.body && (
-          <div style={{ position: 'absolute', left: pad, top: fz(16), width: '38%', fontSize: fz(1.35), lineHeight: 1.7, color: t.meta, whiteSpace: 'pre-line' }}>{slide.body}</div>
+          <div style={{ position: 'absolute', left: pad, top: fz(16), width: '38%', bottom: fz(8.5), overflow: 'hidden', fontSize: fz(1.35), lineHeight: 1.7, color: t.meta, whiteSpace: 'pre-line' }}>{slide.body}</div>
         )}
         {footer}
       </div>
@@ -110,9 +111,9 @@ export default function SlideView({ slide, index, total, clientName, format = 'd
         <div style={{ position: 'absolute', top: fz(5), left: pad, right: pad }}>
           <div style={{ fontSize: fz(1.15), letterSpacing: '0.22em', textTransform: 'uppercase', color: t.accent }}>{slide.eyebrow}</div>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: fz(3), lineHeight: 1.12, marginTop: fz(1.2) }}>{slide.title}</div>
-          {slide.body && <div style={{ fontSize: fz(1.35), lineHeight: 1.65, color: t.meta, marginTop: fz(1.2), maxWidth: '70%' }}>{slide.body}</div>}
+          {slide.body && <div style={{ fontSize: fz(1.35), lineHeight: 1.65, color: t.meta, marginTop: fz(1.2), maxWidth: '70%', maxHeight: fz(8), overflow: 'hidden' }}>{slide.body}</div>}
         </div>
-        <div style={{ position: 'absolute', left: pad, right: pad, bottom: fz(8), display: 'grid', gridTemplateColumns: isA4 ? 'repeat(2, 1fr)' : `repeat(${Math.max(cols.length, 1)}, 1fr)`, gap: fz(1.4) }}>
+        <div style={{ position: 'absolute', left: pad, right: pad, bottom: fz(9), display: 'grid', gridTemplateColumns: isA4 ? 'repeat(2, 1fr)' : `repeat(${Math.max(cols.length, 1)}, 1fr)`, gap: fz(1.4) }}>
           {cols.map((b, i) => (
             <div key={i} style={{ borderTop: `2px solid ${t.accent}`, paddingTop: fz(1) }}>
               <div style={{ fontSize: fz(1.3), lineHeight: 1.5 }}>{b}</div>
@@ -131,7 +132,7 @@ export default function SlideView({ slide, index, total, clientName, format = 'd
           <div style={{ fontSize: fz(1.15), letterSpacing: '0.22em', textTransform: 'uppercase', color: t.accent }}>{slide.eyebrow}</div>
           <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: fz(2.6), lineHeight: 1.14, marginTop: fz(1) }}>{slide.title}</div>
         </div>
-        <div style={{ position: 'absolute', left: pad, right: pad, top: fz(13.5), bottom: fz(6.5), overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', left: pad, right: pad, top: fz(13.5), bottom: fz(8.5), overflow: 'hidden' }}>
           {slide.body && <div style={{ fontSize: fz(1.3), lineHeight: 1.7, color: t.ink, opacity: 0.92, whiteSpace: 'pre-line', marginBottom: fz(1.4) }}>{slide.body}</div>}
           {(slide.bullets ?? []).filter((b) => b.trim()).map((b, i) => (
             <div key={i} style={{ display: 'flex', gap: fz(1), padding: `${fz(0.9)} 0`, borderBottom: `1px solid ${t.rule}`, fontSize: fz(1.3), lineHeight: 1.55 }}>
@@ -152,7 +153,7 @@ export default function SlideView({ slide, index, total, clientName, format = 'd
         <div style={{ fontSize: fz(1.15), letterSpacing: '0.22em', textTransform: 'uppercase', color: t.accent }}>{slide.eyebrow}</div>
         <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: fz(3), lineHeight: 1.12, marginTop: fz(1.2), maxWidth: '74%' }}>{slide.title}</div>
       </div>
-      <div style={{ position: 'absolute', left: pad, right: pad, top: fz(17), bottom: fz(6.5), overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', left: pad, right: pad, top: fz(17), bottom: fz(8.5), overflow: 'hidden' }}>
         {slide.layout === 'list' ? (
           <div>
             {slide.body && <div style={{ fontSize: fz(1.45), lineHeight: 1.7, maxWidth: '66%', marginBottom: fz(1.6), opacity: 0.92 }}>{slide.body}</div>}
