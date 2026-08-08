@@ -7,6 +7,9 @@
 // in-app template. No images are generated here: the drafts open on the brand
 // atmos background so you drop in your own photo or AI background in the studio.
 // A digest of the day's topics is emailed to hello@hueandheal.com.
+// No repeats: the last 30 days of drafts are fed to the prompts as an
+// ALREADY COVERED list, and a subject-based guard redrafts once if the model
+// still returns a company or product covered recently (or twice in one batch).
 // Triggered by Supabase pg_cron; guarded by CRON_SECRET.
 // preview:true returns the batch without saving drafts or emailing.
 // Secrets: CRON_SECRET, ANTHROPIC_API_KEY, RESEND_API_KEY,
@@ -45,7 +48,7 @@ const TOPIC_BUCKETS = [
 ]
 
 interface CarouselSlide { heading: string; body: string }
-interface Post { title: string; format: string; caption: string; hashtags: string[]; sector: string; slides?: CarouselSlide[]; sourceUrl?: string }
+interface Post { title: string; format: string; caption: string; hashtags: string[]; sector: string; subject?: string; slides?: CarouselSlide[]; sourceUrl?: string }
 interface Brand { id: string; name: string; created_by?: string | null; tone_of_voice?: string | null; writing_guidelines?: string | null; accent_color?: string | null }
 interface Item { post: Post; draftId: string | null }
 
@@ -74,17 +77,63 @@ async function anthropic(body: Record<string, unknown>, ms: number): Promise<Res
   }
 }
 
+/* The do-not-repeat memory: titles and captions of every draft generated for
+   this brand in the last 30 days. Feeds the prompts and the repeat guard. */
+async function recentCoverage(admin: ReturnType<typeof createClient>, brandId: string): Promise<{ titles: string[]; haystack: string[] }> {
+  try {
+    const since = new Date(Date.now() - 30 * 86400000).toISOString()
+    const { data } = await admin.from('social_posts')
+      .select('topic, headline, caption')
+      .eq('brand_id', brandId)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(80)
+    const rows = (data ?? []) as { topic?: string; headline?: string; caption?: string }[]
+    const seen = new Set<string>()
+    const titles: string[] = []
+    const haystack: string[] = []
+    for (const r of rows) {
+      const t = (r.topic || r.headline || '').trim()
+      if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); titles.push(t) }
+      haystack.push([r.topic, r.headline, r.caption].filter(Boolean).join(' '))
+    }
+    return { titles: titles.slice(0, 40), haystack }
+  } catch {
+    return { titles: [], haystack: [] }
+  }
+}
+
+/* True when a post's subject (the company/product it is about) already appears
+   anywhere in the recent drafts. Catches the "Oura again" failure mode. */
+function isRepeat(post: Post, haystack: string[]): boolean {
+  const s = (post.subject ?? '').trim().toLowerCase()
+  if (s.length < 3 || s === 'evergreen') return false
+  return haystack.some((h) => h.toLowerCase().includes(s))
+}
+
+function avoidBlock(titles: string[]): string {
+  if (!titles.length) return ''
+  return (
+    '\nALREADY COVERED (the studio published or drafted these in the last 30 days). ' +
+    'Do NOT cover these stories again, and do NOT feature the same companies or products again ' +
+    'unless there is genuinely new, materially different news about them:\n' +
+    titles.map((t) => `- ${t}`).join('\n') + '\n'
+  )
+}
+
 /* Step 1: research real, current developments with live web search. Resilient:
    on any error or timeout it returns '' and the draft step uses evergreen angles. */
-async function research(): Promise<string> {
+async function research(avoid: string): Promise<string> {
   try {
     const prompt =
       `${POSITIONING}\n\n` +
       'Use web search to find real, current and specific developments from the last few weeks that would inspire ' +
       'strong social posts. Cover a spread across these angles:\n' +
       TOPIC_BUCKETS.map((b, i) => `${i + 1}. ${b}`).join('\n') +
+      avoid +
       '\n\nReturn a short brief of 3 to 5 concrete, real items (name the real product, company, study or launch) ' +
-      'each with one sentence of context and its source URL. British English. Do not invent anything.'
+      'each with one sentence of context and its source URL. Every item must be about a DIFFERENT company or product. ' +
+      'British English. Do not invent anything.'
     const resp = await anthropic({
       model: MODEL, max_tokens: 1500,
       tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
@@ -111,6 +160,7 @@ const TOOL = {
           type: 'object',
           properties: {
             title: { type: 'string', description: 'The cover headline. Short and striking, under 8 words. Must make sense on its own.' },
+            subject: { type: 'string', description: 'The single company, product, study or place this post is about, e.g. "Oura" or "Equinox". Use "evergreen" if the post is a general thought piece about no specific company.' },
             format: { type: 'string', enum: ['single', 'carousel'], description: 'single = one image that stands alone. carousel = a cover plus content slides that develop the idea.' },
             caption: { type: 'string', description: 'The full ready-to-post caption for the post description. Strong hook, natural flow, a soft call to action. British English. Never use em dashes or en dashes.' },
             hashtags: { type: 'array', items: { type: 'string' }, description: '5 to 8 relevant hashtags, each starting with #.' },
@@ -122,7 +172,7 @@ const TOOL = {
             },
             sourceUrl: { type: 'string', description: 'If based on a real news item, the source URL. Empty string if evergreen.' },
           },
-          required: ['title', 'format', 'caption', 'hashtags', 'sector'],
+          required: ['title', 'format', 'caption', 'hashtags', 'sector', 'subject'],
         },
       },
     },
@@ -131,7 +181,7 @@ const TOOL = {
 }
 
 /* Step 2: turn the research into 3 polished posts in the brand voice. */
-async function draftPosts(brand: Brand, brief: string): Promise<Post[]> {
+async function draftPosts(brand: Brand, brief: string, avoid: string, feedback = ''): Promise<Post[]> {
   const voice = (brand.tone_of_voice ?? '').trim()
   const guides = (brand.writing_guidelines ?? '').trim()
   const prompt =
@@ -142,7 +192,10 @@ async function draftPosts(brand: Brand, brief: string): Promise<Post[]> {
     `Write today's 3 polished, ready-to-post Instagram posts for ${brand.name}.\n` +
     (voice ? `\nVOICE (follow it closely):\n${voice}\n` : '') +
     (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
+    avoid +
+    (feedback ? `\n${feedback}\n` : '') +
     '\nRules: three genuinely distinct angles drawn from different topic buckets (digital and physical, not all about physical spaces). ' +
+    'The 3 posts must be about 3 DIFFERENT companies, products or subjects, and none of them may repeat anything on the ALREADY COVERED list. ' +
     'Each post is EITHER a single or a carousel, and must be complete either way:\n' +
     '- single: the cover headline plus the image carries the whole idea. Choose single only when one line genuinely lands on its own.\n' +
     '- carousel: give 3 to 5 content slides after the cover, each a clear self-contained point, so the swipe tells the full story. Prefer carousel when the idea needs unpacking (most news, guides and thought pieces do).\n' +
@@ -282,8 +335,28 @@ async function runBatch(preview: boolean): Promise<Record<string, unknown>> {
     owner = (mem.data as { user_id?: string } | null)?.user_id ?? null
   }
 
-  const brief = await research()
-  const posts = await draftPosts(brand, brief)
+  // Memory: what the last 30 days of drafts already covered.
+  const recent = await recentCoverage(admin, brand.id)
+  const avoid = avoidBlock(recent.titles)
+
+  const brief = await research(avoid)
+  let posts = await draftPosts(brand, brief, avoid)
+
+  // Repeat guard: if any post is about a subject already covered (or two posts
+  // in the batch share a subject), redraft once with explicit feedback.
+  const inBatch = new Set<string>()
+  const dupes: string[] = []
+  for (const p of posts) {
+    const s = (p.subject ?? '').trim().toLowerCase()
+    if (isRepeat(p, recent.haystack) || (s && s !== 'evergreen' && inBatch.has(s))) dupes.push(p.subject ?? p.title)
+    if (s) inBatch.add(s)
+  }
+  if (dupes.length) {
+    const feedback =
+      `YOUR PREVIOUS ATTEMPT REPEATED COVERAGE OF: ${dupes.join(', ')}. ` +
+      'These subjects were already covered recently. Replace every repeated post with a post about a completely different company, product or subject.'
+    try { posts = await draftPosts(brand, brief, avoid, feedback) } catch { /* keep the first batch rather than fail the run */ }
+  }
 
   const items: Item[] = []
   for (const p of posts) {
