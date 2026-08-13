@@ -15,6 +15,17 @@ interface Body {
   subject: string
   html: string
   recipients: (string | Recipient)[]
+  /** Optional per-brand sender, e.g. "Remedae <news@remedae.app>". Must be a
+      domain verified in Resend or Resend rejects the batch. */
+  from?: string
+}
+
+function cleanFrom(v: unknown): string | null {
+  if (typeof v !== 'string') return null
+  const s = v.trim()
+  // "Name <local@domain>" or a bare address.
+  if (/^[^<>@]{1,80}<[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>$/.test(s) || /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(s)) return s
+  return null
 }
 
 async function sendBatch(items: { from: string; to: string[]; subject: string; html: string }[]) {
@@ -44,6 +55,8 @@ Deno.serve(async (req) => {
   if (!recipients.length) return json({ error: 'No recipients' }, 400)
   if (!body.subject || !body.html) return json({ error: 'subject and html are required' }, 400)
 
+  const from = cleanFrom(body.from) ?? RESEND_FROM
+
   // One message per recipient (privacy: no shared To). Chunk to 100 per batch call.
   // Each message gets its own {{unsubscribe}} link swapped in.
   let sent = 0
@@ -51,7 +64,7 @@ Deno.serve(async (req) => {
   for (let i = 0; i < recipients.length; i += 100) {
     const chunk = recipients.slice(i, i + 100)
     const items = chunk.map((r) => ({
-      from: RESEND_FROM,
+      from,
       to: [r.email],
       subject: body.subject,
       html: body.html.replaceAll('{{unsubscribe}}', r.unsubUrl || '#'),

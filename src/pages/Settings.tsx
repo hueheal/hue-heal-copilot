@@ -93,6 +93,7 @@ function BrandsPanel() {
         name: draft.name, tone_of_voice: draft.tone_of_voice, writing_guidelines: draft.writing_guidelines,
         image_master_prompt: draft.image_master_prompt, image_negatives: draft.image_negatives,
         accent_color: draft.accent_color, display_font: draft.display_font, logo_url: draft.logo_url,
+        sender_email: draft.sender_email ?? '', tagline: draft.tagline ?? '', website: draft.website ?? '',
       })
       await reload(draft.id); await brandCtx.reload(); setStatus('Saved')
     } catch (e) { setStatus(String(e)) } finally { setBusy(false) }
@@ -170,6 +171,7 @@ function BrandsPanel() {
                 <select value={draft.display_font} onChange={(e) => patch({ display_font: e.target.value })} style={{ ...inp, width: 180 }}>
                   <option value="poppins">Poppins (white-label)</option>
                   <option value="ivyora">Ivy Ora (Hue &amp; Heal)</option>
+                  <option value="quando">Quando (Remedae)</option>
                 </select>
               </div>
               <div style={{ flex: 1, minWidth: 240 }}>
@@ -185,6 +187,23 @@ function BrandsPanel() {
                   {draft.logo_url && <button className="hh-btn" onClick={() => patch({ logo_url: '' })} style={{ background: 'none', border: 'none', color: 'var(--hh-ember)', fontSize: 12 }}>Remove</button>}
                 </div>
                 <input value={draft.logo_url || ''} onChange={(e) => patch({ logo_url: e.target.value })} placeholder="…or paste a logo URL" style={{ ...inp, marginTop: 8 }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginTop: 18 }}>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Newsletter sender</label>
+                <input value={draft.sender_email || ''} onChange={(e) => patch({ sender_email: e.target.value })} placeholder="Remedae <news@remedae.app>" style={inp} />
+                <p style={hint}>Verified Resend address emails send from. Empty = the default sender.</p>
+              </div>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Tagline</label>
+                <input value={draft.tagline || ''} onChange={(e) => patch({ tagline: e.target.value })} placeholder="The world's healing knowledge. Now yours." style={inp} />
+                <p style={hint}>Shown in the email footer.</p>
+              </div>
+              <div style={{ minWidth: 160 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Website</label>
+                <input value={draft.website || ''} onChange={(e) => patch({ website: e.target.value })} placeholder="remedae.app" style={inp} />
+                <p style={hint}>Shown in the email footer.</p>
               </div>
             </div>
 

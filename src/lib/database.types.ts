@@ -275,6 +275,9 @@ export interface Database {
           accent_color: string
           logo_url: string | null
           display_font: string
+          sender_email?: string
+          tagline?: string
+          website?: string
           modules: string[]
           social_style: Record<string, unknown> | null
           is_default: boolean
@@ -293,6 +296,9 @@ export interface Database {
           accent_color?: string
           logo_url?: string | null
           display_font?: string
+          sender_email?: string
+          tagline?: string
+          website?: string
           modules?: string[]
           social_style?: Record<string, unknown> | null
           is_default?: boolean

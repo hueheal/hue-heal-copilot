@@ -60,10 +60,12 @@ export function BrandProvider({ children }: { children: ReactNode }) {
     const onInk = readableOn(accent, '#1E1B18', 4.2) // on the dark sidebar / ink
     root.style.setProperty('--text-accent-on-ink', onInk)
     root.style.setProperty('--hh-ember', onInk)
-    root.style.setProperty(
-      '--font-serif',
-      current.display_font === 'poppins' ? "'Poppins', system-ui, sans-serif" : "'ivyora-display', Georgia, serif",
-    )
+    const fonts: Record<string, string> = {
+      poppins: "'Poppins', system-ui, sans-serif",
+      ivyora: "'ivyora-display', Georgia, serif",
+      quando: "'Quando', Georgia, serif",
+    }
+    root.style.setProperty('--font-serif', fonts[current.display_font ?? ''] ?? fonts.ivyora)
   }, [current?.id, current?.accent_color, current?.display_font])
 
   return <Ctx.Provider value={{ brands, current: current ?? null, loading, chosen, setCurrent, openSelector, reload }}>{children}</Ctx.Provider>

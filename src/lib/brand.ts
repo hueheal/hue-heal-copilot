@@ -63,6 +63,11 @@ Reduce every image to three layers: (1) hero subject, (2) supporting activity or
 
 const REMEDAE_NEGATIVES = `Avoid: stock photography, spa clichés, yoga clichés, matching smiles, mirrored expressions, artificial happiness, plastic skin, AI-perfect faces, fashion-shoot posing, overly styled interiors, excessive décor, perfect symmetry, clinical wellness imagery, rustic farmhouse styling, influencer aesthetic, busy compositions, too many props, wellness clichés, sterile minimalism, grey desaturated grading, overly muted palettes. No text, logos, watermarks or UI.`
 
+/* Distilled from the Remedae copy bible (remedae repo, docs/copy_bible_source.md). */
+const REMEDAE_TOV = `Plain, warm and precise. Remedae writes like a knowledgeable friend reading the world's healing library aloud: clear sentences, no jargon, no hype. Every tradition is held in equal standing, modern medicine alongside the rest, never above or below. The frame is abundance, not debate: all the remedies, from every tradition, side by side and clearly explained. Evidence is always specific: name the study, the body or the year, and if the evidence is thin, say so plainly. Avoid three registers completely: clinical ("patients", "presents with"), woo ("energies", "chakras"), and hustle ("biohack", "optimise"). British English. No em dashes, ever: use a comma, colon or full stop.`
+
+const REMEDAE_GUIDELINES = `Banned words: delve, navigate, unlock, leverage, harness, biohack, optimise, journey, ancient wisdom, holistic, natural, clean, proven, magic, miracle, tapestry, realm, elevate, unleash, secret, timeless. Never use "research shows" or "clinically proven" as standalone claims: say which research, which year, and what it found; if unknown, say so. Never originate remedies, dosages, citations or study findings: only restate verified content. Signature phrases to use on purpose: "All the remedies, from every tradition." "Six traditions, one body." "Sleep. Sun. Breath." "The world's healing knowledge. Now yours." Keep paragraphs short, one idea each. Headlines in the Quando serif, with the accent half of a heading set in italic mint. Sign off calm and specific, never urgent.`
+
 function seedProfiles(): NewBrandProfile[] {
   return [
     {
@@ -75,10 +80,14 @@ function seedProfiles(): NewBrandProfile[] {
     },
     {
       name: 'Remedae',
-      tone_of_voice: 'Modern, warm and human. Everyday wellbeing, never preachy or performed.',
-      writing_guidelines: '',
+      tone_of_voice: REMEDAE_TOV,
+      writing_guidelines: REMEDAE_GUIDELINES,
       image_master_prompt: REMEDAE_MASTER,
       image_negatives: REMEDAE_NEGATIVES,
+      accent_color: '#A6D893',
+      display_font: 'quando',
+      tagline: "The world's healing knowledge. Now yours.",
+      website: 'remedae.app',
       is_default: false,
     },
   ]
@@ -104,6 +113,9 @@ function localRow(input: NewBrandProfile): BrandProfile {
     accent_color: input.accent_color ?? '#B5632F',
     logo_url: input.logo_url ?? null,
     display_font: input.display_font ?? (input.name === 'Hue & Heal' ? 'ivyora' : 'poppins'),
+    sender_email: input.sender_email ?? '',
+    tagline: input.tagline ?? '',
+    website: input.website ?? '',
     modules: input.modules ?? ['calendar', 'clients', 'proposals', 'social', 'newsletter', 'reports'],
     social_style: input.social_style ?? null,
     is_default: input.is_default ?? false,

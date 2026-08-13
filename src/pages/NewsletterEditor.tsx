@@ -44,8 +44,13 @@ export default function NewsletterEditor() {
   const isMobile = useIsMobile()
   const gated = auth.mode === 'connected' && !auth.session
 
-  const [subject, setSubject] = useState('This month from Hue & Heal')
+  const [subject, setSubject] = useState('This month from the studio')
   const [preheader, setPreheader] = useState('A short note from the studio.')
+
+  // Personalise the default subject once the brand world resolves (untouched only).
+  useEffect(() => {
+    if (brand?.name) setSubject((s) => (s === 'This month from the studio' ? `This month from ${brand.name}` : s))
+  }, [brand?.name])
   const [templateId, setTemplateId] = useState('journal')
   const [eyebrow, setEyebrow] = useState('The Journal')
   const [blocks, setBlocks] = useState<Block[]>(() => TEMPLATES[0].blocks())
@@ -100,7 +105,8 @@ export default function NewsletterEditor() {
             name: brand.name,
             accent_color: brand.accent_color,
             logo_url: brand.logo_url,
-            ...(brand.name === 'Hue & Heal' ? { tagline: 'Designing the future of wellness', website: 'hueandheal.com' } : {}),
+            tagline: brand.tagline || (brand.name === 'Hue & Heal' ? 'Designing the future of wellness' : undefined),
+            website: brand.website || (brand.name === 'Hue & Heal' ? 'hueandheal.com' : undefined),
           }
         : undefined,
     [brand?.id, brand?.name, brand?.accent_color, brand?.logo_url],
@@ -137,7 +143,7 @@ export default function NewsletterEditor() {
     setTemplateId(id); setEyebrow(t.eyebrow); setBlocks(t.blocks()); setCurrentId(null)
   }
   function blank() {
-    setCurrentId(null); setSubject('This month from Hue & Heal'); setPreheader('A short note from the studio.')
+    setCurrentId(null); setSubject(`This month from ${brand?.name ?? 'the studio'}`); setPreheader('A short note from the studio.')
     applyTemplate('journal'); setStatus(null)
   }
   const setBlock = (id: string, patch: Partial<Block>) => setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, ...patch } as Block : b)))
@@ -203,7 +209,7 @@ export default function NewsletterEditor() {
     if (sending) return
     if (!testEmail) { setStatus('Enter a test email'); return }
     setSending(true); setStatus('Sending test…')
-    try { const { sent, error } = await sendNewsletter(subject, html, [testEmail]); setStatus(sent ? `Test sent to ${testEmail}` : `Test failed: ${error}`) }
+    try { const { sent, error } = await sendNewsletter(subject, html, [testEmail], brand?.sender_email); setStatus(sent ? `Test sent to ${testEmail}` : `Test failed: ${error}`) }
     finally { setSending(false) }
   }
   async function sendToList() {
@@ -215,7 +221,7 @@ export default function NewsletterEditor() {
     if (!recipients.length) { setStatus(sendGroup === '__all' ? 'No subscribers yet' : `No subscribers in “${sendGroup}”`); return }
     setSending(true); setStatus(`Sending to ${recipients.length}…`)
     try {
-      const { sent, error } = await sendNewsletter(subject, html, recipients)
+      const { sent, error } = await sendNewsletter(subject, html, recipients, brand?.sender_email)
       if (sent) { if (currentId) await updateNewsletter(currentId, { status: 'sent', sent_at: new Date().toISOString(), recipients_count: sent }); setStatus(`Sent to ${sent} subscriber${sent > 1 ? 's' : ''}`); await reload() }
       else setStatus(`Send failed: ${error}`)
     } finally { setSending(false) }

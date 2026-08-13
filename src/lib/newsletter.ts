@@ -420,6 +420,8 @@ export async function sendNewsletter(
   subject: string,
   html: string,
   recipients: SendRecipient[],
+  /** Per-brand verified sender, e.g. "Remedae <news@remedae.app>". Empty = function default. */
+  from?: string,
 ): Promise<{ sent: number; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { sent: 0, error: 'Not connected — add Supabase keys' }
   const { data: sessionData } = await supabase.auth.getSession()
@@ -436,7 +438,7 @@ export async function sendNewsletter(
     const res = await fetch(`${functionsBase}/send-newsletter`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ subject, html, recipients: payload }),
+      body: JSON.stringify({ subject, html, recipients: payload, ...(from?.trim() ? { from: from.trim() } : {}) }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) return { sent: 0, error: data?.error ? String(data.error) : `Send ${res.status}` }
