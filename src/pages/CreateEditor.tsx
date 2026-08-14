@@ -21,6 +21,7 @@ import {
   createNewsletterFromArticle,
 } from '../lib/journal'
 import { REMEDAE_CATEGORIES, toRemedaeArticle, publishToRemedae, type RemedaeCategory } from '../lib/remedae'
+import RemedaeArticlePreview from '../components/RemedaeArticlePreview'
 
 /* ============================================================
    Content Studio · unified editor for authored publications.
@@ -248,6 +249,13 @@ export default function CreateEditor() {
       </div>
       <ArticleBody blocks={blocks} takeaways={takeawayList} isMobile={isMobile} takeawaysLabel="What to do with this" />
     </div>
+  ) : isRemedae ? (
+    // The Remedae workspace previews the article exactly as remedae.app renders
+    // it, driven by the same mapping the publish button sends.
+    <RemedaeArticlePreview
+      article={toRemedaeArticle({ title, dek, readingTime, blocks, takeaways: takeawayList, category: remCategory })}
+      isMobile={isMobile}
+    />
   ) : (
     <article style={{ background: '#FBFAF6', border: '1px solid var(--hh-line-card, var(--hh-line))', borderRadius: 14, overflow: 'hidden', maxWidth: 760 }}>
       <div style={{ padding: isMobile ? '32px 22px 4px' : '48px 56px 8px' }}>
