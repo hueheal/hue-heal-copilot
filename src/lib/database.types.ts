@@ -392,6 +392,7 @@ export interface Database {
           title: string
           dek: string
           reading_time: string
+          hero_image?: string
           body_md: string
           blocks: unknown[]
           takeaways: string[]
@@ -409,6 +410,7 @@ export interface Database {
           title?: string
           dek?: string
           reading_time?: string
+          hero_image?: string
           body_md?: string
           blocks?: unknown[]
           takeaways?: string[]

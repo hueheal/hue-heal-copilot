@@ -37,18 +37,22 @@ export interface RemedaeArticle {
   body: RemedaeBlock[]
 }
 
-/** Copilot journal → Remedae article. The first image becomes the hero, the
-    first paragraph becomes the lede, takeaways close the piece as a list. */
+/** Copilot journal → Remedae article. The dedicated hero image gets the
+    full-bleed cover treatment, every image block stays in the body, the
+    first paragraph becomes the lede, takeaways close the piece as a list.
+    (Legacy fallback: with no dedicated hero, the first body image is lifted
+    out to serve as one so older drafts keep their cover.) */
 export function toRemedaeArticle(input: {
   title: string
   dek: string
   readingTime?: string
+  hero?: string
   blocks: Block[]
   takeaways: string[]
   category: RemedaeCategory
 }): RemedaeArticle {
   const body: RemedaeBlock[] = []
-  let hero = ''
+  let hero = (input.hero ?? '').trim()
   let ledeDone = false
 
   for (const b of input.blocks) {

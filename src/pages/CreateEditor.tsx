@@ -116,6 +116,8 @@ export default function CreateEditor() {
   const [title, setTitle] = useState('')
   const [dek, setDek] = useState('')
   const [readingTime, setReadingTime] = useState('')
+  const [hero, setHero] = useState('')
+  const [heroBusy, setHeroBusy] = useState(false)
   const [blocks, setBlocks] = useState<Block[]>([])
   const [takeaways, setTakeaways] = useState('')
   const [status, setStatus] = useState<string | null>(null)
@@ -133,7 +135,7 @@ export default function CreateEditor() {
     try {
       const id = await save()
       if (!id) return
-      const article = toRemedaeArticle({ title, dek, readingTime, blocks, takeaways: takeaways.split('\n').map((s) => s.trim()).filter(Boolean), category: remCategory })
+      const article = toRemedaeArticle({ title, dek, readingTime, hero, blocks, takeaways: takeaways.split('\n').map((s) => s.trim()).filter(Boolean), category: remCategory })
       const { url, error } = await publishToRemedae(article)
       if (error || !url) { setStatus(`Couldn’t publish: ${error ?? 'no URL returned'}`); return }
       await updateJournal(id, { status: 'published', published_at: new Date().toISOString() })
@@ -149,10 +151,11 @@ export default function CreateEditor() {
 
   useDraft(
     `hh-create-${family}:${brand?.id ?? 'x'}`,
-    { currentId, title, dek, readingTime, blocks, takeaways },
+    { currentId, title, dek, readingTime, hero, blocks, takeaways },
     (v) => {
       setCurrentId(v.currentId ?? null); setTitle(v.title ?? ''); setDek(v.dek ?? '')
-      setReadingTime(v.readingTime ?? ''); setBlocks(Array.isArray(v.blocks) ? v.blocks : []); setTakeaways(v.takeaways ?? '')
+      setReadingTime(v.readingTime ?? ''); setHero(v.hero ?? '')
+      setBlocks(Array.isArray(v.blocks) ? v.blocks : []); setTakeaways(v.takeaways ?? '')
     },
     !gated,
   )
@@ -194,18 +197,26 @@ export default function CreateEditor() {
     setBlock(id, { url }); setStatus('Image added')
   }
 
-  function blank() { setCurrentId(null); setTitle(''); setDek(''); setReadingTime(''); setBlocks([]); setTakeaways(''); setStatus(null) }
+  function blank() { setCurrentId(null); setTitle(''); setDek(''); setReadingTime(''); setHero(''); setBlocks([]); setTakeaways(''); setStatus(null) }
   function openDoc(a: JournalArticle) {
-    setCurrentId(a.id); setTitle(a.title); setDek(a.dek); setReadingTime(a.reading_time)
+    setCurrentId(a.id); setTitle(a.title); setDek(a.dek); setReadingTime(a.reading_time); setHero(a.hero_image ?? '')
     setBlocks(Array.isArray(a.blocks) && a.blocks.length ? (a.blocks as unknown as Block[]) : [])
     setTakeaways((a.takeaways ?? []).join('\n')); setStatus(null)
     if (isMobile) setMView('preview')
   }
 
+  async function uploadHero(file: File) {
+    setHeroBusy(true); setStatus('Uploading hero image…')
+    const { url, error } = await uploadJournalImage(file)
+    setHeroBusy(false)
+    if (error || !url) { setStatus(`Upload failed: ${error ?? ''}`); return }
+    setHero(url); setStatus('Hero image set')
+  }
+
   const takeawayList = takeaways.split('\n').map((s) => s.trim()).filter(Boolean)
   function payload() {
     return {
-      title, dek, reading_time: readingTime,
+      title, dek, reading_time: readingTime, hero_image: hero,
       blocks: blocks as unknown[],
       body_md: blocksToText(blocks),
       takeaways: takeawayList,
@@ -253,11 +264,12 @@ export default function CreateEditor() {
     // The Remedae workspace previews the article exactly as remedae.app renders
     // it, driven by the same mapping the publish button sends.
     <RemedaeArticlePreview
-      article={toRemedaeArticle({ title, dek, readingTime, blocks, takeaways: takeawayList, category: remCategory })}
+      article={toRemedaeArticle({ title, dek, readingTime, hero, blocks, takeaways: takeawayList, category: remCategory })}
       isMobile={isMobile}
     />
   ) : (
     <article style={{ background: '#FBFAF6', border: '1px solid var(--hh-line-card, var(--hh-line))', borderRadius: 14, overflow: 'hidden', maxWidth: 760 }}>
+      {hero && <img src={hero} alt="" style={{ display: 'block', width: '100%', height: isMobile ? 200 : 300, objectFit: 'cover' }} />}
       <div style={{ padding: isMobile ? '32px 22px 4px' : '48px 56px 8px' }}>
         {readingTime && <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 16 }}>{readingTime}</div>}
         <h1 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: isMobile ? 30 : 40, lineHeight: 1.12, color: 'var(--text-strong)', margin: '0 0 14px', letterSpacing: '-0.4px' }}>{title || 'Your article title'}</h1>
@@ -310,6 +322,24 @@ export default function CreateEditor() {
                 <input style={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={family === 'report' ? 'The state of wellness in…' : 'Article title'} />
                 <div style={rail}>Standfirst</div>
                 <textarea style={{ ...inp, resize: 'vertical' }} rows={2} value={dek} onChange={(e) => setDek(e.target.value)} placeholder="One or two line intro" />
+
+                <div style={rail}>Hero image</div>
+                {hero && (
+                  <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', marginBottom: 8, border: '1px solid var(--hh-line)' }}>
+                    <img src={hero} alt="" style={{ display: 'block', width: '100%', height: 110, objectFit: 'cover' }} />
+                    <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,10,7,0) 30%, rgba(5,10,7,0.7) 100%)' }} />
+                    <span style={{ position: 'absolute', left: 10, bottom: 8, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>Cover</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <label className="hh-btn" style={{ ...miniBtn, width: 'auto', padding: '9px 12px', flex: 1, textAlign: 'center', cursor: heroBusy ? 'default' : 'pointer', opacity: heroBusy ? 0.6 : 1 }}>
+                    {heroBusy ? 'Uploading…' : hero ? 'Replace hero' : '⭱ Upload hero image'}
+                    <input type="file" accept="image/*" style={{ display: 'none' }} disabled={heroBusy} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadHero(f); e.currentTarget.value = '' }} />
+                  </label>
+                  {hero && <button className="hh-btn" onClick={() => setHero('')} style={{ ...miniBtn, width: 'auto', padding: '9px 12px' }}>Remove</button>}
+                </div>
+                <input style={{ ...inp, marginTop: 6, fontSize: 12.5 }} placeholder="…or paste an image URL" value={hero} onChange={(e) => setHero(e.target.value)} />
+
                 <div style={rail}>Reading time</div>
                 <input style={inp} value={readingTime} onChange={(e) => setReadingTime(e.target.value)} placeholder="6 min read" />
 
