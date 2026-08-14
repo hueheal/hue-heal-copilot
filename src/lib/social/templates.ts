@@ -58,11 +58,32 @@ export function wordmarkFor(seed: TemplateSeed): string {
   return `${n}.`
 }
 
-/** The brand mark for a slide: the uploaded logo image when present, else the
+/* Hosted vector wordmarks per brand world (same-origin, so PNG export can
+   embed them). onDark = the cream original, onLight = the ink recolour. */
+const BRAND_MARKS: Record<string, { onDark: string; onLight: string }> = {
+  remedae: { onDark: '/brand/remedae-logo.svg', onLight: '/brand/remedae-logo-ink.svg' },
+}
+
+/** True when a hex colour reads as light (used to infer the slide ground:
+    light mark colour means a dark background, and vice versa). */
+function isLightHex(hex: string): boolean {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return true
+  const n = parseInt(m[1], 16)
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.55
+}
+
+/** The brand mark for a slide: the uploaded logo when present, else the
+    brand's hosted wordmark in the variant that suits the ground, else the
     text wordmark. Carries role 'wordmark' so template switches preserve it. */
 function brandmark(seed: TemplateSeed, box: DesignElement['box'], color: string): DesignElement {
   if (seed.logoUrl && seed.logoUrl.trim()) {
     return { id: eid('logo'), type: 'logo', box, style: { align: 'left' }, content: seed.logoUrl.trim(), role: 'wordmark' }
+  }
+  const mark = BRAND_MARKS[(seed.brandName ?? '').trim().toLowerCase()]
+  if (mark) {
+    return { id: eid('logo'), type: 'logo', box, style: { align: 'left' }, content: isLightHex(color) ? mark.onDark : mark.onLight, role: 'wordmark' }
   }
   return text(wordmarkFor(seed), box, { color, fontKey: 'serif', fontSize: SZ.Body, fontWeight: 300 }, { role: 'wordmark' })
 }

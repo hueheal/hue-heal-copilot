@@ -86,6 +86,16 @@ const SANS = "'Poppins', 'Helvetica Neue', Helvetica, Arial, sans-serif"
 const PARENT_LOGO_INK = 'https://copilotadmin.hueandheal.com/brand/hue-heal-email-ink.png'
 const PARENT_LOGO_CREAM = 'https://copilotadmin.hueandheal.com/brand/hue-heal-email-cream.png'
 
+/* Hosted raster wordmarks per brand world, keyed by lowercased name.
+   ink = for the light masthead, cream = for the dark footer band. */
+const BRAND_EMAIL_LOGOS: Record<string, { ink: string; cream: string }> = {
+  'hue & heal': { ink: PARENT_LOGO_INK, cream: PARENT_LOGO_CREAM },
+  'remedae': {
+    ink: 'https://copilotadmin.hueandheal.com/brand/remedae-email-ink.png',
+    cream: 'https://copilotadmin.hueandheal.com/brand/remedae-email-cream.png',
+  },
+}
+
 function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
@@ -157,7 +167,6 @@ export function renderEmailHtml(
   const accent = brand.accent_color || C.copper
   // Accent as text needs to stay legible on the near-white email paper.
   const accentInk = readableOn(accent, C.paper, 4.2)
-  const isParent = brand.name === HUE_HEAL_BRAND.name
 
   // Long Lane hero: if the newsletter opens on an image, lift it out of the flow
   // and run it full-bleed under the logo — an image-led cover.
@@ -170,12 +179,13 @@ export function renderEmailHtml(
     ? `<tr><td style="padding:0;">${imageCell(hero)}</td></tr>`
     : ''
 
-  // Masthead: the brand's logo centred. A raster logo_url is used as-is; the
-  // parent brand falls back to its hosted PNG wordmark (email can't render the
-  // SVG logo). SVG urls are skipped for the same reason. If a child brand has
-  // no raster logo, its name is set in Poppins as a graceful fallback.
+  // Masthead: the brand's logo centred. A raster logo_url is used as-is; known
+  // brand worlds fall back to their hosted PNG wordmarks (email can't render
+  // SVG logos, so SVG urls are skipped). If a brand has no raster logo at all,
+  // its name is set in Poppins as a graceful fallback.
+  const hosted = BRAND_EMAIL_LOGOS[brand.name.trim().toLowerCase()]
   const rasterLogo = brand.logo_url && !/\.svg(\?|$)/i.test(brand.logo_url) ? brand.logo_url : null
-  const mastLogo = rasterLogo ?? (isParent ? PARENT_LOGO_INK : null)
+  const mastLogo = rasterLogo ?? hosted?.ink ?? null
   const masthead = mastLogo
     ? `<img src="${esc(mastLogo)}" alt="${esc(brand.name)}" height="40" style="height:40px;width:auto;max-width:80%;display:block;border:0;margin:0 auto;" />`
     : `<span style="font-family:${SANS};font-weight:500;font-size:26px;letter-spacing:0.3px;color:${C.ink};">${esc(brand.name)}</span>`
@@ -184,10 +194,10 @@ export function renderEmailHtml(
     ? `<tr><td align="center" style="padding:38px 48px 0;font-family:${SANS};font-weight:500;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${accentInk};">${esc(nl.eyebrow)}</td></tr>`
     : `<tr><td style="height:14px;"></td></tr>`
 
-  // Footer: a grounded dark band. The parent shows its cream wordmark PNG; a
-  // child brand shows its name set in Poppins (a dark logo would vanish on ink).
-  const footerMark = isParent
-    ? `<img src="${esc(PARENT_LOGO_CREAM)}" alt="${esc(brand.name)}" height="30" style="height:30px;width:auto;max-width:70%;display:block;border:0;margin:0 auto;" />`
+  // Footer: a grounded dark band. Known brands show their cream wordmark PNG;
+  // others show their name set in Poppins (a dark logo would vanish on ink).
+  const footerMark = hosted
+    ? `<img src="${esc(hosted.cream)}" alt="${esc(brand.name)}" height="30" style="height:30px;width:auto;max-width:70%;display:block;border:0;margin:0 auto;" />`
     : `<div style="font-family:${SANS};font-weight:500;font-size:22px;letter-spacing:0.3px;color:${C.onDark};">${esc(brand.name)}</div>`
   const taglineHtml = brand.tagline
     ? `<div style="font-family:${SANS};font-weight:300;font-style:italic;font-size:14px;color:${C.onDarkMuted};margin:14px 0 0;">${esc(brand.tagline)}</div>`
