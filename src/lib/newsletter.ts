@@ -13,6 +13,9 @@ export type Block =
   | { id: string; type: 'image'; url: string; alt?: string }
   | { id: string; type: 'button'; label: string; href: string }
   | { id: string; type: 'divider' }
+  /* Editorial blocks (journal-first, mirrored from remedae.app's article model). */
+  | { id: string; type: 'quote'; text: string; attribution?: string }
+  | { id: string; type: 'list'; items: string[] }
 
 let bseq = 1
 export const bid = () => `b-${bseq++}`
@@ -124,6 +127,20 @@ function renderBlock(b: Block, accentInk: string): string {
     // A short centred rule, a beat of silence between ideas.
     case 'divider':
       return `<tr><td align="center" style="padding:26px 48px;"><div style="width:46px;height:1px;background:${C.line};margin:0 auto;line-height:1px;font-size:0;">&nbsp;</div></td></tr>`
+    // Pulled quote: hairline accent rule, larger light type, small-caps attribution.
+    case 'quote':
+      return `<tr><td style="padding:18px 48px;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="border-left:2px solid ${accentInk};padding:4px 0 4px 18px;">` +
+        `<div style="font-family:${SANS};font-weight:300;font-style:italic;font-size:19px;line-height:1.5;color:${C.ink};">&ldquo;${esc(b.text)}&rdquo;</div>` +
+        (b.attribution ? `<div style="font-family:${SANS};font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${C.muted};margin-top:10px;">${esc(b.attribution)}</div>` : '') +
+        `</td></tr></table></td></tr>`
+    // Numbered list with two-digit editorial numerals and hairline dividers.
+    case 'list':
+      return `<tr><td style="padding:12px 48px;"><table role="presentation" cellpadding="0" cellspacing="0" width="100%">` +
+        b.items.filter((it) => it.trim()).map((it, i, arr) =>
+          `<tr><td width="30" valign="top" style="padding:10px 0;font-family:${SANS};font-size:11px;font-weight:600;letter-spacing:1px;color:${accentInk};border-bottom:${i === arr.length - 1 ? 'none' : `1px solid ${C.line}`};">${String(i + 1).padStart(2, '0')}</td>` +
+          `<td valign="top" style="padding:10px 0;font-family:${SANS};font-weight:300;font-size:15px;line-height:1.7;color:${C.soft};border-bottom:${i === arr.length - 1 ? 'none' : `1px solid ${C.line}`};">${esc(it)}</td></tr>`,
+        ).join('') +
+        `</table></td></tr>`
   }
 }
 

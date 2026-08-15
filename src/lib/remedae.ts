@@ -63,6 +63,11 @@ export function toRemedaeArticle(input: {
     } else if (b.type === 'image' && b.url) {
       if (!hero) hero = b.url
       else body.push({ kind: 'image', url: b.url, alt: b.alt ?? '' })
+    } else if (b.type === 'quote' && b.text.trim()) {
+      body.push({ kind: 'quote', text: b.text.trim(), ...(b.attribution?.trim() ? { attribution: b.attribution.trim() } : {}) })
+    } else if (b.type === 'list') {
+      const items = b.items.map((s) => s.trim()).filter(Boolean)
+      if (items.length) body.push({ kind: 'list', items })
     }
     // buttons and dividers have no journal equivalent on remedae.app
   }
@@ -86,7 +91,28 @@ export function toRemedaeArticle(input: {
   }
 }
 
+/** Pre-flight against the rules remedae.app's validator enforces, so the
+    editor can say exactly what to fix instead of a 400 from the endpoint. */
+export function validateRemedaeArticle(a: RemedaeArticle): string | null {
+  if (!a.title.trim()) return 'Give the article a title'
+  if (a.title.length > 400) return 'Title is over 400 characters'
+  if (!a.dek.trim()) return 'Add a standfirst (dek): remedae.app requires one'
+  if (a.dek.length > 400) return 'Standfirst is over 400 characters'
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(a.slug)) return 'Title produces an invalid slug'
+  if (!a.heroImage) return 'Add a hero image: every remedae.app article opens on one'
+  if (!/^https?:\/\//.test(a.heroImage) && !a.heroImage.startsWith('/')) return 'Hero image must be an https:// URL'
+  if (!a.body.length) return 'Write the article body first'
+  for (const b of a.body) if (b.kind === 'image' && !/^https?:\/\//.test(b.url)) return 'Every inline image must be an https:// URL'
+  const dash = /[–—]/
+  if (dash.test(a.title) || dash.test(a.dek) || a.body.some((b) => ('text' in b && dash.test(b.text)) || (b.kind === 'list' && b.items.some((i) => dash.test(i))))) {
+    return 'Remove em/en dashes: use a comma, colon or full stop'
+  }
+  return null
+}
+
 export async function publishToRemedae(article: RemedaeArticle): Promise<{ url?: string; error?: string }> {
+  const problem = validateRemedaeArticle(article)
+  if (problem) return { error: problem }
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { error: 'Not connected' }
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token

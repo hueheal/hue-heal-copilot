@@ -13,28 +13,44 @@ export function journalUrl(a: { slug?: string | null; title?: string | null }): 
   return `${JOURNAL_BASE}/${s}`
 }
 
+export interface GeneratedSection {
+  heading: string
+  body: string
+  /** Optional pulled quote after the section (Remedae brief: a real, citeable person). */
+  quote?: { text: string; attribution?: string }
+  /** Optional numbered list after the section (Remedae brief: at most one per piece). */
+  list?: string[]
+}
+
 export interface GeneratedJournal {
   title: string
   dek: string
   readingTime?: string
-  sections: { heading: string; body: string }[]
+  sections: GeneratedSection[]
   takeaways: string[]
 }
 
 /** Map a generated article into editable, reorderable blocks (heading + text
-    per section). Images are added by hand in the editor. */
+    per section, plus any quote or list the writer placed). Images are added
+    by hand in the editor. */
 export function journalToBlocks(a: GeneratedJournal): Block[] {
   const out: Block[] = []
   for (const s of a.sections) {
     if (s.heading?.trim()) out.push({ id: bid(), type: 'heading', text: s.heading })
     if (s.body?.trim()) out.push({ id: bid(), type: 'text', text: s.body })
+    if (s.quote?.text?.trim()) out.push({ id: bid(), type: 'quote', text: s.quote.text, attribution: s.quote.attribution ?? '' })
+    if (Array.isArray(s.list) && s.list.some((i) => i.trim())) out.push({ id: bid(), type: 'list', items: s.list.filter((i) => i.trim()) })
   }
   return out
 }
 
 /** Flatten blocks to plain text (for body_md, search, and the teaser hook). */
 export function blocksToText(blocks: Block[]): string {
-  return blocks.map((b) => (b.type === 'heading' || b.type === 'text' ? b.text : '')).filter(Boolean).join('\n\n')
+  return blocks.map((b) => {
+    if (b.type === 'heading' || b.type === 'text' || b.type === 'quote') return b.text
+    if (b.type === 'list') return b.items.map((i, n) => `${n + 1}. ${i}`).join('\n')
+    return ''
+  }).filter(Boolean).join('\n\n')
 }
 
 /** Upload a journal image to the social-assets bucket, returning a public URL. */

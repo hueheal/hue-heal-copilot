@@ -84,7 +84,12 @@ export default function RemedaeArticlePreview({ article, isMobile }: { article: 
               </ul>
             )
             if (b.kind === 'image') return (
-              <img key={i} src={b.url} alt={b.alt ?? ''} style={{ width: '100%', borderRadius: 14, display: 'block' }} />
+              <figure key={i} style={{ margin: '6px 0' }}>
+                <div style={{ aspectRatio: '16 / 10', overflow: 'hidden', borderRadius: 14, border: `1px solid ${RULE}`, boxShadow: '0 10px 30px rgba(19,26,21,0.08)' }}>
+                  <img src={b.url} alt={b.alt ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                </div>
+                {b.alt && <figcaption style={{ marginTop: 10, fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(19,26,21,.55)' }}>{b.alt}</figcaption>}
+              </figure>
             )
             return null
           })}

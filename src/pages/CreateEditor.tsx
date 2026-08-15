@@ -93,7 +93,7 @@ const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textT
 const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--text-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
 const chip = (active: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-body)' })
 
-const BLOCK_LABEL: Record<string, string> = { heading: 'Heading', text: 'Text', image: 'Image' }
+const BLOCK_LABEL: Record<string, string> = { heading: 'Heading', text: 'Text', image: 'Image', quote: 'Quote', list: 'Numbered list' }
 
 export default function CreateEditor() {
   const { family: famParam } = useParams()
@@ -160,7 +160,7 @@ export default function CreateEditor() {
     !gated,
   )
 
-  const hasContent = blocks.some((b) => (b.type === 'heading' || b.type === 'text' ? b.text.trim() : b.type === 'image' ? !!b.url : false))
+  const hasContent = blocks.some((b) => (b.type === 'heading' || b.type === 'text' || b.type === 'quote' ? !!b.text.trim() : b.type === 'image' ? !!b.url : b.type === 'list' ? b.items.some((i) => i.trim()) : false))
   function applyStructure(id: string) {
     setStructureId(id)
     if (hasContent) return // structure only seeds an empty document; it never clobbers writing
@@ -185,8 +185,13 @@ export default function CreateEditor() {
   const setBlock = (id: string, patch: Partial<Block>) => setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, ...patch } as Block : b)))
   const removeBlock = (id: string) => setBlocks((bs) => bs.filter((b) => b.id !== id))
   const moveBlock = (i: number, dir: -1 | 1) => setBlocks((bs) => { const j = i + dir; if (j < 0 || j >= bs.length) return bs; const c = [...bs]; [c[i], c[j]] = [c[j], c[i]]; return c })
-  function addBlock(type: 'heading' | 'text' | 'image') {
-    const b: Block = type === 'heading' ? { id: bid(), type, text: '' } : type === 'text' ? { id: bid(), type, text: '' } : { id: bid(), type: 'image', url: '', alt: '' }
+  function addBlock(type: 'heading' | 'text' | 'image' | 'quote' | 'list') {
+    const b: Block =
+      type === 'heading' ? { id: bid(), type, text: '' }
+      : type === 'text' ? { id: bid(), type, text: '' }
+      : type === 'quote' ? { id: bid(), type, text: '', attribution: '' }
+      : type === 'list' ? { id: bid(), type, items: [''] }
+      : { id: bid(), type: 'image', url: '', alt: '' }
     setBlocks((bs) => [...bs, b])
   }
   async function uploadBlockImage(id: string, file: File) {
@@ -368,11 +373,22 @@ export default function CreateEditor() {
                           <input style={{ ...inp, marginTop: 6, fontSize: 12.5 }} placeholder="Caption / alt text" value={b.alt ?? ''} onChange={(e) => setBlock(b.id, { alt: e.target.value })} />
                         </div>
                       )}
+                      {b.type === 'quote' && (
+                        <div>
+                          <textarea style={{ ...inp, resize: 'vertical', lineHeight: 1.6 }} rows={3} value={b.text} placeholder="The pulled quote, word for word" onChange={(e) => setBlock(b.id, { text: e.target.value })} />
+                          <input style={{ ...inp, marginTop: 6, fontSize: 12.5 }} placeholder="Attribution: a real person or institution, e.g. Dr. Aran Patel, in a 2024 review" value={b.attribution ?? ''} onChange={(e) => setBlock(b.id, { attribution: e.target.value })} />
+                        </div>
+                      )}
+                      {b.type === 'list' && (
+                        <div>
+                          <textarea style={{ ...inp, resize: 'vertical', lineHeight: 1.6 }} rows={4} value={b.items.join('\n')} placeholder="One item per line (renders as 01, 02, 03…)" onChange={(e) => setBlock(b.id, { items: e.target.value.split('\n') })} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
-                  {(['heading', 'text', 'image'] as const).map((t) => (
+                  {(['heading', 'text', 'image', 'quote', 'list'] as const).map((t) => (
                     <button key={t} className="hh-btn" onClick={() => addBlock(t)} style={{ ...miniBtn, width: 'auto', padding: '7px 12px', fontSize: 11.5 }}>＋ {BLOCK_LABEL[t]}</button>
                   ))}
                 </div>
@@ -442,6 +458,22 @@ function ArticleBody({ blocks, takeaways, isMobile, takeawaysLabel }: { blocks: 
               : <div style={{ width: '100%', height: isMobile ? 180 : 260, background: 'var(--hh-bone)', border: '1px dashed var(--hh-line)', borderRadius: 12 }} />}
             {b.alt && <figcaption style={{ fontFamily: 'var(--font-sans)', fontSize: 12.5, color: 'var(--text-faint)', marginTop: 8, textAlign: 'center' }}>{b.alt}</figcaption>}
           </figure>
+        )
+        if (b.type === 'quote') return (
+          <figure key={b.id} style={{ margin: '26px 0', paddingLeft: 20, borderLeft: '2px solid var(--hh-copper)' }}>
+            <blockquote style={{ fontFamily: 'var(--font-voice)', fontStyle: 'italic', fontSize: isMobile ? 19 : 22, lineHeight: 1.45, color: 'var(--text-strong)', margin: 0 }}>“{b.text || '…'}”</blockquote>
+            {b.attribution && <figcaption style={{ fontSize: 11.5, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-faint)', marginTop: 10 }}>{b.attribution}</figcaption>}
+          </figure>
+        )
+        if (b.type === 'list') return (
+          <ul key={b.id} style={{ margin: '20px 0', padding: 0, listStyle: 'none' }}>
+            {b.items.map((it, j) => (
+              <li key={j} style={{ display: 'flex', gap: 14, padding: '10px 0', borderBottom: j === b.items.length - 1 ? 'none' : '1px solid var(--hh-line)' }}>
+                <span style={{ flexShrink: 0, width: 24, fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', color: 'var(--text-accent)', paddingTop: 4 }}>{String(j + 1).padStart(2, '0')}</span>
+                <span style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 15 : 16, lineHeight: 1.65, color: 'var(--text-body)' }}>{it}</span>
+              </li>
+            ))}
+          </ul>
         )
         return null
       })}
