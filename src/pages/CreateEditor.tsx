@@ -20,7 +20,7 @@ import {
   deleteJournal,
   createNewsletterFromArticle,
 } from '../lib/journal'
-import { REMEDAE_CATEGORIES, toRemedaeArticle, publishToRemedae, type RemedaeCategory } from '../lib/remedae'
+import { REMEDAE_CATEGORIES, toRemedaeArticle, publishToRemedae, validateRemedaeArticle, type RemedaeCategory } from '../lib/remedae'
 import RemedaeArticlePreview from '../components/RemedaeArticlePreview'
 
 /* ============================================================
@@ -133,12 +133,15 @@ export default function CreateEditor() {
     if (!title.trim() || !blocks.length) { setStatus('Write it first'); return }
     setBusy(true); setStatus('Publishing to remedae.app…')
     try {
-      const id = await save()
-      if (!id) return
+      // Pre-flight first, so a fixable content problem is reported before anything is saved.
       const article = toRemedaeArticle({ title, dek, readingTime, hero, blocks, takeaways: takeaways.split('\n').map((s) => s.trim()).filter(Boolean), category: remCategory })
+      const problem = validateRemedaeArticle(article)
+      if (problem) { setStatus(`Before publishing: ${problem}`); return }
+      const id = await save()
+      if (!id) { setStatus((s) => `${s ?? 'Couldn’t save the draft'} (publish not attempted)`); return }
       const { url, error } = await publishToRemedae(article)
-      if (error || !url) { setStatus(`Couldn’t publish: ${error ?? 'no URL returned'}`); return }
-      await updateJournal(id, { status: 'published', published_at: new Date().toISOString() })
+      if (error || !url) { setStatus(`remedae.app didn’t accept it: ${error ?? 'no URL returned'}`); return }
+      try { await updateJournal(id, { status: 'published', published_at: new Date().toISOString() }) } catch { /* the article is live; the local flag is cosmetic */ }
       setRemedaeUrl(url); setStatus('Live on remedae.app'); await reload()
     } finally { setBusy(false) }
   }

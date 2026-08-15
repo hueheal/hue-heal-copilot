@@ -109,17 +109,45 @@ export async function listJournal(kind?: 'article' | 'report'): Promise<JournalA
 
 type JournalInput = Database['public']['Tables']['journal_articles']['Insert']
 
+/* Optional columns added by later migrations. If the live database is behind
+   (the migration was not run yet), retry the write without them rather than
+   failing the whole save; a schema lag must never block writing or publishing. */
+const OPTIONAL_COLUMNS = ['hero_image'] as const
+function isMissingColumn(err: unknown): string | null {
+  const msg = (err as { message?: string })?.message ?? ''
+  const m = /column (?:journal_articles\.)?"?(\w+)"? does not exist/i.exec(msg) ?? /'(\w+)' column of 'journal_articles'/i.exec(msg)
+  return m && (OPTIONAL_COLUMNS as readonly string[]).includes(m[1]) ? m[1] : null
+}
+function without<T extends object>(obj: T, key: string): T {
+  const copy = { ...obj } as Record<string, unknown>
+  delete copy[key]
+  return copy as T
+}
+
 export async function saveJournal(input: JournalInput): Promise<JournalArticle> {
   if (!(isSupabaseConfigured && supabase)) throw new Error('Not connected')
-  const { data, error } = await supabase.from('journal_articles').insert(withBrandInsert(input)).select('*').single()
-  if (error) throw error
-  return data as JournalArticle
+  let payload = withBrandInsert(input)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await supabase.from('journal_articles').insert(payload).select('*').single()
+    if (!error) return data as JournalArticle
+    const missing = isMissingColumn(error)
+    if (!missing) throw error
+    payload = without(payload, missing)
+  }
+  throw new Error('Could not save the article')
 }
 
 export async function updateJournal(id: string, patch: Partial<JournalInput>): Promise<void> {
   if (!(isSupabaseConfigured && supabase)) throw new Error('Not connected')
-  const { error } = await supabase.from('journal_articles').update(patch).eq('id', id)
-  if (error) throw error
+  let p = patch
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { error } = await supabase.from('journal_articles').update(p).eq('id', id)
+    if (!error) return
+    const missing = isMissingColumn(error)
+    if (!missing) throw error
+    p = without(p, missing)
+  }
+  throw new Error('Could not save the article')
 }
 
 export async function deleteJournal(id: string): Promise<void> {
