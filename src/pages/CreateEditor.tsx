@@ -20,7 +20,8 @@ import {
   deleteJournal,
   createNewsletterFromArticle,
 } from '../lib/journal'
-import { REMEDAE_CATEGORIES, toRemedaeArticle, publishToRemedae, validateRemedaeArticle, type RemedaeCategory } from '../lib/remedae'
+import { REMEDAE_CATEGORIES, toRemedaeArticle, publishToRemedae, unpublishFromRemedae, validateRemedaeArticle, type RemedaeCategory } from '../lib/remedae'
+import { ARTICLE_TYPES, LENGTHS, type ArticleTypeKey, type LengthKey } from '../lib/articleTypes'
 import RemedaeArticlePreview from '../components/RemedaeArticlePreview'
 
 /* ============================================================
@@ -109,6 +110,8 @@ export default function CreateEditor() {
 
   const [aiTopic, setAiTopic] = useState('')
   const [aiNotes, setAiNotes] = useState('')
+  const [articleType, setArticleType] = useState<ArticleTypeKey>('story')
+  const [length, setLength] = useState<LengthKey>('medium')
   const [aiBusy, setAiBusy] = useState(false)
 
   const [currentId, setCurrentId] = useState<string | null>(null)
@@ -127,6 +130,7 @@ export default function CreateEditor() {
   const [mView, setMView] = useState<'edit' | 'preview'>('edit')
   const [remCategory, setRemCategory] = useState<RemedaeCategory>('on-the-research')
   const [remedaeUrl, setRemedaeUrl] = useState<string | null>(null)
+  const [pinnedSlug, setPinnedSlug] = useState<string | null>(null)
   const isRemedae = (brand?.name ?? '').toLowerCase().includes('remedae')
 
   async function publishRemedae() {
@@ -134,15 +138,28 @@ export default function CreateEditor() {
     setBusy(true); setStatus('Publishing to remedae.app…')
     try {
       // Pre-flight first, so a fixable content problem is reported before anything is saved.
-      const article = toRemedaeArticle({ title, dek, readingTime, hero, blocks, takeaways: takeaways.split('\n').map((s) => s.trim()).filter(Boolean), category: remCategory })
+      const article = toRemedaeArticle({ title, dek, readingTime, hero, blocks, takeaways: takeaways.split('\n').map((s) => s.trim()).filter(Boolean), category: remCategory, slug: effectiveSlug() })
       const problem = validateRemedaeArticle(article)
       if (problem) { setStatus(`Before publishing: ${problem}`); return }
       const id = await save()
       if (!id) { setStatus((s) => `${s ?? 'Couldn’t save the draft'} (publish not attempted)`); return }
       const { url, error } = await publishToRemedae(article)
       if (error || !url) { setStatus(`remedae.app didn’t accept it: ${error ?? 'no URL returned'}`); return }
-      try { await updateJournal(id, { status: 'published', published_at: new Date().toISOString() }) } catch { /* the article is live; the local flag is cosmetic */ }
+      try { await updateJournal(id, { status: 'published', published_at: new Date().toISOString(), slug: article.slug }) } catch { /* the article is live; the local flag is cosmetic */ }
+      setPinnedSlug(article.slug)
       setRemedaeUrl(url); setStatus('Live on remedae.app'); await reload()
+    } finally { setBusy(false) }
+  }
+
+  async function unpublishRemedae() {
+    const slug = pinnedSlug
+    if (!slug) { setStatus('This article is not published'); return }
+    setBusy(true); setStatus('Taking it down from remedae.app…')
+    try {
+      const { error } = await unpublishFromRemedae(slug)
+      if (error) { setStatus(`Couldn’t unpublish: ${error}`); return }
+      if (currentId) { try { await updateJournal(currentId, { status: 'draft', published_at: null }) } catch { /* local flag only */ } }
+      setPinnedSlug(null); setRemedaeUrl(null); setStatus('Removed from remedae.app. The draft is still here.'); await reload()
     } finally { setBusy(false) }
   }
 
@@ -174,7 +191,7 @@ export default function CreateEditor() {
   async function write() {
     if (!aiTopic.trim()) return
     setAiBusy(true); setStatus(null)
-    const { result, error } = await generateJournal({ topic: aiTopic, notes: aiNotes, kind: family === 'report' ? 'report' : 'article', brandName: brand?.name, toneOfVoice: brand?.tone_of_voice, writingGuidelines: brand?.writing_guidelines })
+    const { result, error } = await generateJournal({ topic: aiTopic, notes: aiNotes, kind: family === 'report' ? 'report' : 'article', articleType, length, brandName: brand?.name, toneOfVoice: brand?.tone_of_voice, writingGuidelines: brand?.writing_guidelines })
     setAiBusy(false)
     if (error || !result) { setStatus(error ?? 'Could not write it'); return }
     setTitle(result.title); setDek(result.dek); setReadingTime(result.readingTime ?? '')
@@ -205,13 +222,19 @@ export default function CreateEditor() {
     setBlock(id, { url }); setStatus('Image added')
   }
 
-  function blank() { setCurrentId(null); setTitle(''); setDek(''); setReadingTime(''); setHero(''); setBlocks([]); setTakeaways(''); setStatus(null) }
+  function blank() { setCurrentId(null); setTitle(''); setDek(''); setReadingTime(''); setHero(''); setBlocks([]); setTakeaways(''); setPinnedSlug(null); setRemedaeUrl(null); setStatus(null) }
   function openDoc(a: JournalArticle) {
     setCurrentId(a.id); setTitle(a.title); setDek(a.dek); setReadingTime(a.reading_time); setHero(a.hero_image ?? '')
     setBlocks(Array.isArray(a.blocks) && a.blocks.length ? (a.blocks as unknown as Block[]) : [])
     setTakeaways((a.takeaways ?? []).join('\n')); setStatus(null)
+    // A published article keeps its slug for life, so retitling updates the
+    // live piece in place instead of publishing a second copy.
+    const published = a.status === 'published' && !!a.slug
+    setPinnedSlug(published ? a.slug : null)
+    setRemedaeUrl(published && isRemedae ? `https://remedae.app/journal/${a.slug}` : null)
     if (isMobile) setMView('preview')
   }
+  const effectiveSlug = () => pinnedSlug ?? slugify(title || 'untitled')
 
   async function uploadHero(file: File) {
     setHeroBusy(true); setStatus('Uploading hero image…')
@@ -228,7 +251,7 @@ export default function CreateEditor() {
       blocks: blocks as unknown[],
       body_md: blocksToText(blocks),
       takeaways: takeawayList,
-      slug: slugify(title || 'untitled'),
+      slug: effectiveSlug(),
       kind: family === 'report' ? 'report' : 'article',
     }
   }
@@ -272,7 +295,7 @@ export default function CreateEditor() {
     // The Remedae workspace previews the article exactly as remedae.app renders
     // it, driven by the same mapping the publish button sends.
     <RemedaeArticlePreview
-      article={toRemedaeArticle({ title, dek, readingTime, hero, blocks, takeaways: takeawayList, category: remCategory })}
+      article={toRemedaeArticle({ title, dek, readingTime, hero, blocks, takeaways: takeawayList, category: remCategory, slug: effectiveSlug() })}
       isMobile={isMobile}
     />
   ) : (
@@ -314,9 +337,26 @@ export default function CreateEditor() {
                   <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
                   <input style={{ ...inp, marginBottom: 8 }} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder={meta.topicPlaceholder} onKeyDown={(e) => { if (e.key === 'Enter') write() }} />
                   <textarea style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} rows={2} value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="Notes, angles, references (optional)" />
+                  {family === 'journal' && (
+                    <>
+                      <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '12px 0 6px' }}>Type of piece</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {ARTICLE_TYPES.map((t) => (
+                          <button key={t.key} className="hh-btn" onClick={() => setArticleType(t.key)} title={t.hint} style={{ ...chip(articleType === t.key), padding: '6px 11px', fontSize: 11.5 }}>{t.label}</button>
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6, lineHeight: 1.45 }}>{ARTICLE_TYPES.find((t) => t.key === articleType)?.hint}</div>
+                      <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '12px 0 6px' }}>Length</div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {LENGTHS.map((l) => (
+                          <button key={l.key} className="hh-btn" onClick={() => setLength(l.key)} style={{ ...chip(length === l.key), padding: '6px 11px', fontSize: 11.5 }}>{l.label} <span style={{ opacity: 0.6 }}>· {l.hint}</span></button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   <button className="hh-btn" onClick={write} disabled={aiBusy || !aiTopic.trim()}
-                    style={{ marginTop: 10, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy || !aiTopic.trim() ? 'default' : 'pointer', opacity: aiBusy || !aiTopic.trim() ? 0.55 : 1 }}>
-                    {aiBusy ? 'Writing… (20–40s)' : '✦ Generate'}
+                    style={{ marginTop: 12, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy || !aiTopic.trim() ? 'default' : 'pointer', opacity: aiBusy || !aiTopic.trim() ? 0.55 : 1 }}>
+                    {aiBusy ? (length === 'long' ? 'Writing… (about 90s)' : 'Writing… (about a minute)') : '✦ Generate'}
                   </button>
                 </div>
 
@@ -413,13 +453,15 @@ export default function CreateEditor() {
                     </select>
                     <button className="hh-btn" onClick={publishRemedae} disabled={busy || !title.trim() || !blocks.length}
                       style={{ background: 'var(--hh-copper)', border: '1px solid var(--hh-copper)', color: 'var(--hh-on-accent, #10140F)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
-                      ↗ Publish to the journal
+                      {pinnedSlug ? '↗ Update the live article' : '↗ Publish to the journal'}
                     </button>
-                    {remedaeUrl && (
-                      <a href={remedaeUrl} target="_blank" rel="noreferrer" style={{ display: 'block', fontSize: 12.5, color: 'var(--text-accent)', marginTop: 8 }}>
-                        View on remedae.app ↗
-                      </a>
+                    {pinnedSlug && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+                        {remedaeUrl && <a href={remedaeUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, color: 'var(--text-accent)' }}>View on remedae.app ↗</a>}
+                        <ConfirmButton onConfirm={unpublishRemedae} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Unpublish</ConfirmButton>
+                      </div>
                     )}
+                    {pinnedSlug && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Live at /journal/{pinnedSlug}. Edits update this article in place, even if you retitle it.</div>}
                   </>
                 )}
 

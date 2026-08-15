@@ -50,6 +50,8 @@ export function toRemedaeArticle(input: {
   blocks: Block[]
   takeaways: string[]
   category: RemedaeCategory
+  /** Keep a published article's slug so a retitle updates it in place. */
+  slug?: string
 }): RemedaeArticle {
   const body: RemedaeBlock[] = []
   let hero = (input.hero ?? '').trim()
@@ -81,7 +83,7 @@ export function toRemedaeArticle(input: {
   const readMinutes = Number.isFinite(parsed) && parsed > 0 ? parsed : Math.max(2, Math.round(words / 200))
 
   return {
-    slug: slugify(input.title || 'untitled'),
+    slug: (input.slug?.trim()) || slugify(input.title || 'untitled'),
     title: input.title.trim(),
     dek: input.dek.trim(),
     category: input.category,
@@ -108,6 +110,26 @@ export function validateRemedaeArticle(a: RemedaeArticle): string | null {
     return 'Remove em/en dashes: use a comma, colon or full stop'
   }
   return null
+}
+
+/** Take a published article down from remedae.app (the draft stays in the copilot). */
+export async function unpublishFromRemedae(slug: string): Promise<{ error?: string }> {
+  if (!(isSupabaseConfigured && supabase && functionsBase)) return { error: 'Not connected' }
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) return { error: 'Sign in first' }
+  try {
+    const res = await fetch(`${functionsBase}/publish-remedae`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'unpublish', slug }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { error: data?.error ? String(data.error) : `Unpublish ${res.status}` }
+    return {}
+  } catch (e) {
+    return { error: String(e) }
+  }
 }
 
 export async function publishToRemedae(article: RemedaeArticle): Promise<{ url?: string; error?: string }> {

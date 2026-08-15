@@ -84,6 +84,10 @@ export async function generateJournal(input: {
   writingGuidelines?: string
   /** 'report' writes in the wider-publication register (state-of-the-sector). */
   kind?: 'article' | 'report'
+  /** How the piece tells its story (see lib/articleTypes). */
+  articleType?: string
+  /** Target length key (see lib/articleTypes). */
+  length?: string
 }): Promise<{ result: GeneratedJournal | null; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { result: null, error: 'Not connected' }
   const { data: sessionData } = await supabase.auth.getSession()

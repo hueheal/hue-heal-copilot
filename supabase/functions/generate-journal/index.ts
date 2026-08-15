@@ -13,7 +13,62 @@ import { corsHeaders, json } from '../_shared/cors.ts'
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
 
-interface Body { topic: string; notes?: string; brandName?: string; toneOfVoice?: string; writingGuidelines?: string; kind?: string }
+interface Body {
+  topic: string; notes?: string; brandName?: string; toneOfVoice?: string; writingGuidelines?: string; kind?: string
+  /** Article type key (see ARTICLE_TYPES) and target length key (see LENGTHS). */
+  articleType?: string
+  length?: string
+}
+
+/* Article types: how the piece tells its story. Each brief shapes the arc and
+   the balance of narrative to evidence; the brand's voice still governs the
+   words. Mirrored in src/lib/articleTypes.ts for the editor's controls. */
+const ARTICLE_TYPES: Record<string, { label: string; brief: string }> = {
+  story: {
+    label: 'Story-led',
+    brief:
+      'ARTICLE TYPE: story-led. Open on a person, a place or a moment (real, or clearly framed as illustrative) and let the reader arrive at the idea through the story. ' +
+      'Evidence, studies and citations come in later and lightly, as support for what the story has already made felt, never as the opening move. Roughly two thirds narrative and observation, one third evidence and explanation. ' +
+      'Close by returning to the opening scene or person, changed by what the piece has shown.',
+  },
+  explainer: {
+    label: 'Explainer',
+    brief:
+      'ARTICLE TYPE: explainer. Take one thing people half-know and make it fully clear. Start from the everyday version of the question, then build understanding step by step in plain terms. ' +
+      'Evidence is woven in where it clarifies, one named source at a time, never stacked. End with what the reader now understands that they did not before.',
+  },
+  research: {
+    label: 'On the research',
+    brief:
+      'ARTICLE TYPE: research deep read. This piece is explicitly about what the studies say. Still open with the human question the research is trying to answer, then walk through the evidence honestly: what was studied, when, what it found, and what it could not show. ' +
+      'Name every source. Be plain about weak or mixed evidence. Close with a fair, calibrated position.',
+  },
+  practical: {
+    label: 'Practical guide',
+    brief:
+      'ARTICLE TYPE: practical guide. Something the reader can try tonight. Open with the situation the reader is in, give the practice with enough specificity to actually do it (amounts, timing, what to expect), then the why behind it in a paragraph or two. ' +
+      'This is the piece where a numbered list of steps earns its place. Include the safety line near the end.',
+  },
+  essay: {
+    label: 'Essay',
+    brief:
+      'ARTICLE TYPE: essay. A considered, personal-in-tone piece with a point of view. Open with an observation or a tension worth sitting with, develop it through two or three turns of thought, use one or two concrete examples, and land on a position the reader can disagree with. ' +
+      'Evidence is welcome but serves the argument; this is thinking on the page, not a literature review.',
+  },
+  profile: {
+    label: 'Profile',
+    brief:
+      'ARTICLE TYPE: profile. A portrait of a tradition, a practice, a place or a practitioner (real, from verifiable public knowledge only). Lead with a vivid, specific detail, then widen out to history, how it works and where it sits today. ' +
+      'Let the subject carry the piece; quotes and sources support the portrait rather than replace it.',
+  },
+}
+
+/* Target lengths. Words guide the model; readingTime follows from them. */
+const LENGTHS: Record<string, { label: string; words: string; sections: string }> = {
+  short: { label: 'Short', words: '450 to 700 words (a 3 to 4 minute read)', sections: '2 or 3 sections' },
+  medium: { label: 'Medium', words: '800 to 1,200 words (a 5 to 7 minute read)', sections: '3 or 4 sections' },
+  long: { label: 'Long read', words: '1,400 to 2,000 words (an 8 to 11 minute read)', sections: '4 to 6 sections' },
+}
 
 /* The Remedae journal authoring brief (remedae repo, docs/journal-authoring.md).
    Applied when the active brand world is Remedae. Structure and rules only;
@@ -28,7 +83,8 @@ const REMEDAE_BRIEF =
   'Swaps: treatment -> remedy or practice; patient -> person or reader; cure -> help, ease, address; alternative medicine -> traditional medicine; evidence level -> research available; dosage -> amount, how much; side effect -> what to watch for; symptom -> what you\'re noticing.\n' +
   'Hooks: concrete ("Your nan was onto something."), human, low-key. Never "In a world where", "Did you know", "We need to talk about", "Let\'s dive into", or rhetorical questions as filler.\n' +
   'Title: 1 to 14 words carrying the promise; ends with a full stop, question mark or nothing, never an exclamation; a full stop over a colon ("Sleep. Sun. Breath. The free medicines."). Dek: 1 to 3 sentences that extend the title with the specific angle and what the reader gets, never repeating it.\n' +
-  'Structure and rhythm: 700 to 1,800 words (a 5 to 10 minute read). The FIRST section\'s body opens with a lede paragraph that lands the concrete image or claim the piece hangs on. Then 2 to 4 sections, each with a short image-rich heading and 2 to 4 paragraphs of 40 to 90 words. Place a pulled quote (real, attributed) after a section every 2 to 3 sections to lift the pace. Use at most ONE numbered list in the whole piece, for the "things every tradition agrees on" moment. Cut a third out of your first draft.\n' +
+  'Structure and rhythm: length and section count are given below under LENGTH; follow them. The FIRST section\'s body opens with a lede paragraph that lands a concrete image, a person or a moment (not a statistic or a study). Each section has a short image-rich heading and 2 to 4 paragraphs of 40 to 90 words. Place a pulled quote (real, attributed) after a section every 2 to 3 sections to lift the pace. Use at most ONE numbered list in the whole piece. Cut a third out of your first draft.\n' +
+  'Storytelling first: readers arrive at the evidence through people and moments, not the other way round. Do not open on a study, a percentage or "research shows". Introduce a source at the point where the story has made the reader want it.\n' +
   'Safety line: if the piece offers anything to try, close with a version, in the piece\'s own voice, of: none of this replaces a clinician; if something is new, severe or getting worse, the answer is a doctor, not a warm drink. Purely editorial pieces need one sentence acknowledging the limits of an article.\n' +
   'The takeaways field: 3 to 5 short, concrete things the reader can hold onto, in the same voice (never generic).\n'
 
@@ -104,12 +160,18 @@ Deno.serve(async (req) => {
 
   const isReport = body.kind === 'report'
   const isRemedae = brand.toLowerCase().includes('remedae')
+  const atype = ARTICLE_TYPES[body.articleType ?? ''] ?? ARTICLE_TYPES.story
+  const len = LENGTHS[body.length ?? ''] ?? LENGTHS.medium
+  const shape =
+    `\n${atype.brief}\n` +
+    `LENGTH: ${len.words}, in ${len.sections}. This overrides any other length guidance. Set readingTime to match.\n`
   const prompt = isRemedae && !isReport
     ? `Write a full journal article for the Remedae journal.\n\nTopic: "${topic}".\n` +
       (notes ? `Notes and raw material to work from (treat as the reader-supplied source; do not go beyond what it and real, citeable knowledge support): ${notes}\n` : '') +
       (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
       (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
-      `\nTHE REMEDAE JOURNAL BRIEF (this governs structure and rules):\n${REMEDAE_BRIEF}\n` +
+      `\nTHE REMEDAE JOURNAL BRIEF (this governs rules and voice):\n${REMEDAE_BRIEF}\n` +
+      shape +
       'British English. Call the journal_article tool with the finished piece: sections in reading order (heading and body only), then any real attributed quotes in "quotes" and at most one numbered list in "lists", each pointing at the section it follows via afterSection.'
     : (isReport
       ? `Write a full studio report for ${brand}, a wellness experience design studio working across digital and physical experiences. This is a wider publication (a "state of" style piece) the studio publishes under its own name: broader in scope than a journal article, surveying a territory and taking a clear editorial position. Structure it as a report with distinct chapters.\n\n`
@@ -125,7 +187,8 @@ Deno.serve(async (req) => {
     '- Precise. Every paragraph earns its place. Concrete and sensory over abstract claims.\n' +
     '- British English. No hype, no buzzwords, no emoji. Never use em dashes or en dashes: use commas, colons, full stops, or the word "and".\n' +
     '- A pulled quote is welcome only when it is real and attributable to a named person; never invent one. Use a numbered list sparingly.\n' +
-    '- Always end with a short set of key design takeaways the client can leverage and learn from.\n\n' +
+    '- Always end with a short set of key design takeaways the client can leverage and learn from.\n' +
+    (isReport ? '' : shape) + '\n' +
     'Call the journal_article tool with the finished piece.'
 
   // Long articles routinely overflow the tool-argument parser (array fields
