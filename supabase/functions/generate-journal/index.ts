@@ -43,25 +43,39 @@ const TOOL = {
       readingTime: { type: 'string', description: 'Estimated reading time, e.g. "6 min read".' },
       sections: {
         type: 'array',
-        description: '3 to 6 sections that develop one clear idea, unhurried and precise.',
+        description: '3 to 6 sections that develop one clear idea, unhurried and precise. Each item is an object with heading and body only.',
         items: {
           type: 'object',
           properties: {
             heading: { type: 'string' },
             body: { type: 'string', description: 'A few flowing paragraphs. Separate paragraphs with blank lines.' },
-            quote: {
-              type: 'object',
-              description: 'Optional pulled quote placed after this section. ONLY when you can attribute it to a real, named person or institution and you are confident it is real. Never invent a quote.',
-              properties: { text: { type: 'string' }, attribution: { type: 'string', description: 'Real person or institution, e.g. "Dr. Aran Patel, gastroenterologist, in a 2024 review".' } },
-              required: ['text', 'attribution'],
-            },
-            list: {
-              type: 'array',
-              description: 'Optional numbered list placed after this section: the "five things every tradition agrees on" moment. At most ONE list in the whole article.',
-              items: { type: 'string' },
-            },
           },
           required: ['heading', 'body'],
+        },
+      },
+      quotes: {
+        type: 'array',
+        description: 'Optional pulled quotes, each placed after the section at afterSection (0-based index into sections). ONLY when you can attribute it to a real, named person or institution and you are confident it is real. Never invent a quote. Empty array if none.',
+        items: {
+          type: 'object',
+          properties: {
+            afterSection: { type: 'integer' },
+            text: { type: 'string' },
+            attribution: { type: 'string', description: 'Real person or institution, e.g. "Dr. Aran Patel, gastroenterologist, in a 2024 review".' },
+          },
+          required: ['afterSection', 'text', 'attribution'],
+        },
+      },
+      lists: {
+        type: 'array',
+        description: 'Optional numbered lists, each placed after the section at afterSection (0-based). The "five things every tradition agrees on" moment. At most ONE list in the whole article. Empty array if none.',
+        items: {
+          type: 'object',
+          properties: {
+            afterSection: { type: 'integer' },
+            items: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['afterSection', 'items'],
         },
       },
       takeaways: {
@@ -96,7 +110,7 @@ Deno.serve(async (req) => {
       (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
       (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
       `\nTHE REMEDAE JOURNAL BRIEF (this governs structure and rules):\n${REMEDAE_BRIEF}\n` +
-      'British English. Call the journal_article tool with the finished piece: sections in reading order, with quote and list attached to the sections they follow.'
+      'British English. Call the journal_article tool with the finished piece: sections in reading order (heading and body only), then any real attributed quotes in "quotes" and at most one numbered list in "lists", each pointing at the section it follows via afterSection.'
     : (isReport
       ? `Write a full studio report for ${brand}, a wellness experience design studio working across digital and physical experiences. This is a wider publication (a "state of" style piece) the studio publishes under its own name: broader in scope than a journal article, surveying a territory and taking a clear editorial position. Structure it as a report with distinct chapters.\n\n`
       : `Write a full journal article for ${brand}, a wellness experience design studio working across digital and physical experiences, for the studio's website Journal.\n\n`) +
@@ -114,21 +128,149 @@ Deno.serve(async (req) => {
     '- Always end with a short set of key design takeaways the client can leverage and learn from.\n\n' +
     'Call the journal_article tool with the finished piece.'
 
+  // Long articles routinely overflow the tool-argument parser (array fields
+  // arrive as raw "<parameter>" strings). So we ask for the article as a JSON
+  // document in plain text, matching the tool schema, and parse it ourselves.
+  const jsonPrompt =
+    prompt.replace(/Call the journal_article tool with the finished piece[^\n]*/, '') +
+    '\nOUTPUT FORMAT: respond with ONLY one JSON object and nothing else (no prose before or after, no markdown fences, no schema). ' +
+    'Follow the shape of this example exactly, replacing the values with the real article:\n' +
+    JSON.stringify({
+      title: 'The first glass of the day.',
+      dek: 'One or two sentences that extend the title with the specific angle.',
+      readingTime: '6 min read',
+      sections: [
+        { heading: 'Section heading', body: 'Paragraph one.\n\nParagraph two.' },
+        { heading: 'Another heading', body: 'Paragraph.' },
+      ],
+      quotes: [{ afterSection: 0, text: 'The quoted words.', attribution: 'Real Person, role, source and year' }],
+      lists: [{ afterSection: 1, items: ['First item.', 'Second item.'] }],
+      takeaways: ['First takeaway.', 'Second takeaway.'],
+    }) +
+    '\nRules for the JSON: title, dek and readingTime are plain strings (never objects). sections is an array of {heading, body} objects. quotes and lists may be empty arrays. Use straight double quotes, escape any double quote inside a string as \\", and write newlines inside strings as \\n.'
+
   let resp: Response
   try {
     resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 8000, tools: [TOOL], tool_choice: { type: 'tool', name: 'journal_article' }, messages: [{ role: 'user', content: prompt }] }),
+      // Sonnet 5 thinks adaptively by default and max_tokens caps thinking +
+      // text together; a demanding brief can spend the whole budget deliberating.
+      // Medium effort keeps the reasoning proportionate so the article itself
+      // always fits, and the ceiling has headroom for the long pieces.
+      // (Kept under the edge function's wall-clock so long pieces still return.)
+      body: JSON.stringify({ model: MODEL, max_tokens: 9000, output_config: { effort: 'medium' }, messages: [{ role: 'user', content: jsonPrompt }] }),
     })
   } catch (e) {
     return json({ error: `Request failed: ${e instanceof Error ? e.message : e}` }, 502)
   }
   if (!resp.ok) return json({ error: `Anthropic ${resp.status}: ${(await resp.text()).slice(0, 300)}` }, 502)
   const data = await resp.json()
-  const use = (data.content ?? []).find((b: { type: string }) => b.type === 'tool_use')
-  const article = use?.input as { title?: string; sections?: unknown[] } | undefined
-  if (!article || !Array.isArray(article.sections) || !article.sections.length) return json({ error: 'No article returned' }, 502)
+  const text = (data.content ?? []).filter((b: { type: string }) => b.type === 'text').map((b: { text: string }) => b.text).join('\n')
+  type Sec = { heading?: string; body?: string; quote?: { text: string; attribution?: string }; list?: string[] }
+  type Article = {
+    title?: string; sections?: Sec[]
+    quotes?: { afterSection?: number; text?: string; attribution?: string }[]
+    lists?: { afterSection?: number; items?: string[] }[]
+  }
+  let article: Article | undefined
+  let parseNote = ''
+  {
+    const s = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+    const start = s.indexOf('{'), end = s.lastIndexOf('}')
+    if (start >= 0 && end > start) {
+      const raw = s.slice(start, end + 1)
+      // Pass 1: as written. Pass 2: repair the two slips models make in long
+      // JSON strings, raw newlines/tabs inside a string and unescaped inner
+      // double quotes (detected as a quote followed by something that cannot
+      // legally follow a closing quote).
+      // Repair pass is a cheap linear scan (no backtracking regex, which can
+      // stall the isolate on 30KB+ bodies): escape raw newlines/tabs and bare
+      // inner quotes that appear inside string literals.
+      const repair = (src: string): string => {
+        let out = '', inStr = false, esc = false
+        for (let i = 0; i < src.length; i++) {
+          const c = src[i]
+          if (inStr) {
+            if (esc) { out += c; esc = false; continue }
+            if (c === '\\') { out += c; esc = true; continue }
+            if (c === '\n') { out += '\\n'; continue }
+            if (c === '\r') continue
+            if (c === '\t') { out += '\\t'; continue }
+            if (c === '"') {
+              // A closing quote is followed (after spaces) by , : } ] or end.
+              let j = i + 1
+              while (j < src.length && (src[j] === ' ' || src[j] === '\n' || src[j] === '\r' || src[j] === '\t')) j++
+              const nxt = src[j]
+              if (nxt === undefined || nxt === ',' || nxt === ':' || nxt === '}' || nxt === ']') { inStr = false; out += c }
+              else out += '\\"'
+              continue
+            }
+            out += c
+          } else {
+            if (c === '"') inStr = true
+            out += c
+          }
+        }
+        return out
+      }
+      try { article = JSON.parse(raw); parseNote = '' }
+      catch (e1) {
+        parseNote = String(e1).slice(0, 120)
+        try { article = JSON.parse(repair(raw)); parseNote = '' } catch (e2) { parseNote += ' | repaired: ' + String(e2).slice(0, 120) }
+      }
+    }
+  }
+
+  // The API sometimes hands back an array-valued tool argument as a raw string
+  // (a leaked "<parameter name=...>[...]" wrapper around the JSON). Recover the
+  // JSON inside so a fully written article is never thrown away.
+  const recover = (v: unknown): unknown => {
+    if (typeof v !== 'string') return v
+    const s = v.trim()
+    const start = s.search(/[[{]/)
+    if (start < 0) return v
+    const endBracket = s.lastIndexOf(']'), endBrace = s.lastIndexOf('}')
+    const end = Math.max(endBracket, endBrace)
+    if (end <= start) return v
+    try { return JSON.parse(s.slice(start, end + 1)) } catch { return v }
+  }
+  if (article) {
+    for (const k of ['sections', 'quotes', 'lists', 'takeaways'] as const) {
+      const rec = recover((article as Record<string, unknown>)[k])
+      if (rec !== undefined) (article as Record<string, unknown>)[k] = rec
+    }
+    for (const k of ['title', 'dek', 'readingTime'] as const) {
+      const val = (article as Record<string, unknown>)[k]
+      if (typeof val === 'string') (article as Record<string, unknown>)[k] = val.replace(/<\/?parameter[^>]*>/g, '').trim()
+    }
+  }
+
+  // Reattach top-level quotes/lists to their sections (the app's contract).
+  if (article && Array.isArray(article.sections) && article.sections.length) {
+    const secs = article.sections
+    const at = (n: unknown) => Math.min(secs.length - 1, Math.max(0, Number.isFinite(Number(n)) ? Math.floor(Number(n)) : 0))
+    for (const q of article.quotes ?? []) {
+      if (q?.text?.trim() && q?.attribution?.trim()) secs[at(q.afterSection)].quote = { text: q.text.trim(), attribution: q.attribution.trim() }
+    }
+    for (const l of (article.lists ?? []).slice(0, 1)) {
+      const items = (l?.items ?? []).map((s) => String(s).trim()).filter(Boolean)
+      if (items.length) secs[at(l.afterSection)].list = items
+    }
+    delete article.quotes
+    delete article.lists
+  }
+
+  if (!article || !Array.isArray(article.sections) || !article.sections.length) {
+    // Surface why: stop reason and a glimpse of what came back, so a truncated
+    // or refused response is diagnosable from the app instead of a blank error.
+    const stop = data.stop_reason ?? 'unknown'
+    const keys = article ? Object.keys(article as object).join(',') : 'none'
+    const secType = article ? `${typeof article.sections}/${Array.isArray(article.sections)}` : 'n/a'
+    const glimpse = `keys=${keys} sections=${secType} parse=${parseNote} sample=${JSON.stringify(article?.sections ?? null).slice(0, 200)} text=${text.slice(0, 120)}`
+    console.error('generate-journal: no article', { stop, glimpse })
+    return json({ error: `No article returned (stop: ${stop})`, detail: glimpse }, 502)
+  }
   if (!article.title || !article.title.trim()) article.title = topic // model sometimes omits the title; fall back to the topic
   return json({ result: article })
 })
