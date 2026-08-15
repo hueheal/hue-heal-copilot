@@ -10,6 +10,11 @@ export interface Brief {
   format: PostFormat
   sector: Sector
   accent: Accent
+  /** Article mode: the post promotes a published journal article. */
+  article?: { title: string; dek?: string; body?: string; url: string; takeaways?: string[] }
+  /** The active brand world's identity (name, voice, guidelines, tagline). When
+      set it replaces the legacy brand-kit lookup so every workspace sounds like itself. */
+  brandOverride?: { name?: string; tagline?: string; voice?: string; guidelines?: string }
 }
 
 export interface GeneratedCopy {
@@ -56,29 +61,52 @@ async function getBrand(): Promise<{ name?: string; tagline?: string; voice?: st
 export function localCopy(brief: Brief): GeneratedCopy {
   const topic = brief.topic.trim() || 'wellness spaces'
   const sector = SECTOR_LABEL[brief.sector]
-  const caption =
-    `A Hue & Heal guide to ${topic.toLowerCase()} — where ${sector.toLowerCase()} meets the ` +
-    `science of feeling well. Swipe for the five principles we design by. ↝`
+  const brandName = brief.brandOverride?.name?.trim() || 'Hue & Heal'
+  const tag = brandName.replace(/[^a-zA-Z0-9]/g, '')
   const bySector: Record<Sector, string> = {
     hospitality: '#HospitalityDesign',
     food_beverage: '#FnBDesign',
     health_fitness: '#WellnessSpaces',
     education: '#LearningEnvironments',
   }
+  // Article mode offline: build the post from the article itself so a draft is
+  // still useful without the model (headline = title, slides = its sections).
+  const a = brief.article
+  if (a) {
+    const paras = (a.body ?? '').split(/\n{2,}/).map((x) => x.trim()).filter(Boolean)
+    const first = paras[0] ?? a.dek ?? ''
+    const isMulti = brief.format === 'carousel' || brief.format === 'story'
+    const points = (a.takeaways?.length ? a.takeaways : paras.slice(1, 5)).slice(0, brief.format === 'story' ? 1 : 4)
+    const slides: Slide[] = isMulti
+      ? [
+          ...points.map((pt, i) => ({ heading: a.takeaways?.length ? `0${i + 1}` : (pt.split(/[.:]/)[0] ?? '').slice(0, 40), body: pt })),
+          { heading: 'Read the full piece', body: `The whole story is on the ${brandName} journal. Link in bio.` },
+        ]
+      : []
+    return {
+      headline: a.title,
+      caption: `${first}\n\nThe full piece is on the ${brandName} journal: link in bio.`,
+      hashtags: [`#${tag}`, bySector[brief.sector], '#Wellbeing', '#Journal'],
+      slides,
+    }
+  }
+  const caption =
+    `A ${brandName} guide to ${topic.toLowerCase()}, where ${sector.toLowerCase()} meets the ` +
+    `science of feeling well. Swipe for the five principles we design by.`
   const slides: Slide[] =
     brief.format === 'carousel' || brief.format === 'report'
       ? [
           { heading: 'Sense of arrival', body: 'The first threshold sets the nervous system for everything after.' },
           { heading: 'Light as material', body: 'Warm, layered light does the quiet work of making a space feel safe.' },
           { heading: 'Natural texture', body: 'Clay, timber and stone ground the body in the room.' },
-          { heading: 'Room to breathe', body: 'Negative space is not empty — it is where calm lives.' },
+          { heading: 'Room to breathe', body: 'Negative space is not empty: it is where calm lives.' },
           { heading: 'A reason to return', body: 'Design one detail people will want to come back for.' },
         ]
       : []
   return {
     headline: topic,
     caption,
-    hashtags: ['#HueAndHeal', '#WellnessDesign', '#DesigningTheFutureOfWellness', bySector[brief.sector]],
+    hashtags: [`#${tag}`, '#WellnessDesign', bySector[brief.sector]],
     slides,
   }
 }
@@ -89,11 +117,12 @@ export async function generateCopy(brief: Brief): Promise<{ copy: GeneratedCopy;
     const token = sessionData.session?.access_token
     if (token) {
       try {
-        const brand = await getBrand()
+        const { brandOverride, ...rest } = brief
+        const brand = brandOverride ?? (await getBrand())
         const res = await fetch(`${functionsBase}/generate-copy`, {
           method: 'POST',
           headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-          body: JSON.stringify({ ...brief, brand }),
+          body: JSON.stringify({ ...rest, brand }),
         })
         if (res.ok) {
           const { post } = await res.json()
@@ -124,7 +153,7 @@ export const IMAGE_PRESETS: { key: string; label: string }[] = [
 ]
 
 /** Publish already-hosted JPEG(s) to Instagram with a caption (single or carousel). */
-export async function publishToInstagram(imageUrls: string[], caption: string): Promise<{ ok: boolean; permalink?: string | null; error?: string }> {
+export async function publishToInstagram(imageUrls: string[], caption: string, brandId?: string): Promise<{ ok: boolean; permalink?: string | null; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { ok: false, error: 'Not connected — add Supabase keys' }
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
@@ -133,7 +162,7 @@ export async function publishToInstagram(imageUrls: string[], caption: string): 
     const res = await fetch(`${functionsBase}/publish-instagram`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ imageUrls, caption }),
+      body: JSON.stringify({ imageUrls, caption, brandId }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) return { ok: false, error: data?.error ? String(data.error) : `Publish ${res.status}` }

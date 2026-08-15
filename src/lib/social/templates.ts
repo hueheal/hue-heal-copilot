@@ -197,22 +197,28 @@ export function templateById(id: string): TemplateDef {
 export interface ContentSlideInput {
   heading: string
   body: string
+  /** Optional photo behind this slide (e.g. an article image nearest to this idea). */
+  image?: string
 }
 
-/** A carousel content slide (used for slides 2..N): number, heading, body. */
+/** A carousel content slide (used for slides 2..N): number, heading, body.
+    With an image, the photo runs full-bleed behind a gradient scrim and the
+    type goes cream so it stays legible, matching the photo-led cover. */
 export function buildContentSlide(
   _format: InstaFormat,
-  { index, total, heading, body, accent, style }: { index: number; total: number; heading: string; body: string; accent: Accent; style?: SocialStyle },
+  { index, total, heading, body, accent, style, image }: { index: number; total: number; heading: string; body: string; accent: Accent; style?: SocialStyle; image?: string },
 ): Slide {
   const acc = accentHex(accent)
   const st = style ?? defaultStyle(null)
-  const fg = fgFor(st, acc)
+  const photo = image?.trim()
+  const fg = photo ? '#F4F0E7' : fgFor(st, acc)
   const els: DesignElement[] = [
     text(`0${index + 1} / 0${total}`, { x: 8, y: 8, w: 40, h: 6 }, { color: acc, fontKey: 'sans', fontSize: SZ.Small, letterSpacing: 0.16, uppercase: true }, { accentRef: true }),
-    text(heading, { x: 8, y: 30, w: 84, h: 20 }, { color: fg, fontKey: st.headlineFont, fontSize: SZ.H2, fontWeight: 300, lineHeight: 1.05 }, { role: 'heading' }),
+    text(heading, { x: 8, y: photo ? 52 : 30, w: 84, h: 20 }, { color: fg, fontKey: st.headlineFont, fontSize: SZ.H2, fontWeight: 300, lineHeight: 1.05 }, { role: 'heading' }),
   ]
-  if (st.motif === 'rule') els.push(shape({ x: 8, y: 54, w: 12, h: 0.6 }, acc, 0, { accentRef: true }))
-  els.push(text(body, { x: 8, y: 58, w: 82, h: 30 }, { color: fg, fontKey: 'sans', fontSize: SZ.Body, lineHeight: 1.5, opacity: 0.9 }, { role: 'body' }))
+  if (st.motif === 'rule' && !photo) els.push(shape({ x: 8, y: 54, w: 12, h: 0.6 }, acc, 0, { accentRef: true }))
+  els.push(text(body, { x: 8, y: photo ? 74 : 58, w: 82, h: photo ? 20 : 30 }, { color: fg, fontKey: 'sans', fontSize: SZ.Body, lineHeight: 1.5, opacity: 0.92 }, { role: 'body' }))
+  if (photo) return { id: eid('slide'), background: { type: 'image', value: photo }, scrim: 'gradient', scrimStrength: 70, elements: els }
   return { id: eid('slide'), background: backgroundFor(st, acc), elements: els }
 }
 
@@ -234,7 +240,7 @@ export function buildDesign(
   let rest: Slide[]
   if (contentSlides && contentSlides.length) {
     rest = contentSlides.map((cs, i) =>
-      buildContentSlide(format, { index: i, total: contentSlides.length, heading: cs.heading, body: cs.body, accent: seed.accent, style: seed.style }),
+      buildContentSlide(format, { index: i, total: contentSlides.length, heading: cs.heading, body: cs.body, accent: seed.accent, style: seed.style, image: cs.image }),
     )
   } else {
     rest = Array.from({ length: Math.max(slideCount - 1, 0) }, () => def.build(format, seed))

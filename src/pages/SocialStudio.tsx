@@ -452,7 +452,7 @@ export default function SocialStudio() {
       if (n > 1) setActive(orig)
       setStatus('Posting to Instagram…')
       const caption = [post!.caption, (post!.hashtags ?? []).join(' ')].map((s) => (s ?? '').trim()).filter(Boolean).join('\n\n')
-      const { ok, permalink, error } = await publishToInstagram(urls, caption)
+      const { ok, permalink, error } = await publishToInstagram(urls, caption, brandWorld?.id)
       if (!ok) { setStatus(`Post failed: ${error}`); return }
       await updatePost(post!.id, { status: 'published' })
       setPost((p) => (p ? { ...p, status: 'published' } : p))

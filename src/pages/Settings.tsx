@@ -94,6 +94,7 @@ function BrandsPanel() {
         image_master_prompt: draft.image_master_prompt, image_negatives: draft.image_negatives,
         accent_color: draft.accent_color, display_font: draft.display_font, logo_url: draft.logo_url,
         sender_email: draft.sender_email ?? '', tagline: draft.tagline ?? '', website: draft.website ?? '',
+        instagram: draft.instagram ?? {},
       })
       await reload(draft.id); await brandCtx.reload(); setStatus('Saved')
     } catch (e) { setStatus(String(e)) } finally { setBusy(false) }
@@ -204,6 +205,25 @@ function BrandsPanel() {
                 <label style={{ ...label, margin: '0 0 8px' }}>Website</label>
                 <input value={draft.website || ''} onChange={(e) => patch({ website: e.target.value })} placeholder="remedae.app" style={inp} />
                 <p style={hint}>Shown in the email footer.</p>
+              </div>
+            </div>
+
+            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '30px 0 2px' }}>Instagram · this workspace posts as</div>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginTop: 12 }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Instagram account ID</label>
+                <input value={draft.instagram?.user_id ?? ''} onChange={(e) => patch({ instagram: { ...(draft.instagram ?? {}), user_id: e.target.value.trim() } })} placeholder="17841400000000000" style={inp} />
+                <p style={hint}>The numeric IG Business / Creator account ID (from Meta Business Suite or the Graph API explorer).</p>
+              </div>
+              <div style={{ flex: 2, minWidth: 260 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Long-lived access token</label>
+                <input type="password" autoComplete="off" value={draft.instagram?.access_token ?? ''} onChange={(e) => patch({ instagram: { ...(draft.instagram ?? {}), access_token: e.target.value.trim(), connected_at: new Date().toISOString() } })} placeholder="EAAB…" style={inp} />
+                <p style={hint}>Stored on this workspace only and never shown again in full. Needs instagram_basic, instagram_content_publish and pages_read_engagement.</p>
+              </div>
+              <div style={{ minWidth: 160 }}>
+                <label style={{ ...label, margin: '0 0 8px' }}>Handle (optional)</label>
+                <input value={draft.instagram?.username ?? ''} onChange={(e) => patch({ instagram: { ...(draft.instagram ?? {}), username: e.target.value.replace(/^@/, '').trim() } })} placeholder="remedae" style={inp} />
+                <p style={hint}>{draft.instagram?.user_id && draft.instagram?.access_token ? '● Connected' : '○ Not connected: posting is disabled for this workspace'}</p>
               </div>
             </div>
 

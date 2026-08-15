@@ -9,9 +9,21 @@ export type JournalArticle = Database['public']['Tables']['journal_articles']['R
 /** Where a published article will live on the site. Slug-based; the new site
     will serve these paths. Adjust here if the journal path changes. */
 const JOURNAL_BASE = 'https://www.hueandheal.com/journal'
-export function journalUrl(a: { slug?: string | null; title?: string | null }): string {
+
+/** Where this brand world's journal lives on the web. Remedae publishes to
+    remedae.app; other worlds use their website if set; the parent studio is
+    the default. */
+export function journalBaseFor(brand?: { name?: string | null; website?: string | null } | null): string {
+  const name = (brand?.name ?? '').toLowerCase()
+  if (name.includes('remedae')) return 'https://remedae.app/journal'
+  const site = (brand?.website ?? '').trim().replace(/\/+$/, '')
+  if (site) return `${/^https?:\/\//i.test(site) ? site : `https://${site}`}/journal`
+  return JOURNAL_BASE
+}
+
+export function journalUrl(a: { slug?: string | null; title?: string | null }, brand?: { name?: string | null; website?: string | null } | null): string {
   const s = (a.slug && a.slug.trim()) ? a.slug.trim() : slugify(a.title || 'article')
-  return `${JOURNAL_BASE}/${s}`
+  return `${journalBaseFor(brand)}/${s}`
 }
 
 export interface GeneratedSection {
@@ -163,7 +175,7 @@ export async function deleteJournal(id: string): Promise<void> {
   await supabase.from('journal_articles').delete().eq('id', id)
 }
 
-interface BrandVoice { name?: string; tone_of_voice?: string | null; writing_guidelines?: string | null }
+interface BrandVoice { name?: string; tone_of_voice?: string | null; writing_guidelines?: string | null; website?: string | null }
 
 /* Turn a finished article into a newsletter draft: AI writes a short captivating
    teaser, and a "Read the full piece" button links to the article on the site.
@@ -183,7 +195,7 @@ export async function createNewsletterFromArticle(
     template: 'The Journal',
   })
   if (error || !result) return { error: error ?? 'Could not write the teaser' }
-  const url = journalUrl(article)
+  const url = journalUrl(article, brand)
   let blocks = result.blocks
   const hasButton = blocks.some((b) => b.type === 'button')
   blocks = blocks.map((b) => (b.type === 'button' ? { ...b, label: b.label || 'Read the full piece', href: url } : b))

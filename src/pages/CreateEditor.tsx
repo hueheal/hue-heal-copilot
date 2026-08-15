@@ -22,6 +22,7 @@ import {
 } from '../lib/journal'
 import { REMEDAE_CATEGORIES, toRemedaeArticle, publishToRemedae, unpublishFromRemedae, validateRemedaeArticle, type RemedaeCategory } from '../lib/remedae'
 import { ARTICLE_TYPES, LENGTHS, type ArticleTypeKey, type LengthKey } from '../lib/articleTypes'
+import { createPostFromArticle, type SocialFormat } from '../lib/articleToSocial'
 import RemedaeArticlePreview from '../components/RemedaeArticlePreview'
 
 /* ============================================================
@@ -264,6 +265,20 @@ export default function CreateEditor() {
   }
   async function del(id: string) { await deleteJournal(id); if (currentId === id) blank(); await reload() }
 
+  async function toInstagram(format: SocialFormat) {
+    if (!title.trim() || !blocks.length) { setStatus('Write it first'); return }
+    setBusy(true); setStatus(format === 'portrait' ? 'Composing the post…' : `Composing the ${format}…`)
+    try {
+      const id = await save()
+      if (!id) return
+      const { id: postId, error } = await createPostFromArticle({
+        format, title, dek, hero, slug: effectiveSlug(), blocks, takeaways: takeawayList, bodyText: blocksToText(blocks), brand,
+      })
+      if (error || !postId) { setStatus(`Couldn’t compose the post: ${error ?? ''}`); return }
+      nav(`/create/social/${postId}`)
+    } finally { setBusy(false) }
+  }
+
   async function toNewsletter() {
     if (!title.trim() || !blocks.length) { setStatus('Write it first'); return }
     setBusy(true); setStatus('Writing the teaser…')
@@ -440,10 +455,28 @@ export default function CreateEditor() {
                 <textarea style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} rows={4} value={takeaways} onChange={(e) => setTakeaways(e.target.value)} placeholder="One per line" />
 
                 <div style={rail}>Share</div>
-                <button className="hh-btn" onClick={toNewsletter} disabled={busy || !title.trim() || !blocks.length}
-                  style={{ background: 'none', border: '1px solid var(--hh-copper)', color: 'var(--text-accent)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
-                  ✉ Create newsletter from this
-                </button>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <button className="hh-btn" onClick={toNewsletter} disabled={busy || !title.trim() || !blocks.length}
+                    style={{ background: 'none', border: '1px solid var(--hh-copper)', color: 'var(--text-accent)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
+                    ✉ Create newsletter from this
+                  </button>
+                </div>
+                {family === 'journal' && (
+                  <>
+                    <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '12px 0 6px' }}>Instagram · from this article</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {([['portrait', 'Single post'], ['carousel', 'Carousel'], ['story', 'Story']] as const).map(([f, label]) => (
+                        <button key={f} className="hh-btn" onClick={() => toInstagram(f)} disabled={busy || !title.trim() || !blocks.length}
+                          style={{ background: 'none', border: '1px solid var(--hh-line)', color: 'var(--text-strong)', borderRadius: 999, padding: '9px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
+                          ◎ {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6, lineHeight: 1.45 }}>
+                      Opens a draft in the Social Studio: hero as the cover, article images on the slides they belong to, caption and hashtags pointing to the piece. Post to Instagram from there.
+                    </div>
+                  </>
+                )}
 
                 {family === 'journal' && isRemedae && (
                   <>

@@ -14,6 +14,8 @@ export type InvoiceStatus = 'draft' | 'sent' | 'paid' | 'overdue'
 export interface Slide {
   heading: string
   body: string
+  /** Optional photo behind this slide (e.g. an article image placed on the idea it illustrates). */
+  image?: string
 }
 
 export interface ProposalPhase {
@@ -276,6 +278,7 @@ export interface Database {
           logo_url: string | null
           display_font: string
           sender_email?: string
+          instagram?: { user_id?: string; access_token?: string; username?: string; connected_at?: string } | null
           tagline?: string
           website?: string
           modules: string[]
@@ -297,6 +300,7 @@ export interface Database {
           logo_url?: string | null
           display_font?: string
           sender_email?: string
+          instagram?: { user_id?: string; access_token?: string; username?: string; connected_at?: string } | null
           tagline?: string
           website?: string
           modules?: string[]
