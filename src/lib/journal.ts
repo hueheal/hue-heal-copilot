@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
+import { compressPhoto } from './imageCompress'
 import { filterByBrand, withBrandInsert } from './brandScope'
 import { generateNewsletter, saveNewsletter, bid, type Block } from './newsletter'
 import type { Database } from './database.types'
@@ -53,12 +54,15 @@ export function blocksToText(blocks: Block[]): string {
   }).filter(Boolean).join('\n\n')
 }
 
-/** Upload a journal image to the social-assets bucket, returning a public URL. */
-export async function uploadJournalImage(file: File): Promise<{ url?: string; error?: string }> {
+/** Upload a journal image to the social-assets bucket, returning a public URL.
+    Photos are resized to a 2000px long edge and re-encoded as WebP first, so
+    heroes and inline images stay light on remedae.app and in email. */
+export async function uploadJournalImage(raw: File): Promise<{ url?: string; error?: string }> {
   if (!(isSupabaseConfigured && supabase)) return { error: 'Not connected' }
   const { data: s } = await supabase.auth.getSession()
   const uid = s.session?.user.id
   if (!uid) return { error: 'Sign in first' }
+  const file = await compressPhoto(raw)
   const safe = file.name.replace(/[^a-zA-Z0-9.]/g, '')
   const path = `${uid}/journal/img-${Date.now()}-${safe}`
   const { error } = await supabase.storage.from('social-assets').upload(path, file, { upsert: true, contentType: file.type || 'image/png' })

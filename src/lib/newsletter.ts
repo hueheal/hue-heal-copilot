@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
+import { compressPhoto } from './imageCompress'
 import { filterByBrand, withBrandInsert } from './brandScope'
 import { readableOn } from './color'
 import type { Database } from './database.types'
@@ -250,11 +251,13 @@ export function renderEmailHtml(
 /* Upload an image chosen from the user's device to the social-assets bucket and
    return its public URL, so image blocks can attach a local file instead of
    pasting a URL. Email needs a hosted absolute URL, which the public bucket gives. */
-export async function uploadNewsletterImage(file: File): Promise<{ url?: string; error?: string }> {
+export async function uploadNewsletterImage(raw: File): Promise<{ url?: string; error?: string }> {
   if (!(isSupabaseConfigured && supabase)) return { error: 'Not connected' }
   const { data: s } = await supabase.auth.getSession()
   const uid = s.session?.user.id
   if (!uid) return { error: 'Sign in first' }
+  // Email columns are 600px wide (1200px at retina); JPEG renders everywhere email does.
+  const file = await compressPhoto(raw, { maxEdge: 1200, format: 'jpeg', quality: 0.84 })
   const safe = file.name.replace(/[^a-zA-Z0-9.]/g, '')
   const path = `${uid}/newsletter/img-${Date.now()}-${safe}`
   const { error } = await supabase.storage.from('social-assets').upload(path, file, { upsert: true, contentType: file.type || 'image/png' })
