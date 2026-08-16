@@ -83,7 +83,7 @@ const REMEDAE_BRIEF =
   'Swaps: treatment -> remedy or practice; patient -> person or reader; cure -> help, ease, address; alternative medicine -> traditional medicine; evidence level -> research available; dosage -> amount, how much; side effect -> what to watch for; symptom -> what you\'re noticing.\n' +
   'Hooks: concrete ("Your nan was onto something."), human, low-key. Never "In a world where", "Did you know", "We need to talk about", "Let\'s dive into", or rhetorical questions as filler.\n' +
   'Title: 1 to 14 words carrying the promise; ends with a full stop, question mark or nothing, never an exclamation; a full stop over a colon ("Sleep. Sun. Breath. The free medicines."). Dek: 1 to 3 sentences that extend the title with the specific angle and what the reader gets, never repeating it.\n' +
-  'Structure and rhythm: length and section count are given below under LENGTH; follow them. The FIRST section\'s body opens with a lede paragraph that lands a concrete image, a person or a moment (not a statistic or a study). Each section has a short image-rich heading and 2 to 4 paragraphs of 40 to 90 words. Place a pulled quote (real, attributed) after a section every 2 to 3 sections to lift the pace. Use at most ONE numbered list in the whole piece. Cut a third out of your first draft.\n' +
+  'Structure and rhythm: length and section count are given below under LENGTH; follow them. The FIRST section\'s body opens with a lede: ONE short paragraph of at most two sentences (under 45 words) that lands a concrete image, a person or a moment (not a statistic or a study). It is set in large type on the page, so it must be brief. Everything after the lede is ordinary paragraphs. Each section has a short image-rich heading and 2 to 4 paragraphs of 40 to 90 words, separated by blank lines; never run a section into a single long block. Place a pulled quote (real, attributed) after a section every 2 to 3 sections to lift the pace. Use at most ONE numbered list in the whole piece. Cut a third out of your first draft.\n' +
   'Storytelling first: readers arrive at the evidence through people and moments, not the other way round. Do not open on a study, a percentage or "research shows". Introduce a source at the point where the story has made the reader want it.\n' +
   'Safety line: if the piece offers anything to try, close with a version, in the piece\'s own voice, of: none of this replaces a clinician; if something is new, severe or getting worse, the answer is a doctor, not a warm drink. Purely editorial pieces need one sentence acknowledging the limits of an article.\n' +
   'The takeaways field: 3 to 5 short, concrete things the reader can hold onto, in the same voice (never generic).\n'
@@ -185,6 +185,7 @@ Deno.serve(async (req) => {
     '- Ground the thinking in design thinking and behavioural psychology. Reference established ideas by name where they genuinely fit (for example cognitive load, the peak-end rule, biophilia, defaults and nudges, habit loops), woven in naturally, never as an academic list. Do not invent studies, statistics or quotes.\n' +
     '- Slow and thoughtful, unhurried, but never over-prescriptive: offer ways of seeing, not rigid rules.\n' +
     '- Precise. Every paragraph earns its place. Concrete and sensory over abstract claims.\n' +
+    '- The first paragraph is a lede: at most two sentences, under 45 words, landing one concrete image or moment. It is set in large type, so keep it brief; everything after it is ordinary paragraphs separated by blank lines. Never run a section into one long block.\n' +
     '- British English. No hype, no buzzwords, no emoji. Never use em dashes or en dashes: use commas, colons, full stops, or the word "and".\n' +
     '- A pulled quote is welcome only when it is real and attributable to a named person; never invent one. Use a numbered list sparingly.\n' +
     '- Always end with a short set of key design takeaways the client can leverage and learn from.\n' +
@@ -193,24 +194,36 @@ Deno.serve(async (req) => {
 
   // Long articles routinely overflow the tool-argument parser (array fields
   // arrive as raw "<parameter>" strings). So we ask for the article as a JSON
-  // document in plain text, matching the tool schema, and parse it ourselves.
+  // document, and use the API's native structured output (a JSON schema on
+  // output_config.format) so the response is guaranteed valid JSON: no
+  // hand-repair of quotes or newlines in long prose.
   const jsonPrompt =
     prompt.replace(/Call the journal_article tool with the finished piece[^\n]*/, '') +
-    '\nOUTPUT FORMAT: respond with ONLY one JSON object and nothing else (no prose before or after, no markdown fences, no schema). ' +
-    'Follow the shape of this example exactly, replacing the values with the real article:\n' +
-    JSON.stringify({
-      title: 'The first glass of the day.',
-      dek: 'One or two sentences that extend the title with the specific angle.',
-      readingTime: '6 min read',
-      sections: [
-        { heading: 'Section heading', body: 'Paragraph one.\n\nParagraph two.' },
-        { heading: 'Another heading', body: 'Paragraph.' },
-      ],
-      quotes: [{ afterSection: 0, text: 'The quoted words.', attribution: 'Real Person, role, source and year' }],
-      lists: [{ afterSection: 1, items: ['First item.', 'Second item.'] }],
-      takeaways: ['First takeaway.', 'Second takeaway.'],
-    }) +
-    '\nRules for the JSON: title, dek and readingTime are plain strings (never objects). sections is an array of {heading, body} objects. quotes and lists may be empty arrays. Use straight double quotes, escape any double quote inside a string as \\", and write newlines inside strings as \\n.'
+    '\nReturn the finished article as the JSON object described by the output schema: title, dek and readingTime as plain strings; sections as {heading, body} in reading order, with paragraphs inside body separated by a blank line; quotes and lists (each pointing at the section it follows via afterSection, 0-based; empty arrays if none); takeaways as an array of strings.'
+
+  const ARTICLE_SCHEMA = {
+    type: 'object',
+    additionalProperties: false,
+    required: ['title', 'dek', 'readingTime', 'sections', 'quotes', 'lists', 'takeaways'],
+    properties: {
+      title: { type: 'string' },
+      dek: { type: 'string' },
+      readingTime: { type: 'string' },
+      sections: {
+        type: 'array',
+        items: { type: 'object', additionalProperties: false, required: ['heading', 'body'], properties: { heading: { type: 'string' }, body: { type: 'string' } } },
+      },
+      quotes: {
+        type: 'array',
+        items: { type: 'object', additionalProperties: false, required: ['afterSection', 'text', 'attribution'], properties: { afterSection: { type: 'integer' }, text: { type: 'string' }, attribution: { type: 'string' } } },
+      },
+      lists: {
+        type: 'array',
+        items: { type: 'object', additionalProperties: false, required: ['afterSection', 'items'], properties: { afterSection: { type: 'integer' }, items: { type: 'array', items: { type: 'string' } } } },
+      },
+      takeaways: { type: 'array', items: { type: 'string' } },
+    },
+  }
 
   let resp: Response
   try {
@@ -222,7 +235,12 @@ Deno.serve(async (req) => {
       // Medium effort keeps the reasoning proportionate so the article itself
       // always fits, and the ceiling has headroom for the long pieces.
       // (Kept under the edge function's wall-clock so long pieces still return.)
-      body: JSON.stringify({ model: MODEL, max_tokens: 9000, output_config: { effort: 'medium' }, messages: [{ role: 'user', content: jsonPrompt }] }),
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 9000,
+        output_config: { effort: 'medium', format: { type: 'json_schema', schema: ARTICLE_SCHEMA } },
+        messages: [{ role: 'user', content: jsonPrompt }],
+      }),
     })
   } catch (e) {
     return json({ error: `Request failed: ${e instanceof Error ? e.message : e}` }, 502)

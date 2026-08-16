@@ -60,8 +60,14 @@ export function toRemedaeArticle(input: {
   for (const b of input.blocks) {
     if (b.type === 'heading' && b.text.trim()) body.push({ kind: 'h2', text: b.text.trim() })
     else if (b.type === 'text' && b.text.trim()) {
-      if (!ledeDone) { body.push({ kind: 'lede', text: b.text.trim() }); ledeDone = true }
-      else body.push({ kind: 'p', text: b.text.trim() })
+      // A text block may hold several paragraphs. Only the very first paragraph
+      // of the article is the lede (it renders in large type on remedae.app);
+      // everything else, including the rest of that block, is ordinary body copy.
+      const paras = b.text.split(/\n{2,}/).map((x) => x.trim()).filter(Boolean)
+      for (const p of paras) {
+        if (!ledeDone) { body.push({ kind: 'lede', text: p }); ledeDone = true }
+        else body.push({ kind: 'p', text: p })
+      }
     } else if (b.type === 'image' && b.url) {
       if (!hero) hero = b.url
       else body.push({ kind: 'image', url: b.url, alt: b.alt ?? '' })
