@@ -278,7 +278,7 @@ export interface Database {
           logo_url: string | null
           display_font: string
           sender_email?: string
-          instagram?: { user_id?: string; access_token?: string; username?: string; connected_at?: string } | null
+          instagram?: { user_id?: string; access_token?: string; username?: string; connected_at?: string; expires_at?: string; account_type?: string; via?: string } | null
           tagline?: string
           website?: string
           modules: string[]
@@ -300,7 +300,7 @@ export interface Database {
           logo_url?: string | null
           display_font?: string
           sender_email?: string
-          instagram?: { user_id?: string; access_token?: string; username?: string; connected_at?: string } | null
+          instagram?: { user_id?: string; access_token?: string; username?: string; connected_at?: string; expires_at?: string; account_type?: string; via?: string } | null
           tagline?: string
           website?: string
           modules?: string[]

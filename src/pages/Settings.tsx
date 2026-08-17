@@ -17,6 +17,7 @@ import {
   inviteBrandMember,
   removeBrandMember,
 } from '../lib/brand'
+import { startInstagramConnect, finishInstagramConnect, refreshInstagramToken } from '../lib/instagramConnect'
 import {
   type AppMember,
   checkMembership,
@@ -72,6 +73,7 @@ function BrandsPanel() {
   const [busy, setBusy] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [delBusy, setDelBusy] = useState(false)
+  const [igCheck, setIgCheck] = useState<{ ok: boolean; text: string } | null>(null)
 
   async function reload(pick?: string) {
     const list = await listBrands()
@@ -80,7 +82,22 @@ function BrandsPanel() {
     setSelId(target)
     setDraft(list.find((b) => b.id === target) ?? null)
   }
-  useEffect(() => { reload().catch(() => setStatus('Could not load brands')) /* eslint-disable-next-line */ }, [])
+  useEffect(() => {
+    // Coming back from Instagram's consent screen? Finish the connection for
+    // the brand named in ?state=, then load (and select) that brand.
+    (async () => {
+      const done = await finishInstagramConnect()
+      if (done) {
+        await reload(done.brandId).catch(() => setStatus('Could not load brands'))
+        setIgCheck(done.error
+          ? { ok: false, text: done.error }
+          : { ok: true, text: `Connected. Posts as @${done.username ?? 'instagram'}${done.expiresAt ? `, token valid until ${new Date(done.expiresAt).toLocaleDateString()}` : ''}.` })
+      } else {
+        await reload().catch(() => setStatus('Could not load brands'))
+      }
+    })()
+    /* eslint-disable-next-line */
+  }, [])
 
   function select(id: string) { setSelId(id); setDraft(brands.find((b) => b.id === id) ?? null); setStatus(null) }
   const patch = (p: Partial<BrandProfile>) => setDraft((d) => (d ? { ...d, ...p } : d))
@@ -120,7 +137,22 @@ function BrandsPanel() {
       setStatus('Logo uploaded — Save changes to apply')
     } catch (e) { setStatus(`Upload failed: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
   }
-  const [igCheck, setIgCheck] = useState<{ ok: boolean; text: string } | null>(null)
+  /** Hand off to Instagram's consent screen; Settings finishes the job on return. */
+  async function connectInstagram() {
+    if (!draft) return
+    setBusy(true); setIgCheck(null)
+    const r = await startInstagramConnect(draft.id)
+    if (r.error) { setIgCheck({ ok: false, text: r.error }); setBusy(false) }
+    // On success the page navigates away; busy stays on until then.
+  }
+  async function renewInstagram() {
+    if (!draft) return
+    setBusy(true); setIgCheck(null)
+    const r = await refreshInstagramToken(draft.id)
+    if (r.error) setIgCheck({ ok: false, text: r.error })
+    else { await reload(draft.id); setIgCheck({ ok: true, text: `Token renewed${r.expiresAt ? `, valid until ${new Date(r.expiresAt).toLocaleDateString()}` : ''}.` }) }
+    setBusy(false)
+  }
   /** Ask the Graph API who this token posts as. Fills or corrects the account
       ID (a Page ID is resolved to its linked Instagram account) and confirms the
       publish permission is on the token, so a bad paste shows up here rather
@@ -289,13 +321,23 @@ function BrandsPanel() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 12, flexWrap: 'wrap' }}>
+              <PillButton tone="accent" onClick={connectInstagram} disabled={busy}>{draft.instagram?.access_token ? 'Reconnect Instagram' : 'Connect Instagram'}</PillButton>
               <PillButton onClick={checkInstagram} disabled={busy || !draft.instagram?.access_token}>Check connection</PillButton>
+              {draft.instagram?.access_token && draft.instagram?.via === 'instagram_login' && (
+                <PillButton onClick={renewInstagram} disabled={busy}>Renew token</PillButton>
+              )}
               {igCheck && (
                 <span style={{ fontSize: 12.5, lineHeight: 1.5, color: igCheck.ok ? 'var(--hh-copper)' : 'var(--text-strong)', maxWidth: 640 }}>
                   {igCheck.ok ? '✓ ' : '✕ '}{igCheck.text}
                 </span>
               )}
-              {!igCheck && <span style={hint}>Leave the account ID blank and Check connection will find it from the token.</span>}
+              {!igCheck && (
+                <span style={hint}>
+                  {draft.instagram?.expires_at
+                    ? `Token valid until ${new Date(draft.instagram.expires_at).toLocaleDateString()}. Renew any time after 24h to add another 60 days.`
+                    : 'Connect Instagram opens Instagram to approve this workspace (no Facebook Page needed). Or paste a token above and Check connection.'}
+                </span>
+              )}
             </div>
 
             <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '30px 0 2px' }}>Verbal identity</div>
