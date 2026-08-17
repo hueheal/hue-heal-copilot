@@ -444,7 +444,7 @@ export default function SocialStudio() {
         if (n > 1) { setActive(i); await new Promise((r) => setTimeout(r, 200)) }
         if (!canvasRef.current) continue
         const blob = dataUrlToBlob(await captureNodeJpeg(canvasRef.current, spec.w))
-        const path = `published/${uid}/${post!.id}/${ts}-${i + 1}.jpg`
+        const path = `${uid}/published/${post!.id}/${ts}-${i + 1}.jpg` // bucket policy: first folder must be the uploader's uid
         const { error } = await supabase.storage.from('social-assets').upload(path, blob, { contentType: 'image/jpeg', upsert: true })
         if (error) throw error
         urls.push(supabase.storage.from('social-assets').getPublicUrl(path).data.publicUrl)
