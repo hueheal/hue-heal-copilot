@@ -120,6 +120,53 @@ function BrandsPanel() {
       setStatus('Logo uploaded — Save changes to apply')
     } catch (e) { setStatus(`Upload failed: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
   }
+  const [igCheck, setIgCheck] = useState<{ ok: boolean; text: string } | null>(null)
+  /** Ask the Graph API who this token posts as. Fills or corrects the account
+      ID (a Page ID is resolved to its linked Instagram account) and confirms the
+      publish permission is on the token, so a bad paste shows up here rather
+      than on the first post. */
+  async function checkInstagram() {
+    const token = draft?.instagram?.access_token?.trim()
+    if (!token) { setIgCheck({ ok: false, text: 'Paste the access token first' }); return }
+    setBusy(true); setIgCheck(null)
+    const G = 'https://graph.facebook.com/v21.0'
+    const get = async (path: string) => {
+      const res = await fetch(`${G}/${path}${path.includes('?') ? '&' : '?'}access_token=${encodeURIComponent(token)}`)
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data?.error) throw new Error(data?.error?.message ?? `Graph ${res.status}`)
+      return data as Record<string, unknown>
+    }
+    try {
+      let id = draft?.instagram?.user_id?.trim() ?? ''
+      let username = ''
+      let name = ''
+      if (id) {
+        const me = await get(`${id}?fields=username,name,instagram_business_account{id,username,name}`).catch(() => null)
+        const linked = me?.instagram_business_account as { id?: string; username?: string; name?: string } | undefined
+        if (me && typeof me.username === 'string') { username = me.username; name = String(me.name ?? '') }
+        else if (linked?.id) { id = linked.id; username = linked.username ?? ''; name = linked.name ?? '' }
+        else id = ''
+      }
+      if (!id) {
+        const pages = await get('me/accounts?fields=name,instagram_business_account{id,username,name}')
+        const list = (pages.data as Array<{ name?: string; instagram_business_account?: { id?: string; username?: string; name?: string } }> | undefined) ?? []
+        const hit = list.find((p) => p.instagram_business_account?.id)
+        if (!hit?.instagram_business_account?.id) throw new Error(list.length ? `The token can see ${list.length} Page(s) but none has an Instagram account linked. Link @remedae to the Page (Page settings → Linked accounts) and generate the token again.` : 'The token cannot see any Facebook Page. Generate it with pages_show_list ticked and the Remedae Page selected.')
+        id = hit.instagram_business_account.id
+        username = hit.instagram_business_account.username ?? ''
+        name = hit.instagram_business_account.name ?? hit.name ?? ''
+      }
+      const perms = await get('me/permissions').catch(() => null)
+      const granted = new Set(((perms?.data as Array<{ permission: string; status: string }> | undefined) ?? []).filter((p) => p.status === 'granted').map((p) => p.permission))
+      const missing = ['instagram_basic', 'instagram_content_publish'].filter((p) => perms && !granted.has(p))
+      patch({ instagram: { ...(draft?.instagram ?? {}), user_id: id, username: username || draft?.instagram?.username || '', access_token: token, connected_at: new Date().toISOString() } })
+      setIgCheck(missing.length
+        ? { ok: false, text: `Found @${username || id}${name ? ` (${name})` : ''} but the token is missing ${missing.join(' and ')}. Regenerate it with those permissions ticked.` }
+        : { ok: true, text: `Posts as @${username || id}${name ? ` (${name})` : ''}. Publish permission granted. Save changes to keep it.` })
+    } catch (e) {
+      setIgCheck({ ok: false, text: e instanceof Error ? e.message : String(e) })
+    } finally { setBusy(false) }
+  }
   async function remove(id: string) {
     setDelBusy(true)
     try {
@@ -218,13 +265,22 @@ function BrandsPanel() {
               <div style={{ flex: 2, minWidth: 260 }}>
                 <label style={{ ...label, margin: '0 0 8px' }}>Long-lived access token</label>
                 <input type="password" autoComplete="off" value={draft.instagram?.access_token ?? ''} onChange={(e) => patch({ instagram: { ...(draft.instagram ?? {}), access_token: e.target.value.trim(), connected_at: new Date().toISOString() } })} placeholder="EAAB…" style={inp} />
-                <p style={hint}>Stored on this workspace only and never shown again in full. Needs instagram_basic, instagram_content_publish and pages_read_engagement.</p>
+                <p style={hint}>Stored on this workspace only and never shown again in full. Generate it in Meta's Graph API Explorer with instagram_basic, instagram_content_publish, pages_show_list and pages_read_engagement, then extend it in the Access Token Debugger (60 days).</p>
               </div>
               <div style={{ minWidth: 160 }}>
                 <label style={{ ...label, margin: '0 0 8px' }}>Handle (optional)</label>
                 <input value={draft.instagram?.username ?? ''} onChange={(e) => patch({ instagram: { ...(draft.instagram ?? {}), username: e.target.value.replace(/^@/, '').trim() } })} placeholder="remedae" style={inp} />
                 <p style={hint}>{draft.instagram?.user_id && draft.instagram?.access_token ? '● Connected' : '○ Not connected: posting is disabled for this workspace'}</p>
               </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 12, flexWrap: 'wrap' }}>
+              <PillButton onClick={checkInstagram} disabled={busy || !draft.instagram?.access_token}>Check connection</PillButton>
+              {igCheck && (
+                <span style={{ fontSize: 12.5, lineHeight: 1.5, color: igCheck.ok ? 'var(--hh-copper)' : 'var(--text-strong)', maxWidth: 640 }}>
+                  {igCheck.ok ? '✓ ' : '✕ '}{igCheck.text}
+                </span>
+              )}
+              {!igCheck && <span style={hint}>Leave the account ID blank and Check connection will find it from the token.</span>}
             </div>
 
             <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '30px 0 2px' }}>Verbal identity</div>
