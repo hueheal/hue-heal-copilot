@@ -9,7 +9,9 @@
 // access_token } for the brandId the caller passes (membership is checked
 // with the caller's own JWT before the token is read with the service role).
 // The global INSTAGRAM_ACCESS_TOKEN / INSTAGRAM_USER_ID secrets remain a
-// fallback for the parent studio. Optional GRAPH_VERSION.
+// fallback for the parent studio. Optional GRAPH_VERSION. Tokens from either
+// "Facebook Login for Business" (EAA…) or "Instagram API with Instagram
+// Login" (IG…) are accepted; see baseFor().
 // Deploy:  npx supabase functions deploy publish-instagram --project-ref <ref>
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
@@ -18,7 +20,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const FALLBACK_TOKEN = Deno.env.get('INSTAGRAM_ACCESS_TOKEN') ?? ''
 const FALLBACK_USER = Deno.env.get('INSTAGRAM_USER_ID') ?? ''
 const V = Deno.env.get('GRAPH_VERSION') ?? 'v21.0'
-const BASE = `https://graph.facebook.com/${V}`
+/** Two Meta routes publish to Instagram with the same container flow:
+    Facebook Login tokens (EAA…) go through graph.facebook.com and need a
+    Page-linked account; Instagram Login tokens (IG…) go through
+    graph.instagram.com and need no Facebook Page at all. Route by token. */
+const baseFor = (token: string) => token.startsWith('IG') ? `https://graph.instagram.com/${V}` : `https://graph.facebook.com/${V}`
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -47,7 +53,7 @@ async function credentialsFor(authHeader: string, brandId?: string): Promise<{ t
 
 async function graph(path: string, params: Record<string, string>, token: string): Promise<Record<string, unknown>> {
   const body = new URLSearchParams({ ...params, access_token: token })
-  const res = await fetch(`${BASE}/${path}`, { method: 'POST', body })
+  const res = await fetch(`${baseFor(token)}/${path}`, { method: 'POST', body })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     const msg = (data as { error?: { message?: string } })?.error?.message ?? `Graph ${res.status}`
@@ -90,7 +96,7 @@ Deno.serve(async (req) => {
     // Best-effort permalink lookup.
     let permalink: string | null = null
     try {
-      const res = await fetch(`${BASE}/${mediaId}?fields=permalink&access_token=${encodeURIComponent(TOKEN)}`)
+      const res = await fetch(`${baseFor(TOKEN)}/${mediaId}?fields=permalink&access_token=${encodeURIComponent(TOKEN)}`)
       const d = await res.json()
       permalink = (d as { permalink?: string })?.permalink ?? null
     } catch { /* ignore */ }

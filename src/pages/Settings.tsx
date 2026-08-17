@@ -129,7 +129,10 @@ function BrandsPanel() {
     const token = draft?.instagram?.access_token?.trim()
     if (!token) { setIgCheck({ ok: false, text: 'Paste the access token first' }); return }
     setBusy(true); setIgCheck(null)
-    const G = 'https://graph.facebook.com/v21.0'
+    // Instagram Login tokens (IG…) live on graph.instagram.com and need no
+    // Facebook Page; Facebook Login tokens (EAA…) live on graph.facebook.com.
+    const viaInstagram = token.startsWith('IG')
+    const G = viaInstagram ? 'https://graph.instagram.com/v21.0' : 'https://graph.facebook.com/v21.0'
     const get = async (path: string) => {
       const res = await fetch(`${G}/${path}${path.includes('?') ? '&' : '?'}access_token=${encodeURIComponent(token)}`)
       const data = await res.json().catch(() => ({}))
@@ -137,6 +140,18 @@ function BrandsPanel() {
       return data as Record<string, unknown>
     }
     try {
+      if (viaInstagram) {
+        const me = await get('me?fields=user_id,username,name,account_type')
+        const id = String(me.user_id ?? me.id ?? '')
+        const username = String(me.username ?? '')
+        if (!id) throw new Error('The token did not return an Instagram account. Generate it again from the app dashboard (Instagram → API setup with Instagram login).')
+        const type = String(me.account_type ?? '')
+        patch({ instagram: { ...(draft?.instagram ?? {}), user_id: id, username: username || draft?.instagram?.username || '', access_token: token, connected_at: new Date().toISOString() } })
+        setIgCheck(type && !/business|creator|media_creator/i.test(type)
+          ? { ok: false, text: `Found @${username} but it is a ${type.toLowerCase()} account. Switch it to Professional (Business or Creator) in Instagram, then check again.` }
+          : { ok: true, text: `Posts as @${username || id}${me.name ? ` (${String(me.name)})` : ''} via Instagram Login (no Facebook Page needed). Save changes to keep it.` })
+        return
+      }
       let id = draft?.instagram?.user_id?.trim() ?? ''
       let username = ''
       let name = ''
@@ -265,7 +280,7 @@ function BrandsPanel() {
               <div style={{ flex: 2, minWidth: 260 }}>
                 <label style={{ ...label, margin: '0 0 8px' }}>Long-lived access token</label>
                 <input type="password" autoComplete="off" value={draft.instagram?.access_token ?? ''} onChange={(e) => patch({ instagram: { ...(draft.instagram ?? {}), access_token: e.target.value.trim(), connected_at: new Date().toISOString() } })} placeholder="EAAB…" style={inp} />
-                <p style={hint}>Stored on this workspace only and never shown again in full. Generate it in Meta's Graph API Explorer with instagram_basic, instagram_content_publish, pages_show_list and pages_read_engagement, then extend it in the Access Token Debugger (60 days).</p>
+                <p style={hint}>Stored on this workspace only and never shown again in full. Either an Instagram Login token (IG…, from your Meta app's Instagram → API setup with Instagram login → Generate token: no Facebook Page needed) or a Facebook Login token (EAA…, Graph API Explorer with instagram_basic, instagram_content_publish, pages_show_list, extended in the Access Token Debugger). Both last 60 days.</p>
               </div>
               <div style={{ minWidth: 160 }}>
                 <label style={{ ...label, margin: '0 0 8px' }}>Handle (optional)</label>
