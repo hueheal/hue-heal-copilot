@@ -2,6 +2,7 @@ import { generateCopy, savePost } from './socialCopilot'
 import { journalUrl } from './journal'
 import type { Block } from './newsletter'
 import type { Sector } from './database.types'
+import { defaultTemplateFor } from './social/templates'
 
 /* ============================================================
    Article → Instagram. Turns a finished journal article into a
@@ -70,6 +71,7 @@ export async function createPostFromArticle(input: {
     sector: input.sector ?? 'health_fitness',
     accent: 'copper',
     article: { title: input.title, dek: input.dek, body: input.bodyText, url, takeaways: input.takeaways },
+    template: defaultTemplateFor(input.brand?.name, input.format, Boolean(input.hero)),
     brandOverride: input.brand ? { name: input.brand.name ?? undefined, voice: input.brand.tone_of_voice ?? undefined, guidelines: input.brand.writing_guidelines ?? undefined, tagline: input.brand.tagline ?? undefined } : undefined,
   })
 

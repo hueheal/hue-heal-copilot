@@ -6,6 +6,7 @@ import { INSTAGRAM_FORMATS, type InstaFormat } from './formats'
 import { type Design, type Slide, type DesignElement, accentHex, eid } from './design'
 import { type SocialStyle, defaultStyle, backgroundFor, fgFor } from './style'
 import { CANVAS_TYPE_SIZE as SZ } from '../typeScale'
+import { REMEDAE_TEMPLATES, REMEDAE_FONTS, isRemedae, buildRemedaeContentSlide, buildRemedaeEndSlide, remedaeDefaultTemplate } from './remedae'
 
 export interface TemplateSeed {
   headline: string
@@ -20,13 +21,21 @@ export interface TemplateSeed {
   /** Optional cover background photo (e.g. an AI-generated image). When set, the
       cover slide uses it full-bleed with a legibility scrim over the treatment. */
   coverImage?: string
+  /** Standfirst / one-line summary (article dek or caption opener). */
+  dek?: string
+  /** Brand website (footer / end slide). */
+  website?: string
+  /** Content items (carousel headings, remedy names…) for list-shaped covers. */
+  items?: string[]
+  itemBodies?: string[]
+  itemImages?: string[]
 }
 
 /** If the seed carries a cover photo, use it as the slide background with a
     gradient scrim so overlaid text stays legible. */
-function withCover(slide: Slide, seed: TemplateSeed): Slide {
+function withCover(slide: Slide, seed: TemplateSeed, def?: TemplateDef): Slide {
   const img = seed.coverImage?.trim()
-  if (!img) return slide
+  if (!img || def?.noPhoto) return slide
   return {
     ...slide,
     background: { type: 'image', value: img },
@@ -93,6 +102,11 @@ export interface TemplateDef {
   label: string
   /** which formats it suits; empty = all */
   formats?: InstaFormat[]
+  /** Brand world this template belongs to; absent = the Hue & Heal house set. */
+  brand?: string
+  /** This layout owns its ground (cream card, list, recipe…): never drop the
+      post's cover photo behind it. */
+  noPhoto?: boolean
   build: (format: InstaFormat, seed: TemplateSeed) => Slide
 }
 
@@ -190,8 +204,29 @@ TEMPLATES.push({
   },
 })
 
+// Brand-world families live alongside the house set; the studio filters by brand.
+TEMPLATES.push(...REMEDAE_TEMPLATES)
+
 export function templateById(id: string): TemplateDef {
   return TEMPLATES.find((t) => t.id === id) ?? TEMPLATES[0]
+}
+
+/** The templates a workspace sees: Remedae gets only its own family, everyone
+    else gets the house set (never both, so each world stays distinct). */
+export function templatesFor(brandName?: string | null, format?: InstaFormat): TemplateDef[] {
+  const list = isRemedae(brandName) ? TEMPLATES.filter((t) => t.brand === 'remedae') : TEMPLATES.filter((t) => !t.brand)
+  return format ? list.filter((t) => !t.formats || t.formats.includes(format)) : list
+}
+
+/** The template a fresh draft opens in for this workspace. */
+export function defaultTemplateFor(brandName: string | null | undefined, format: InstaFormat, hasImage: boolean): string {
+  if (isRemedae(brandName)) return remedaeDefaultTemplate(format, hasImage)
+  return hasImage ? 'statement' : 'guide'
+}
+
+/** Font pairing a design should carry for this workspace (undefined = house). */
+export function fontsFor(brandName?: string | null) {
+  return isRemedae(brandName) ? REMEDAE_FONTS : undefined
 }
 
 export interface ContentSlideInput {
@@ -205,9 +240,10 @@ export interface ContentSlideInput {
     With an image, the photo runs full-bleed behind a gradient scrim and the
     type goes cream so it stays legible, matching the photo-led cover. */
 export function buildContentSlide(
-  _format: InstaFormat,
-  { index, total, heading, body, accent, style, image }: { index: number; total: number; heading: string; body: string; accent: Accent; style?: SocialStyle; image?: string },
+  format: InstaFormat,
+  { index, total, heading, body, accent, style, image, seed }: { index: number; total: number; heading: string; body: string; accent: Accent; style?: SocialStyle; image?: string; seed?: TemplateSeed },
 ): Slide {
+  if (seed && isRemedae(seed.brandName)) return buildRemedaeContentSlide(format, { index, total, heading, body, image, seed })
   const acc = accentHex(accent)
   const st = style ?? defaultStyle(null)
   const photo = image?.trim()
@@ -233,17 +269,25 @@ export function buildDesign(
 ): Design {
   const def = templateById(templateId)
   const spec = INSTAGRAM_FORMATS[format]
+  const fonts = fontsFor(seed.brandName)
+  const remedae = isRemedae(seed.brandName)
+  // List-shaped covers draw their rows from the carousel content.
+  const seeded: TemplateSeed = contentSlides?.length && !seed.items
+    ? { ...seed, items: contentSlides.map((c) => c.heading), itemBodies: contentSlides.map((c) => c.body), itemImages: contentSlides.map((c) => c.image ?? '') }
+    : seed
   if (!spec.multi) {
-    return { format, accent: seed.accent, templateId, slides: [withCover(def.build(format, seed), seed)] }
+    return { format, accent: seed.accent, templateId, fonts, slides: [withCover(def.build(format, seeded), seeded, def)] }
   }
-  const cover = withCover(def.build(format, seed), seed)
+  const cover = withCover(def.build(format, seeded), seeded, def)
   let rest: Slide[]
   if (contentSlides && contentSlides.length) {
     rest = contentSlides.map((cs, i) =>
-      buildContentSlide(format, { index: i, total: contentSlides.length, heading: cs.heading, body: cs.body, accent: seed.accent, style: seed.style, image: cs.image }),
+      buildContentSlide(format, { index: i, total: contentSlides.length, heading: cs.heading, body: cs.body, accent: seed.accent, style: seed.style, image: cs.image, seed: seeded }),
     )
+    // Remedae carousels close on a "read the whole piece / save" slide.
+    if (remedae) rest.push(buildRemedaeEndSlide(format, seeded, contentSlides.length + 2))
   } else {
-    rest = Array.from({ length: Math.max(slideCount - 1, 0) }, () => def.build(format, seed))
+    rest = Array.from({ length: Math.max(slideCount - 1, 0) }, () => def.build(format, seeded))
   }
-  return { format, accent: seed.accent, templateId, slides: [cover, ...rest] }
+  return { format, accent: seed.accent, templateId, fonts, slides: [cover, ...rest] }
 }

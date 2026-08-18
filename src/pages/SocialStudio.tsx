@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import EditorShell from '../components/EditorShell'
 import { useAuth } from '../lib/auth'
@@ -8,31 +8,37 @@ import ConfirmButton from '../components/ConfirmButton'
 import { listBrands, resolveActiveBrand, getActiveBrandId, type BrandProfile } from '../lib/brand'
 import { useBrand } from '../lib/brandContext'
 import { INSTAGRAM_FORMAT_LIST, INSTAGRAM_FORMATS, type InstaFormat } from '../lib/social/formats'
-import { TEMPLATES, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
+import { templatesFor, defaultTemplateFor, fontsFor, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
+import { REMEDAE_PALETTE, isRemedae } from '../lib/social/remedae'
 import { resolveStyle } from '../lib/social/style'
 import { TYPE_ROLES, CANVAS_TYPE_SIZE } from '../lib/typeScale'
 import { useIsMobile } from '../lib/useIsMobile'
 import { captureNode, captureNodeJpeg, dataUrlToBlob, downloadDataUrl, zipPngs } from '../lib/social/exportImage'
 import {
-  type Design, type Slide, type DesignElement, type ElStyle, type FontKey,
-  accentHex, fontVar, eid, isDesign,
+  type Design, type Slide, type DesignElement, type ElStyle, type FontKey, type FontPair,
+  accentHex, fontVar, eid, isDesign, splitHighlights,
 } from '../lib/social/design'
 import type { Accent } from '../lib/database.types'
 
-const PALETTE = ['#1E1B18', '#3A2E25', '#8A6A52', '#C6B7A2', '#ECE6DA', '#F4F0E7', '#B5632F', '#CE8A53', '#D2DC4E', '#9A4A26']
-const FONTS: { key: FontKey; label: string }[] = [
+const HOUSE_PALETTE = ['#1E1B18', '#3A2E25', '#8A6A52', '#C6B7A2', '#ECE6DA', '#F4F0E7', '#B5632F', '#CE8A53', '#D2DC4E', '#9A4A26']
+const HOUSE_FONTS: { key: FontKey; label: string }[] = [
   { key: 'serif', label: 'Ivy Ora' }, { key: 'sans', label: 'Poppins' }, { key: 'voice', label: 'Italic' },
+]
+const REMEDAE_FONT_LABELS: { key: FontKey; label: string }[] = [
+  { key: 'serif', label: 'Quando' }, { key: 'sans', label: 'Poppins' }, { key: 'voice', label: 'Italic' },
 ]
 
 /* The shared type scale rendered at social-canvas px. */
 const TYPE_SCALE: { label: string; size: number }[] = TYPE_ROLES.map((label) => ({ label, size: CANVAS_TYPE_SIZE[label] }))
 
 /* ---------- Slide canvas (shared by editor + offscreen export) ---------- */
-function SlideCanvas({
-  slide, spec, displayW, interactive, selectedId, onSelectEl, onElPointerDown, onResizePointerDown, innerRef,
+export function SlideCanvas({
+  slide, spec, displayW, interactive, selectedId, onSelectEl, onElPointerDown, onResizePointerDown, innerRef, fonts,
 }: {
   slide: Slide
   spec: { w: number; h: number }
+  /** Brand-world font pairing (Remedae: Quando + Poppins); absent = house fonts. */
+  fonts?: FontPair
   displayW: number
   interactive?: boolean
   selectedId?: string | null
@@ -57,9 +63,10 @@ function SlideCanvas({
     >
       {slide.scrim && slide.scrim !== 'none' && (() => {
         const s = (slide.scrimStrength ?? 55) / 100
+        const c = slide.scrimTint ?? '20,17,14'
         const bg = slide.scrim === 'gradient'
-          ? `linear-gradient(to bottom, rgba(20,17,14,${(0.25 * s).toFixed(3)}) 0%, rgba(20,17,14,0) 28%, rgba(20,17,14,0) 46%, rgba(20,17,14,${Math.min(0.97, s + 0.15).toFixed(3)}) 100%)`
-          : `rgba(20,17,14,${Math.min(0.9, s * 0.95).toFixed(3)})`
+          ? `linear-gradient(to bottom, rgba(${c},${(0.25 * s).toFixed(3)}) 0%, rgba(${c},0) 28%, rgba(${c},0) 46%, rgba(${c},${Math.min(0.97, s + 0.15).toFixed(3)}) 100%)`
+          : `rgba(${c},${Math.min(0.9, s * 0.95).toFixed(3)})`
         return <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: bg }} />
       })()}
       {slide.elements.map((el) => {
@@ -78,38 +85,48 @@ function SlideCanvas({
         if (el.type === 'text') {
           const hasPlate = el.style.plate && el.style.plate !== 'none'
           const plateBg = el.style.plate === 'light' ? 'rgba(244,240,231,0.92)' : 'rgba(20,17,14,0.55)'
+          const parts = el.style.hl ? splitHighlights(el.content || ' ') : [{ text: el.content || ' ', hl: false }]
           inner = (
             <div style={{
-              fontFamily: fontVar(el.style.fontKey), fontSize: (el.style.fontSize ?? 40) * scale,
+              fontFamily: fontVar(el.style.fontKey, fonts), fontSize: (el.style.fontSize ?? 40) * scale,
               fontWeight: el.style.fontWeight ?? 400, color: el.style.color ?? '#1E1B18',
               textAlign: el.style.align ?? 'left', lineHeight: el.style.lineHeight ?? 1.1,
               letterSpacing: `${el.style.letterSpacing ?? 0}em`, fontStyle: el.style.italic ? 'italic' : 'normal',
               textTransform: el.style.uppercase ? 'uppercase' : 'none', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+              textDecoration: el.style.strike ? 'line-through' : 'none',
               background: hasPlate ? plateBg : 'transparent',
               padding: hasPlate ? `${10 * scale}px ${14 * scale}px` : 0,
               borderRadius: hasPlate ? 10 * scale : 0,
-            }}>{el.content || ' '}</div>
+            }}>{parts.map((p, i) => p.hl ? <span key={i} style={{ color: el.style.hl, fontStyle: 'italic' }}>{p.text}</span> : <React.Fragment key={i}>{p.text}</React.Fragment>)}</div>
           )
         } else if (el.type === 'pill') {
+          // House pill = glass + italic voice. A styled pill (bg/border/fontKey set)
+          // follows its own style so brand worlds can have their own chip language.
+          const styled = Boolean(el.style.bg || el.style.border || (el.style.fontKey && el.style.fontKey !== 'voice'))
+          const border = el.style.border ? el.style.border.replace(/^(\d+(?:\.\d+)?)px/, (_m, n) => `${Number(n) * scale}px`) : '1px solid rgba(244,240,231,0.30)'
           inner = (
             <div style={{ width: '100%', textAlign: el.style.align ?? 'center' }}>
               <span style={{
                 display: 'inline-block',
-                background: 'rgba(244,240,231,0.16)',
-                backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
-                border: '1px solid rgba(244,240,231,0.30)',
-                borderRadius: 999,
+                background: el.style.bg ?? 'rgba(244,240,231,0.16)',
+                backdropFilter: styled ? undefined : 'blur(6px)', WebkitBackdropFilter: styled ? undefined : 'blur(6px)',
+                border,
+                borderRadius: el.style.radiusPx != null ? el.style.radiusPx * scale : 999,
                 padding: `${8 * scale}px ${20 * scale}px`,
-                fontFamily: fontVar(el.style.fontKey ?? 'voice'),
-                fontStyle: 'italic',
+                fontFamily: fontVar(el.style.fontKey ?? 'voice', fonts),
+                fontStyle: el.style.italic ?? !styled ? 'italic' : 'normal',
+                fontWeight: el.style.fontWeight ?? 400,
                 fontSize: (el.style.fontSize ?? 32) * scale,
+                letterSpacing: `${el.style.letterSpacing ?? 0}em`,
+                textTransform: el.style.uppercase ? 'uppercase' : 'none',
                 color: el.style.color ?? '#F4F0E7',
                 whiteSpace: 'nowrap',
               }}>{el.content}</span>
             </div>
           )
         } else if (el.type === 'shape') {
-          inner = <div style={{ width: '100%', height: displayH * (el.box.h / 100), background: el.style.bg ?? '#000', borderRadius: `${el.style.radius ?? 0}%` }} />
+          const border = el.style.border ? el.style.border.replace(/^(\d+(?:\.\d+)?)px/, (_m, n) => `${Number(n) * scale}px`) : undefined
+          inner = <div style={{ width: '100%', height: displayH * (el.box.h / 100), background: el.style.bg ?? '#000', borderRadius: el.style.radiusPx != null ? el.style.radiusPx * scale : `${el.style.radius ?? 0}%`, border, boxSizing: 'border-box' }} />
         } else if (el.type === 'logo') {
           inner = (
             <img
@@ -124,7 +141,7 @@ function SlideCanvas({
             />
           )
         } else {
-          inner = <img src={el.content} alt="" style={{ width: '100%', height: displayH * (el.box.h / 100), objectFit: 'cover', borderRadius: `${el.style.radius ?? 0}%` }} />
+          inner = <img src={el.content} alt="" crossOrigin="anonymous" style={{ width: '100%', height: displayH * (el.box.h / 100), objectFit: 'cover', borderRadius: el.style.radiusPx != null ? el.style.radiusPx * scale : `${el.style.radius ?? 0}%`, opacity: 1 }} />
         }
         return (
           <div key={el.id} style={common} onPointerDown={startDrag}>
@@ -172,13 +189,16 @@ export default function SocialStudio() {
       if (!p) { setStatus('Could not load post'); return }
       setPost(p)
       setCopyTopic(p.topic || '')
-      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined), coverImage: p.image_url ?? undefined }
+      const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined), coverImage: p.image_url ?? undefined, website: brandWorld?.website ?? undefined, dek: (p.caption ?? '').split(/\n/)[0]?.slice(0, 160) || undefined }
       const fmt: InstaFormat = (p.format === 'square' || p.format === 'portrait' || p.format === 'story' || p.format === 'carousel') ? p.format : 'portrait'
       const content = (p.slides ?? []) as ContentSlideInput[]
-      // A draft that arrives with a cover photo (e.g. the daily automated posts) opens
-      // in the photo-led statement template; otherwise the guide cover.
-      const seedTemplate = p.image_url ? 'statement' : 'guide'
-      setDesign(isDesign(p.design) ? (p.design as unknown as Design) : buildDesign(fmt, seedTemplate, seed, 3, content))
+      // A draft that arrives with a cover photo (e.g. the daily automated posts, an
+      // article hero) opens in the workspace's photo-led template; otherwise its
+      // text-led default. Each brand world has its own family.
+      const seedTemplate = defaultTemplateFor(brandWorld?.name, fmt, Boolean(p.image_url))
+      const loaded = isDesign(p.design) ? (p.design as unknown as Design) : buildDesign(fmt, seedTemplate, seed, 3, content)
+      // Older saved designs predate per-brand fonts; attach the pairing on load.
+      setDesign(loaded.fonts ? loaded : { ...loaded, fonts: fontsFor(brandWorld?.name) })
     }).catch(() => setStatus('Could not load post'))
   }, [id])
 
@@ -277,37 +297,55 @@ export default function SocialStudio() {
     }))
   }
   function seedFrom(headline: string) {
-    return { headline, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined) }
+    return { headline, sector: SECTOR_LABEL[post!.sector], accent: design!.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined), website: brandWorld?.website ?? undefined, dek: (post!.caption ?? '').split(/\n/)[0]?.slice(0, 160) || undefined, coverImage: post!.image_url ?? undefined }
   }
+  const remedae = isRemedae(brandWorld?.name)
+  const PALETTE = remedae ? REMEDAE_PALETTE : HOUSE_PALETTE
+  const FONTS = remedae ? REMEDAE_FONT_LABELS : HOUSE_FONTS
+  const TEMPLATES = templatesFor(brandWorld?.name, design.format)
   // Rebuild a cover in a new template/format but keep the edited text (matched by
   // role), any manually-added elements, and the current background + accent.
-  function mergeCover(next: Slide, prev: Slide): Slide {
+  function mergeCover(next: Slide, prev: Slide, noPhoto = false, prevDefault?: Slide): Slide {
     const accHex = accentHex(design!.accent)
     // Carry over ONLY edited text, matched by role. Rules, quote marks, accents,
     // pills and any other decoration come from the new template, so a switch
     // resembles that template cleanly with no leftover marks from the old one.
+    // Text that still equals what the previous template generated (its own
+    // eyebrow, cue, label defaults) is not "edited" and does not travel either.
+    const isEdited = (role: string, content: string) => {
+      if (!prevDefault) return true
+      const d = prevDefault.elements.find((e) => e.role === role && (e.type === 'text' || e.type === 'pill'))
+      return !d || d.content !== content
+    }
     const elements = next.elements.map((ne) => {
       const was = (ne.type === 'text' || ne.type === 'pill') && ne.role
-        ? prev.elements.find((oe) => oe.role === ne.role && (oe.type === 'text' || oe.type === 'pill'))
+        ? prev.elements.find((oe) => oe.role === ne.role && (oe.type === 'text' || oe.type === 'pill') && isEdited(oe.role!, oe.content))
         : undefined
       let el = was ? { ...ne, content: was.content } : ne
       if (el.accentRef) el = { ...el, style: { ...el.style, ...(el.type === 'shape' ? { bg: accHex } : { color: accHex }) } }
       return el
     })
-    return { ...next, elements, background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength }
+    // Remedae templates own their ground (dark, charcoal or cream); only a photo
+    // carries across a switch. The house set keeps whatever ground was chosen.
+    const keepGround = (!remedae || prev.background.type === 'image') && !(noPhoto && prev.background.type === 'image')
+    return keepGround
+      ? { ...next, elements, background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength, scrimTint: prev.scrimTint }
+      : { ...next, elements }
   }
   function applyFormat(f: InstaFormat) {
     const map = coverContent()
     const built = buildDesign(f, design!.templateId, seedFrom(map.headline || post!.headline || post!.topic), Math.max(design!.slides.length, 1), liveContentSlides())
-    commit({ ...built, slides: [mergeCover(built.slides[0], design!.slides[0]), ...built.slides.slice(1)] })
+    commit({ ...built, slides: [mergeCover(built.slides[0], design!.slides[0], templateById(design!.templateId).noPhoto), ...built.slides.slice(1)] })
     setActive(0); setSelId(null)
   }
   // Switching template restyles the cover; content slides are left intact, and
   // edited text carries over by role.
   function applyTemplate(tid: string) {
     const map = coverContent()
-    const cover = templateById(tid).build(design!.format, seedFrom(map.headline || post!.headline || post!.topic))
-    commit({ ...design!, templateId: tid, slides: [mergeCover(cover, design!.slides[0]), ...design!.slides.slice(1)] })
+    const seed = seedFrom(map.headline || post!.headline || post!.topic)
+    const cover = templateById(tid).build(design!.format, seed)
+    const prevDefault = templateById(design!.templateId).build(design!.format, seed)
+    commit({ ...design!, templateId: tid, slides: [mergeCover(cover, design!.slides[0], templateById(tid).noPhoto, prevDefault), ...design!.slides.slice(1)] })
     setSelId(null)
   }
   // Accent switch recolours every accent-driven element across all slides.
@@ -384,11 +422,20 @@ export default function SocialStudio() {
     if (!copyTopic.trim() || !post || !design) return
     setCopyBusy(true); setStatus('Writing copy…')
     try {
-      const { copy, source } = await generateCopy({ topic: copyTopic, format: design.format, sector: post.sector, accent: design.accent })
-      setPost((p) => (p ? { ...p, topic: copyTopic, headline: copy.headline, caption: copy.caption, hashtags: copy.hashtags, slides: copy.slides as unknown as Post['slides'] } : p))
-      const built = buildDesign(design.format, design.templateId, seedFrom(copy.headline), Math.max(design.slides.length, 1), (copy.slides ?? []) as ContentSlideInput[])
+      const { copy, source } = await generateCopy({
+        topic: copyTopic, format: design.format, sector: post.sector, accent: design.accent, template: design.templateId,
+        brandOverride: brandWorld ? { name: brandWorld.name, voice: brandWorld.tone_of_voice ?? undefined, guidelines: brandWorld.writing_guidelines ?? undefined, tagline: brandWorld.tagline ?? undefined } : undefined,
+      })
+      // "The number" hook arrives as "3bn | statement": the number is its own element.
+      let headline = copy.headline
+      let stat: string | undefined
+      if (design.templateId === 'rd-number' && headline.includes('|')) { const [n, ...rest] = headline.split('|'); stat = n.trim(); headline = rest.join('|').trim() }
+      setPost((p) => (p ? { ...p, topic: copyTopic, headline, caption: copy.caption, hashtags: copy.hashtags, slides: copy.slides as unknown as Post['slides'] } : p))
+      const built = buildDesign(design.format, design.templateId, seedFrom(headline), Math.max(design.slides.length, 1), (copy.slides ?? []) as ContentSlideInput[])
       const prev = design.slides[0]
-      const cover = { ...built.slides[0], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength }
+      const keepPhoto = prev.background.type === 'image' && !templateById(design.templateId).noPhoto
+      const cover = keepPhoto ? { ...built.slides[0], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength, scrimTint: prev.scrimTint } : (remedae ? built.slides[0] : { ...built.slides[0], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength })
+      if (stat) cover.elements = cover.elements.map((el) => (el.role === 'stat' ? { ...el, content: stat! } : el))
       commit({ ...built, slides: [cover, ...built.slides.slice(1)] })
       setActive(0); setSelId(null)
       setStatus(source === 'claude' ? 'Copy drafted with Claude' : 'Drafted on-device')
@@ -498,7 +545,10 @@ export default function SocialStudio() {
             ))}
           </div>
 
-          <div style={railLabel}>Template</div>
+          <div style={{ ...railLabel, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span>Template</span>
+            <a href={`/templates?format=${design.format}${post.image_url ? '&photo=1' : ''}`} target="_blank" rel="noopener" style={{ fontSize: 11, letterSpacing: 0, textTransform: 'none', color: 'var(--text-muted)' }}>See all ↗</a>
+          </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {TEMPLATES.map((t) => (
               <button key={t.id} className="hh-btn" onClick={() => applyTemplate(t.id)} style={chip(design.templateId === t.id)}>{t.label}</button>
@@ -569,6 +619,9 @@ export default function SocialStudio() {
               <div style={railLabel}>Text</div>
               <textarea value={selEl.content} onChange={(e) => updateEl(selEl.id, { content: e.target.value })} rows={2}
                 style={{ width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'var(--font-sans)', resize: 'vertical' }} />
+              {remedae && selEl.type === 'text' && (
+                <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>Wrap one phrase in *asterisks* to set it in mint. One per slide.</div>
+              )}
               <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                 {FONTS.map((f) => (
                   <button key={f.key} className="hh-btn" onClick={() => updateElStyle(selEl.id, { fontKey: f.key })} style={chip(selEl.style.fontKey === f.key)}>{f.label}</button>
@@ -645,7 +698,7 @@ export default function SocialStudio() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
           <div style={{ boxShadow: 'var(--shadow-raised)', borderRadius: 4, overflow: 'hidden' }}>
             <SlideCanvas
-              slide={slide} spec={spec} displayW={displayW} interactive
+              slide={slide} spec={spec} displayW={displayW} interactive fonts={design.fonts}
               selectedId={selId} onSelectEl={setSelId}
               onElPointerDown={onElPointerDown} onResizePointerDown={onResizePointerDown}
               innerRef={(n) => (canvasRef.current = n)}
@@ -657,7 +710,7 @@ export default function SocialStudio() {
               {design.slides.map((s, i) => (
                 <div key={s.id} onClick={() => { setActive(i); setSelId(null) }}
                   style={{ border: i === active ? '2px solid var(--hh-copper)' : '1px solid var(--hh-line)', borderRadius: 4, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}>
-                  <SlideCanvas slide={s} spec={spec} displayW={72} />
+                  <SlideCanvas slide={s} spec={spec} displayW={72} fonts={design.fonts} />
                   {design.slides.length > 1 && (
                     <button onClick={(e) => { e.stopPropagation(); removeSlide(i) }} style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: 4, background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', fontSize: 11, lineHeight: 1 }}>×</button>
                   )}

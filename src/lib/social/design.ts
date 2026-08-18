@@ -26,6 +26,15 @@ export interface ElStyle {
   radius?: number // shape corner %
   opacity?: number
   plate?: PlateStyle // legibility backing behind text
+  /** Highlight colour: any *phrase* wrapped in asterisks in the content renders
+      in this colour, italic (the Remedae "one mint word" device). */
+  hl?: string
+  /** Strike-through (the Remedae "told / traditionally used" reframe rows). */
+  strike?: boolean
+  /** Shape/pill corner radius in real-canvas px (overrides the % radius). */
+  radiusPx?: number
+  /** Shape/pill border, e.g. '1px solid rgba(255,255,232,0.5)' (width in real px). */
+  border?: string
 }
 
 export type ScrimStyle = 'none' | 'gradient' | 'shade'
@@ -51,14 +60,21 @@ export interface Slide {
   background: Background
   scrim?: ScrimStyle // legibility overlay for photo backgrounds
   scrimStrength?: number // 0–100 intensity, default 55
+  /** Scrim colour as an "r,g,b" triplet; default is the house warm black. */
+  scrimTint?: string
   elements: DesignElement[]
 }
+
+/** Font families a design renders with. Absent = the Hue & Heal house pair. */
+export interface FontPair { serif: string; sans: string }
 
 export interface Design {
   format: InstaFormat
   accent: Accent
   templateId: string
   slides: Slide[]
+  /** Brand-world font pairing (Remedae: Quando + Poppins). */
+  fonts?: FontPair
 }
 
 export function accentHex(accent: Accent): string {
@@ -69,9 +85,25 @@ export function accentHex(accent: Accent): string {
    In the PNG/ZIP export, Ivy Ora (Adobe Fonts) can't be embedded, so it falls back
    to the self-hosted HHSerif; the moment licensed Ivy Ora .otf files are dropped into
    /public/fonts/ivyora and registered as HHSerif, exports become true Ivy Ora too. */
-export function fontVar(key: FontKey | undefined): string {
+export function fontVar(key: FontKey | undefined, fonts?: FontPair): string {
+  if (fonts) return key === 'sans' ? fonts.sans : fonts.serif
   if (key === 'sans') return "'HHSans', 'Poppins', system-ui, sans-serif"
   return "'Romie', 'ivyora-display', 'HHSerif', Georgia, serif" // serif + voice (voice adds font-style:italic)
+}
+
+/** Split text on *asterisk phrases* for the highlight device. */
+export function splitHighlights(content: string): { text: string; hl: boolean }[] {
+  const out: { text: string; hl: boolean }[] = []
+  const re = /\*([^*\n]+)\*/g
+  let last = 0
+  for (const m of content.matchAll(re)) {
+    const i = m.index ?? 0
+    if (i > last) out.push({ text: content.slice(last, i), hl: false })
+    out.push({ text: m[1], hl: true })
+    last = i + m[0].length
+  }
+  if (last < content.length) out.push({ text: content.slice(last), hl: false })
+  return out
 }
 
 let idc = 0

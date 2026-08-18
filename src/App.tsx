@@ -26,6 +26,9 @@ function StudioRedirect() {
 }
 import Reports from './pages/Reports'
 import Settings from './pages/Settings'
+import TemplateGallery from './pages/TemplateGallery'
+import AuthGate from './components/AuthGate'
+import { BrandProvider } from './lib/brandContext'
 import ComingSoon from './pages/ComingSoon'
 import Subscribe from './pages/Subscribe'
 import Unsubscribe from './pages/Unsubscribe'
@@ -36,6 +39,9 @@ export default function App() {
       {/* Public pages — outside the auth gate / studio shell */}
       <Route path="/subscribe" element={<Subscribe />} />
       <Route path="/unsubscribe" element={<Unsubscribe />} />
+      {/* Template contact sheet: signed-in, but outside the workspace picker so it can be
+          opened directly with ?brand=… (used to review a whole family at once). */}
+      <Route path="/templates" element={<AuthGate><BrandProvider><TemplateGallery /></BrandProvider></AuthGate>} />
 
       <Route element={<StudioLayout />}>
         <Route index element={<Dashboard />} />

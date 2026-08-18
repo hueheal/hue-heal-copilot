@@ -21,6 +21,9 @@ interface Brief {
     voice?: string
     guidelines?: string
   }
+  /** The studio template the copy will be laid into (e.g. 'rd-question'), so
+      the headline can take that hook's shape. */
+  template?: string
   /** Article mode: the post promotes a published journal article. The caption
       sends readers to it; slides distil its ideas rather than inventing new ones. */
   article?: {
@@ -89,6 +92,43 @@ Deno.serve(async (req) => {
   const a = brief.article
   const isStory = /story/i.test(brief.format)
   const isCarousel = /carousel/i.test(brief.format)
+
+  // Remedae's Instagram system: one hook, one promise, one cue. The headline
+  // carries a single *highlighted* phrase, and each template is a hook shape.
+  const RD_HOOKS: Record<string, string> = {
+    'rd-question': 'THE QUESTION: the headline is a question the reader cannot leave unanswered, answered in the caption.',
+    'rd-number': 'THE NUMBER: start the headline with one big number and a pipe, then the statement it completes, e.g. "3bn | people already know it. Most doctors were never taught it." Never invent the number; if no real figure exists, use a count from the traditions themselves (e.g. "6 | traditions agree on the first move").',
+    'rd-list-tease': 'THE LIST TEASE: the headline promises N things; slide headings are the N items as short noun phrases (2 to 5 words), the first two are shown on the cover and the rest are withheld.',
+    'rd-reframe': 'THE REFRAME: the headline is "you were told X, the traditions say Y". Slides are pairs: heading = the thing people are told (3 to 5 words), body = what the traditions actually say (one short sentence).',
+    'rd-pov': 'THE POV: second person, present tense, a moment in time. Headline is two or three words with a full stop. Caption is intimate and specific.',
+    'rd-quiz': 'THE QUIZ: the headline is a clue (an ingredient, ritual or phrase) without naming the tradition; the caption asks which tradition and invites a guess in the comments.',
+    'rd-save': 'THE SAVE: a reference post. Headline starts "Save this for…". Slide headings are tradition names, slide bodies are the one-line practice for each.',
+    'rd-cover': 'EDITORIAL COVER: the headline is the article title or a sharper version of it; the caption sells the read.',
+    'rd-editorial': 'EDITORIAL: headline is the article title; the caption is a short standfirst then link in bio.',
+    'rd-glance': 'QUICK GLANCE: headline "N remedies for *X*"; slides are the remedies: heading = remedy name (2 to 4 words), body = one line on when and how, starting with the tradition, e.g. "Ayurveda · Drink".',
+    'rd-recipe': 'RECIPE: headline names the ache; the first slide heading is the remedy name, its body the method in one or two sentences.',
+    'rd-quote': 'PULL QUOTE: the headline is a single resonant sentence, ideally with a family or kitchen image; caption gives the source of the practice.',
+    'rd-remedy': 'REMEDY SPOTLIGHT: headline is the remedy in one or two words; caption gives what it is for in three short fragments.',
+    'rd-evidence': 'EVIDENCE CARD: headline "What we know about *X*"; first slide heading "What the research finds" with a body of one careful sentence, second slide heading "What it does not yet show" with a body of one honest sentence. Never overstate.',
+    'rd-rhythm': 'THREE WORDS: the headline is exactly three one-word remedies separated by full stops, e.g. "Sleep. Sun. Breath."',
+    'rd-six': 'SIX TRADITIONS OPENER: headline in three short lines ending with what they each say; slides are one tradition each: heading = tradition name, body = its take in one sentence.',
+    'rd-short': 'SHORT COVER: the headline is what the practitioner says on camera, one sentence, contrarian or surprising.',
+    'rd-plus': 'PRODUCT PROMO: the headline is a calm promise about a personal practice; caption states the offer plainly.',
+  }
+  const remedaeRules = isRemedae
+    ? `
+REMEDAE INSTAGRAM RULES:
+` +
+      `- headline: under 10 words. Wrap exactly one phrase of 1 to 3 words, the most charged, in *asterisks* (it is set in mint italic). No other markup.
+` +
+      `- One idea per post. Name the tradition when it matters (TCM, Ayurveda, Unani, Kampo, Native American, modern medicine), never "ancient wisdom".
+` +
+      `- caption: first line stops the scroll, then one genuine idea, then the cue (link in bio / save this / say it in the comments). If a study is referred to, add "Sources in caption" facts plainly at the end; never invent one.
+` +
+      (brief.template && RD_HOOKS[brief.template] ? `- HOOK SHAPE, ${RD_HOOKS[brief.template]}
+` : '')
+    : ''
+
   const userPrompt = a
     ? `This post promotes a published journal article. Do not add ideas that are not in it.\n` +
       `ARTICLE TITLE: ${a.title}\n` +
@@ -105,10 +145,17 @@ Deno.serve(async (req) => {
           ? `- slides: exactly 2 short frames after the cover: one striking idea from the article, then a "read the full piece" frame. Heading of a few words, body one sentence.\n`
           : `- slides: an empty array (single image).\n`) +
       `- hashtags: 5 to 8, relevant to the article's subject and the brand.\n` +
+      remedaeRules +
       `Use the compose_post tool to return the result.`
-    : `Compose a ${brief.format} for the sector "${brief.sector}" on the topic "${brief.topic}". ` +
-      `The lead artifact is a "A guide to ${brief.topic}" cover. ` +
-      `Use the compose_post tool to return the result.`
+    : isRemedae
+      ? `Compose a ${brief.format} for Instagram on the topic "${brief.topic}".` +
+        (isCarousel ? ` Include 3 to 5 content slides after the cover, each one clear idea, heading of a few words and body of 1 to 2 sentences.` : isStory ? ` Include 2 short frames after the cover.` : ` slides: an empty array.`) +
+        remedaeRules +
+        `
+Use the compose_post tool to return the result.`
+      : `Compose a ${brief.format} for the sector "${brief.sector}" on the topic "${brief.topic}". ` +
+        `The lead artifact is a "A guide to ${brief.topic}" cover. ` +
+        `Use the compose_post tool to return the result.`
 
   let resp: Response
   try {
