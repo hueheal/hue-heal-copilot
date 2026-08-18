@@ -104,13 +104,24 @@ function pill(content: string, box: Box, on: boolean, ground: 'dark' | 'light' =
   }
 }
 const REMEDAE_MARK = { onDark: '/brand/remedae-logo.svg', onLight: '/brand/remedae-logo-ink.svg' }
-function footer(L: ReturnType<typeof layout>, label: string, ground: 'dark' | 'light', _seed: TemplateSeed): DesignElement[] {
-  // Always the hosted mark that suits the ground: an uploaded (cream) logo
-  // vanishes on the cream save card.
+function footer(L: ReturnType<typeof layout>, _label: string, ground: 'dark' | 'light', _seed: TemplateSeed): DesignElement[] {
+  // One piece of chrome per slide: the wordmark, bottom-left, small. No
+  // bottom-right label (page counters, "save for later", disclaimers): those
+  // corner micro-labels are the giveaway of a generated template. Counters
+  // live in the body slides' index; disclaimers live in the caption.
   const logo = ground === 'dark' ? REMEDAE_MARK.onDark : REMEDAE_MARK.onLight
   return [
-    { id: eid('logo'), type: 'logo', box: L.bottom(PAD, 56, 200, 40), style: { align: 'left' }, content: logo, role: 'wordmark' },
-    t(label, L.bottom(480, 62, 520, 28), { color: ground === 'dark' ? RD.creamFaint : RD.forestDim, fontKey: 'sans', fontSize: 22, letterSpacing: 0.18, uppercase: true, align: 'right' }, 'label'),
+    { id: eid('logo'), type: 'logo', box: L.bottom(PAD, 56, 176, 36), style: { align: 'left' }, content: logo, role: 'wordmark' },
+  ]
+}
+/** Initial-letter mark: what stands in for a thumbnail or avatar when there is
+    no photo (an empty placeholder box reads as unfinished). */
+function initial(text: string, box: Box, ground: 'dark' | 'light' = 'dark'): DesignElement[] {
+  const ch = (text.trim()[0] || 'r').toUpperCase()
+  const size = (box.w / 100) * 1080
+  return [
+    shape(box, ground === 'dark' ? 'rgba(166,216,147,0.14)' : 'rgba(54,76,63,0.1)', { radiusPx: 999 }),
+    t(ch, { x: box.x, y: box.y + box.h * 0.22, w: box.w, h: box.h * 0.6 }, { color: ground === 'dark' ? RD.mint : RD.forest, fontKey: 'serif', fontSize: Math.round(size * 0.42), align: 'center', lineHeight: 1 }),
   ]
 }
 function eyebrow(content: string, box: Box, color = RD.mintDim, role = 'eyebrow'): DesignElement {
@@ -154,7 +165,7 @@ function slide(bg: ReturnType<typeof photoOr> | Background, els: DesignElement[]
 const item = (seed: TemplateSeed, i: number, fallback: string) => (seed.items?.[i]?.trim() || fallback)
 /** Rough line count for a serif headline in a box, so bottom-anchored blocks
     can hug what sits under them (text renders from the top of its box). */
-function linesFor(text: string, fontSize: number, boxW: number, em = 0.56): number {
+function linesFor(text: string, fontSize: number, boxW: number, em = 0.53): number {
   const perLine = Math.max(8, Math.floor(boxW / (fontSize * em)))
   return text.split('\n').reduce((n, para) => n + Math.max(1, Math.ceil(para.replace(/\*/g, '').length / perLine)), 0)
 }
@@ -324,7 +335,7 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         const hasPairs = Boolean(seed.itemBodies?.[i]?.trim())
         return [clip(hasPairs ? item(seed, i, tr) : tr, 26), clip(hasPairs ? seed.itemBodies![i].trim() : item(seed, i, ln), 90)]
       })
-      const rows = stackUp(L, 262, pairs.map(([a, b]) => Math.max(linesFor(a, 21, 230, 0.62) * 21 * 1.3, linesFor(b, 27, 660, 0.55) * 27 * 1.35) + 30))
+      const rows = stackUp(L, 220, pairs.map(([a, b]) => Math.max(linesFor(a, 21, 230, 0.62) * 21 * 1.3, linesFor(b, 27, 660, 0.55) * 27 * 1.35) + 30))
       const els: DesignElement[] = []
       pairs.forEach(([a, b], i) => {
         const r = rows[i]
@@ -339,8 +350,7 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         eyebrow('One gut ache · five answers', L.top(PAD, 60, 800, 30), 'rgba(54,76,63,0.55)'),
         headline(hText, L.bottom(PAD, top + 44, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize, RD.forest, 'headline', { hl: '#5a7a64' }),
         ...els,
-        t('Traditionally used, not medical advice', L.bottom(PAD, 210, 900, 36), { color: 'rgba(54,76,63,0.65)', fontKey: 'sans', fontSize: 24, fontWeight: 500 }, 'tagline'),
-        ...footer(L, 'save for later', 'light', seed),
+        ...footer(L, '', 'light', seed),
       ])
     },
   },
@@ -407,7 +417,8 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         const lineText = clip(body || ln, 52)
         els.push(shape(L.bottom(93, yb, 894, 168), 'rgba(54,76,63,0.42)', { radiusPx: 22, border: '2px solid rgba(166,216,147,0.14)' }))
         const thumb = seed.itemImages?.[i]?.trim()
-        els.push(thumb ? img(thumb, L.bottom(120, yb + 26, 116, 116), 14, `thumb${i + 1}`) : shape(L.bottom(120, yb + 26, 116, 116), 'rgba(166,216,147,0.18)', { radiusPx: 14 }))
+        if (thumb) els.push(img(thumb, L.bottom(120, yb + 26, 116, 116), 14, `thumb${i + 1}`))
+        else els.push(...initial(nm, L.bottom(126, yb + 32, 104, 104)))
         els.push(t(tagText, L.bottom(260, yb + 118, 600, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, fontWeight: 500, letterSpacing: 0.16, uppercase: true }, `tag${i + 1}`))
         els.push(t(nm, L.bottom(260, yb + 72, 640, 44), { color: RD.cream, fontKey: 'serif', fontSize: nm.length > 26 ? 29 : 34, letterSpacing: -0.02 }, `item${i + 1}`))
         els.push(line(lineText, L.bottom(260, yb + 34, 640, 30), 22, RD.creamDim, `line${i + 1}`))
@@ -430,12 +441,12 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
       const els: DesignElement[] = [
         headline(hText, L.top(120, 96, 840, 200), hSize, RD.cream, 'headline', { align: 'center', lineHeight: 1.08 }),
         shape(L.top(79, cardTop, 922, cardH), 'rgba(54,76,63,0.42)', { radiusPx: 22, border: '2px solid rgba(166,216,147,0.12)' }),
-        seed.itemImages?.[0]?.trim() ? img(seed.itemImages[0].trim(), L.top(112, y(36), 88, 88), 12, 'avatar') : shape(L.top(112, y(36), 88, 88), 'rgba(166,216,147,0.2)', { radiusPx: 12 }),
+        ...(seed.itemImages?.[0]?.trim() ? [img(seed.itemImages[0].trim(), L.top(112, y(36), 88, 88), 12, 'avatar')] : initial('Ayurveda', L.top(112, y(36), 88, 88))),
         t('Ayurveda', L.top(264, y(30), 420, 50), { color: RD.cream, fontKey: 'serif', fontSize: 44, letterSpacing: -0.02 }, 'tradition'),
         t('South Asia · c. 1500 BCE', L.top(264, y(96), 420, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, letterSpacing: 0.16, uppercase: true }, 'origin'),
         pill('●  Anecdotal reports', L.top(700, y(50), 260, 50), false, 'dark', 'evidence'),
-        headline(remedy, L.top(176, y(250), 760, 56), 46, RD.cream, 'remedy', { lineHeight: 1.1, letterSpacing: -0.02, hl: undefined }),
-        line(clip(seed.itemBodies?.[0]?.trim() || seed.dek || 'Boil water, let cool to sipping temperature, squeeze in half a lemon. Drink slowly before anything else, said to open the srotas and prepare agni for the day.', 200), L.top(176, y(320), 752, 120), 24, RD.creamDim, 'method', { lineHeight: 1.5 }),
+        headline(remedy, L.top(176, y(236), 760, 104), 46, RD.cream, 'remedy', { lineHeight: 1.1, letterSpacing: -0.02, hl: undefined }),
+        line(clip(seed.itemBodies?.[0]?.trim() || seed.dek || 'Boil water, let cool to sipping temperature, squeeze in half a lemon. Drink slowly before anything else, said to open the srotas.', 130), L.top(176, y(352), 752, 90), 23, RD.creamDim, 'method', { lineHeight: 1.5 }),
         ...(['Time', '5 min', 'Type', 'Morning drink', 'Daily', 'Once'].map((s, i) => {
           const col = Math.floor(i / 2), isLabel = i % 2 === 0
           const x = 176 + [0, 200, 480][col]
@@ -648,9 +659,10 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
       ])
     },
   },
-  /* 21 · Checklist: cream, corner labels, ticks. The text-heavy reference post. */
+  /* 21 · Checklist: an editorial list. Hanging numerals, a narrow measure, rules
+     only under the text. No corner labels, no tick circles. */
   {
-    id: 'rd-checklist', noPhoto: true, label: 'Checklist · cream', brand: 'remedae',
+    id: 'rd-checklist', noPhoto: true, label: 'The list · cream', brand: 'remedae',
     build: (format, seed) => {
       const L = layout(format)
       const defaults = [
@@ -661,36 +673,36 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         ['Screens off, light on', 'Sleep begins with the eyes.'],
       ]
       const hText = seed.headline || 'The morning routine six traditions *agree on.*'
-      const dek = clip(seed.dek || 'Not a protocol. Five small things that keep reappearing across the world\'s healing systems, in the order they happen.', 170)
-      const hSize = linesFor(hText, 74, 920) > 3 ? 58 : 74
-      const headH = linesFor(hText, hSize, 920) * hSize * 0.98 + 30 + linesFor(dek, 26, 860, 0.55) * 26 * 1.5 + 40
-      const avail = L.H - (format === 'story' ? 480 : 0) - 130 - 230 - headH
-      // Fit: drop sub-lines first, then rows, until the stack sits under the head.
+      const dek = clip(seed.dek || 'Not a protocol. Five small things that keep reappearing across the world\'s healing systems, in the order they happen.', 150)
+      const hSize = linesFor(hText, 78, 900) > 3 ? 60 : 78
+      const dekH = linesFor(dek, 25, 620, 0.55) * 25 * 1.5
+      const headH = linesFor(hText, hSize, 900) * hSize * 0.98 + 26 + dekH + 56
+      const avail = L.H - L.safeTop - L.safeBottom - 120 - 200 - headH
+      const GUT = 120 // numeral gutter; text column starts at PAD + GUT
+      const colW = 920 - GUT
       let n = format === 'square' ? 4 : 5, withBodies = true
       let rows: string[][] = [], st: { yb: number; h: number }[] = []
       for (;;) {
-        rows = defaults.slice(0, n).map(([h, b], i) => [clip(item(seed, i, h), 48), withBodies ? clip(seed.itemBodies?.[i]?.trim() || b, 80) : ''])
-        st = stackUp(L, 230, rows.map(([h, b]) => linesFor(h, 28, 800, 0.55) * 28 * 1.3 + (b ? linesFor(b, 22, 800, 0.55) * 22 * 1.4 : 0) + 34), 0)
-        const total = st[0].yb + st[0].h - 230
+        rows = defaults.slice(0, n).map(([h, b], i) => [clip(item(seed, i, h), 52), withBodies ? clip(seed.itemBodies?.[i]?.trim() || b, 84) : ''])
+        st = stackUp(L, 200, rows.map(([h, b]) => linesFor(h, 29, colW, 0.55) * 29 * 1.25 + (b ? 6 + linesFor(b, 22, colW, 0.55) * 22 * 1.4 : 0) + 40), 0)
+        const total = st[0].yb + st[0].h - 200
         if (total <= avail || n <= 3) break
         if (withBodies) withBodies = false; else n -= 1
       }
       const els: DesignElement[] = []
       rows.forEach(([h, b], i) => {
         const r = st[i]
-        els.push(shape(L.bottom(PAD, r.yb + r.h - 44, 40, 40), 'transparent', { radiusPx: 999, border: '2px solid rgba(54,76,63,0.45)' }))
-        els.push(t('✓', L.bottom(PAD + 9, r.yb + r.h - 40, 30, 30), { color: RD.forest, fontKey: 'sans', fontSize: 22, fontWeight: 500 }))
-        els.push(t(h, L.bottom(PAD + 64, r.yb + r.h - 42, 800, 36), { color: RD.forest, fontKey: 'sans', fontSize: 28, fontWeight: 500, letterSpacing: -0.01, lineHeight: 1.3 }, `item${i + 1}`))
-        if (b) els.push(line(b, L.bottom(PAD + 64, r.yb + 8, 800, r.h - 50), 22, 'rgba(54,76,63,0.7)', `line${i + 1}`, { lineHeight: 1.4 }))
+        if (i > 0) els.push(rule(L.bottom(PAD + GUT, r.yb + r.h - 1, colW, 2), 'light'))
+        els.push(t(`0${i + 1}`, L.bottom(PAD, r.yb + r.h - 62, 90, 44), { color: 'rgba(54,76,63,0.38)', fontKey: 'serif', fontSize: 34, letterSpacing: -0.02 }))
+        els.push(t(h, L.bottom(PAD + GUT, r.yb + r.h - 22 - linesFor(h, 29, colW, 0.55) * 29 * 1.25, colW, linesFor(h, 29, colW, 0.55) * 29 * 1.25), { color: RD.forest, fontKey: 'sans', fontSize: 29, fontWeight: 500, letterSpacing: -0.01, lineHeight: 1.25 }, `item${i + 1}`))
+        if (b) els.push(line(b, L.bottom(PAD + GUT, r.yb + 14, colW, r.h - 40 - linesFor(h, 29, colW, 0.55) * 29 * 1.25), 22, 'rgba(54,76,63,0.66)', `line${i + 1}`, { lineHeight: 1.4 }))
       })
       const top = st[0].yb + st[0].h
       return slide(dark(RD.cream), [
-        eyebrow('Routine', L.top(PAD, 60, 500, 30), 'rgba(54,76,63,0.55)'),
-        t('Part 2 · Mornings', L.top(580, 60, 420, 30), { color: 'rgba(54,76,63,0.55)', fontKey: 'sans', fontSize: 24, fontWeight: 500, letterSpacing: 0.22, uppercase: true, align: 'right' }, 'meta'),
-        headline(hText, L.bottom(PAD, top + 40 + linesFor(dek, 26, 860, 0.55) * 26 * 1.5 + 30, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize, RD.forest, 'headline', { hl: '#5a7a64' }),
-        line(dek, L.bottom(PAD, top + 40, 860, linesFor(dek, 26, 860, 0.55) * 26 * 1.5), 26, 'rgba(54,76,63,0.85)', 'dek', { lineHeight: 1.5 }),
+        headline(hText, L.bottom(PAD, top + 56 + dekH + 26, 900, linesFor(hText, hSize, 900) * hSize * 0.98), hSize, RD.forest, 'headline', { hl: '#5a7a64' }),
+        line(dek, L.bottom(PAD, top + 56, 620, dekH), 25, 'rgba(54,76,63,0.78)', 'dek', { lineHeight: 1.5 }),
         ...els,
-        ...footer(L, 'save for later', 'light', seed),
+        ...footer(L, '', 'light', seed),
       ])
     },
   },
@@ -813,8 +825,7 @@ export function buildRemedaeEndSlide(format: InstaFormat, seed: TemplateSeed, to
     eyebrow('The whole story', L.top(PAD, 60, 800, 30)),
     headline(`Read the full piece on *${site}*`, L.bottom(PAD, 420, 920, 300), 84),
     body(seed.headline || '', L.bottom(PAD, 330, 860, 80), 27, RD.creamDim, 'dek'),
-    cue('Link in bio', L.bottom(PAD, 260, 600, 40)),
-    t('Save this for later  ✧', L.bottom(PAD, 210, 600, 34), { color: RD.creamFaint, fontKey: 'sans', fontSize: 24, fontWeight: 500 }, 'kicker'),
+    cue('Link in bio', L.bottom(PAD, 220, 600, 40)),
     ...footer(L, `${total} / ${total}`, 'dark', seed),
   ])
 }

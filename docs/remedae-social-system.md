@@ -46,7 +46,7 @@ slide automatically.
 | Product | Remedae+ promo | The only place the yellow appears |
 | Infographic / text-heavy | Orbit diagram | Six traditions on rings around "you", over ground or photo |
 | | Numbered steps | 01 to 04 glass rows over a photograph |
-| | Checklist · cream | Corner labels, ticks, a line of why under each item |
+| | The list · cream | Hanging numerals, a narrow measure, a line of why under each item |
 | | Habit cards | Four cream cards on a photo, headline between them |
 | | Myth · truth | The belief struck through, what the traditions say beneath |
 
@@ -70,8 +70,15 @@ slide automatically.
    never take the post photo, even when the draft has one.
 5. Legibility floor: nothing under 22px on the 1080 canvas (~8px on a phone).
    The Claude set's 11 to 13px eyebrows and labels were raised for this reason.
-6. Brand mark bottom-left, context label bottom-right, on every slide,
-   including body and end slides, so a screenshot of any slide is attributable.
+6. One piece of chrome per slide: the wordmark, bottom-left, small. No
+   bottom-right label, no top-right meta, no "save for later" or page counters
+   in the corners; those tracked micro-labels are the signature of a generated
+   template. Counters live in the carousel body index; disclaimers live in
+   the caption ("Traditionally used, not medical advice."). The two pills on
+   the Editorial cover stay because they are Remedae's own Figma design.
+9. No empty placeholder boxes: a missing thumbnail or avatar becomes an
+   initial-letter mark. Lists are editorial (hanging numerals, a narrow
+   measure, rules under the text column), never tick-circle stacks.
 7. Story keeps 220px top and 260px bottom clear (profile bar, reply bar).
 8. Traditions are named (TCM, Ayurveda, Unani, Kampo, Native American, modern
    medicine), never "ancient wisdom". "Not medical advice" sits in the label

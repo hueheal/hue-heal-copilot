@@ -128,7 +128,7 @@ REMEDAE INSTAGRAM RULES:
 ` +
       `- One idea per post. Name the tradition when it matters (TCM, Ayurveda, Unani, Kampo, Native American, modern medicine), never "ancient wisdom".
 ` +
-      `- caption: first line stops the scroll, then one genuine idea, then the cue (link in bio / save this / say it in the comments). If a study is referred to, add "Sources in caption" facts plainly at the end; never invent one.
+      `- caption: first line stops the scroll, then one genuine idea, then the cue (link in bio / save this / say it in the comments). If a study is referred to, add the source plainly at the end; never invent one. If the post reads as instruction (a remedy, recipe, routine or list of practices), end the caption with "Traditionally used, not medical advice."
 ` +
       (brief.template && RD_HOOKS[brief.template] ? `- HOOK SHAPE, ${RD_HOOKS[brief.template]}
 ` : '')
