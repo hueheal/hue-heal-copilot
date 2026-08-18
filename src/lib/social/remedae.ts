@@ -266,17 +266,24 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         ['Skip breakfast.', 'Eat when the sun is highest: Ayurveda, TCM.'],
         ['Take it at night.', 'Bitter herbs land better before noon.'],
       ].map(([a, b], i) => [clip(item(seed, i, a), 60), clip(seed.itemBodies?.[i]?.trim() || b, 110)])
-      const rows = stackUp(L, 300, pairs.map(([a, b]) => Math.max(linesFor(a, 26, 400, 0.55) * 26 * 1.35, linesFor(b, 27, 540, 0.55) * 27 * 1.35) + 40))
+      const hText = seed.headline || 'You were told one thing.\n*Six traditions say another.*'
+      const hSize = linesFor(hText, 76, 920) > 3 ? 62 : 76
+      const headH = linesFor(hText, hSize, 920) * hSize * 0.98 + 44
+      const avail = L.H - L.safeTop - L.safeBottom - 300 - 120 - headH
+      let rows = stackUp(L, 300, pairs.map(([a, b]) => Math.max(linesFor(a, 26, 400, 0.55) * 26 * 1.35, linesFor(b, 27, 460, 0.55) * 27 * 1.35) + 40))
+      // Short canvas (square): drop the last pair rather than climb into the headline.
+      while (pairs.length > 2 && rows[0].yb + rows[0].h - 300 > avail) {
+        pairs.pop()
+        rows = stackUp(L, 300, pairs.map(([a, b]) => Math.max(linesFor(a, 26, 400, 0.55) * 26 * 1.35, linesFor(b, 27, 460, 0.55) * 27 * 1.35) + 40))
+      }
       const els: DesignElement[] = []
       pairs.forEach(([a, b], i) => {
         const r = rows[i]
         els.push(rule(L.bottom(PAD, r.yb + r.h - 2, 920, 2)))
         els.push(t(a, L.bottom(PAD, r.yb + 20, 400, r.h - 40), { color: 'rgba(255,255,232,0.42)', fontKey: 'sans', fontSize: 26, fontWeight: 300, letterSpacing: -0.01, strike: true, lineHeight: 1.35 }, `told${i + 1}`))
-        els.push(line(b, L.bottom(PAD + 460, r.yb + 20, 540, r.h - 40), 27, RD.mint, `said${i + 1}`, { fontWeight: 400 }))
+        els.push(line(b, L.bottom(PAD + 460, r.yb + 20, 460, r.h - 40), 27, RD.mint, `said${i + 1}`, { fontWeight: 400 }))
       })
       const top = rows[0].yb + rows[0].h
-      const hText = seed.headline || 'You were told one thing.\n*Six traditions say another.*'
-      const hSize = linesFor(hText, 76, 920) > 3 ? 62 : 76
       return slide(dark(), [
         eyebrow('The reframe', L.top(PAD, 60, 800, 30)),
         headline(hText, L.bottom(PAD, top + 44, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize),
@@ -306,8 +313,15 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
     build: (format, seed) => {
       const L = layout(format)
       const opts = ['Kampo', 'Ayurveda', 'Unani', 'TCM']
-      let x = PAD
-      const pills = opts.map((o, i) => { const w = 60 + o.length * 20; const el = pill(o, L.bottom(x, 330, w, 56), false, 'dark', `option${i + 1}`); x += w + 14; return el })
+      // Pills flow left to right and wrap to a second row rather than bleed.
+      let x = PAD, row = 0
+      const pills = opts.map((o, i) => {
+        const w = Math.min(60 + o.length * 20, 920)
+        if (x + w > 1000) { x = PAD; row += 1 }
+        const el = pill(o, L.bottom(x, 330 + row * 70, w, 56), false, 'dark', `option${i + 1}`)
+        x += w + 14
+        return el
+      })
       return slide(photoOr(seed), [
         eyebrow('Guess the tradition', L.top(PAD, 60, 800, 30), 'rgba(255,255,232,0.8)'),
         headline(seed.headline || 'Cardamom, ghee, and a *warm cup* at dusk.', L.bottom(PAD, 490, 920, 240), 74),
@@ -440,7 +454,7 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
       const remedy = clip(item(seed, 0, 'Warm lemon water on waking.'), 34)
       const els: DesignElement[] = [
         headline(hText, L.top(120, 96, 840, 200), hSize, RD.cream, 'headline', { align: 'center', lineHeight: 1.08 }),
-        shape(L.top(79, cardTop, 922, cardH), 'rgba(54,76,63,0.42)', { radiusPx: 22, border: '2px solid rgba(166,216,147,0.12)' }),
+        shape(L.top(80, cardTop, 920, cardH), 'rgba(54,76,63,0.42)', { radiusPx: 22, border: '2px solid rgba(166,216,147,0.12)' }),
         ...(seed.itemImages?.[0]?.trim() ? [img(seed.itemImages[0].trim(), L.top(112, y(36), 88, 88), 12, 'avatar')] : initial('Ayurveda', L.top(112, y(36), 88, 88))),
         t('Ayurveda', L.top(264, y(30), 420, 50), { color: RD.cream, fontKey: 'serif', fontSize: 44, letterSpacing: -0.02 }, 'tradition'),
         t('South Asia · c. 1500 BCE', L.top(264, y(96), 420, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, letterSpacing: 0.16, uppercase: true }, 'origin'),
@@ -469,7 +483,7 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
     build: (format, seed) => {
       const L = layout(format)
       return slide(dark(), [
-        t('“', L.top(PAD - 8, 120, 300, 200), { color: 'rgba(166,216,147,0.18)', fontKey: 'serif', fontSize: 240, lineHeight: 0.6 }),
+        t('“', L.top(PAD, 120, 300, 200), { color: 'rgba(166,216,147,0.18)', fontKey: 'serif', fontSize: 240, lineHeight: 0.6 }),
         headline(seed.headline || 'Your dadi made you *haldi doodh* when you couldn\'t sleep.', L.bottom(PAD, 420, 920, 400), 58, RD.cream, 'headline', { lineHeight: 1.18, letterSpacing: -0.025 }),
         shape(L.bottom(PAD, 330, 40, 2), RD.mint),
         t('She wasn\'t guessing.', L.bottom(PAD + 60, 318, 800, 30), { color: RD.creamDim, fontKey: 'sans', fontSize: 24, letterSpacing: 0.04 }, 'tagline'),
@@ -598,7 +612,7 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
       const L = layout(format)
       const cx = 540
       const cy = format === 'story' ? 1080 : format === 'square' ? 660 : 880
-      const r = format === 'square' ? 200 : 250
+      const r = format === 'square' ? 190 : 230 // keeps every label inside the 80px margins
       const names = ['Ayurveda', 'TCM', 'Kampo', 'Unani', 'Native American', 'Modern'].map((n, i) => clip(item(seed, i, n), 22))
       const els: DesignElement[] = []
       ;[1, 0.72, 0.44].forEach((s, i) => {
@@ -614,8 +628,9 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         const below = Math.sin(a) > 0.3, above = Math.sin(a) < -0.3
         const ty = above ? yv - 62 : below ? yv + 22 : yv - 16
         const align: 'left' | 'center' | 'right' = Math.abs(Math.cos(a)) < 0.3 ? 'center' : Math.cos(a) > 0 ? 'left' : 'right'
-        const tx = align === 'center' ? x - 130 : align === 'left' ? x + 24 : x - 284
-        els.push(t(n, L.top(tx, ty, 260, 32), { color: RD.cream, fontKey: 'sans', fontSize: 25, fontWeight: 500, align, letterSpacing: -0.01 }, `item${i + 1}`))
+        const lw = align === 'center' ? 260 : 200
+        const tx = align === 'center' ? x - lw / 2 : align === 'left' ? x + 24 : x - 24 - lw
+        els.push(t(n, L.top(Math.max(PAD, Math.min(1000 - lw, tx)), ty, lw, 32), { color: RD.cream, fontKey: 'sans', fontSize: 25, fontWeight: 500, align, letterSpacing: -0.01 }, `item${i + 1}`))
       })
       const hText = seed.headline || 'Six traditions,\n*one body.*'
       return slide(photoOr(seed, RD.ink), [
