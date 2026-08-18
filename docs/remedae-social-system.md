@@ -1,7 +1,7 @@
 # Remedae · Instagram template system
 
 The Remedae workspace has its own social template family in the Social Studio.
-It never mixes with Hue & Heal's set: Remedae sees only these 18 templates, Hue
+It never mixes with Hue & Heal's set: Remedae sees only these 23 templates, Hue
 & Heal sees only its house set. Code: `src/lib/social/remedae.ts`, wired
 through `templatesFor()` / `defaultTemplateFor()` in `src/lib/social/templates.ts`.
 Contact sheet of every template: `/templates?format=portrait|carousel|story|square&photo=1`.
@@ -44,8 +44,19 @@ slide automatically.
 | | Pull quote | One resonant sentence, source line |
 | | Three words | Sleep. Sun. Breath. |
 | Product | Remedae+ promo | The only place the yellow appears |
+| Infographic / text-heavy | Orbit diagram | Six traditions on rings around "you", over ground or photo |
+| | Numbered steps | 01 to 04 glass rows over a photograph |
+| | Checklist · cream | Corner labels, ticks, a line of why under each item |
+| | Habit cards | Four cream cards on a photo, headline between them |
+| | Myth · truth | The belief struck through, what the traditions say beneath |
 
 ## Rules baked into the templates
+
+0. Quando is for headlines, remedy names and quotes only. Every line that can
+   run long (list lines, bodies, notes, deks) is Poppins. Rows size themselves
+   from their text (`stackUp` + `linesFor`), long items are clipped at a word
+   boundary, and every headline steps its size down until it fits its box, so
+   real article titles and headings cannot overflow.
 
 1. One idea per plate. One cue per post, always the last line before the
    footer, always ending in ›.

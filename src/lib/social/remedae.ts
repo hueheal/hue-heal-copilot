@@ -57,9 +57,11 @@ export function isRemedae(brandName?: string | null): boolean {
 
 /* ---- layout: px on the 1080-wide canvas, anchored top or bottom ---- */
 const PAD = 80
+let CUR_H = 1350 // canvas height of the layout being built (builds are synchronous)
 function layout(format: InstaFormat) {
   const spec = INSTAGRAM_FORMATS[format]
   const W = spec.w, H = spec.h
+  CUR_H = H
   // Story: keep IG's top (profile) and bottom (reply) bands clear.
   const safeTop = format === 'story' ? 220 : 0
   const safeBottom = format === 'story' ? 260 : 0
@@ -71,6 +73,9 @@ function layout(format: InstaFormat) {
     bottom: (x: number, yb: number, w: number, h: number): Box => ({ x: pct(x, W), y: pct(H - safeBottom - yb - h, H), w: pct(w, W), h: pct(h, H) }),
     /** Height fraction of the canvas (for shapes / images). */
     hpct: (px: number) => pct(px, H),
+    /** Absolute placement from the canvas top, ignoring the story safe band. */
+    raw: (x: number, y: number, w: number, h: number): Box => ({ x: pct(x, W), y: pct(y, H), w: pct(w, W), h: pct(h, H) }),
+    safeTop, safeBottom,
     fill: (): Box => ({ x: 0, y: 0, w: 100, h: 100 }),
   }
 }
@@ -99,8 +104,10 @@ function pill(content: string, box: Box, on: boolean, ground: 'dark' | 'light' =
   }
 }
 const REMEDAE_MARK = { onDark: '/brand/remedae-logo.svg', onLight: '/brand/remedae-logo-ink.svg' }
-function footer(L: ReturnType<typeof layout>, label: string, ground: 'dark' | 'light', seed: TemplateSeed): DesignElement[] {
-  const logo = seed.logoUrl?.trim() || (ground === 'dark' ? REMEDAE_MARK.onDark : REMEDAE_MARK.onLight)
+function footer(L: ReturnType<typeof layout>, label: string, ground: 'dark' | 'light', _seed: TemplateSeed): DesignElement[] {
+  // Always the hosted mark that suits the ground: an uploaded (cream) logo
+  // vanishes on the cream save card.
+  const logo = ground === 'dark' ? REMEDAE_MARK.onDark : REMEDAE_MARK.onLight
   return [
     { id: eid('logo'), type: 'logo', box: L.bottom(PAD, 56, 200, 40), style: { align: 'left' }, content: logo, role: 'wordmark' },
     t(label, L.bottom(480, 62, 520, 28), { color: ground === 'dark' ? RD.creamFaint : RD.forestDim, fontKey: 'sans', fontSize: 22, letterSpacing: 0.18, uppercase: true, align: 'right' }, 'label'),
@@ -109,8 +116,15 @@ function footer(L: ReturnType<typeof layout>, label: string, ground: 'dark' | 'l
 function eyebrow(content: string, box: Box, color = RD.mintDim, role = 'eyebrow'): DesignElement {
   return t(content, box, { color, fontKey: 'sans', fontSize: 24, fontWeight: 500, letterSpacing: 0.22, uppercase: true }, role)
 }
+/** Headline in Quando. `size` is the ceiling: the type steps down (to 40px)
+    until the estimated line count fits the box, so long article titles never
+    spill into what sits below. */
 function headline(content: string, box: Box, size: number, color = RD.cream, role = 'headline', extra?: DesignElement['style']): DesignElement {
-  return t(content, box, { color, fontKey: 'serif', fontSize: size, lineHeight: 0.98, letterSpacing: -0.04, hl: RD.mint, ...extra }, role)
+  const lh = extra?.lineHeight ?? 0.98
+  const wPx = (box.w / 100) * 1080, hPx = (box.h / 100) * CUR_H
+  let fs = size
+  while (fs > 40 && linesFor(content, fs, wPx) * fs * lh > hPx + 2) fs -= 4
+  return t(content, box, { color, fontKey: 'serif', fontSize: fs, lineHeight: lh, letterSpacing: -0.04, hl: RD.mint, ...extra }, role)
 }
 function body(content: string, box: Box, size = 28, color = RD.creamDim, role = 'body'): DesignElement {
   return t(content, box, { color, fontKey: 'sans', fontSize: size, fontWeight: 300, lineHeight: 1.5 }, role)
@@ -129,16 +143,43 @@ const photoOr = (seed: TemplateSeed, fallback = RD.ink): { background: Backgroun
 }
 function slide(bg: ReturnType<typeof photoOr> | Background, els: DesignElement[]): Slide {
   const b = 'background' in bg ? bg : { background: bg }
-  return { id: eid('slide'), ...b, elements: els }
+  // Photo grounds get an extra shade across the top third so eyebrows, pills
+  // and diagrams stay legible whatever the photograph is doing up there.
+  const photo = 'background' in bg && bg.background.type === 'image'
+  const shade: DesignElement[] = photo
+    ? [shape({ x: 0, y: 0, w: 100, h: 34 }, 'linear-gradient(180deg, rgba(14,26,18,0.78) 0%, rgba(14,26,18,0.35) 55%, rgba(14,26,18,0) 100%)')]
+    : []
+  return { id: eid('slide'), ...b, elements: [...shade, ...els] }
 }
 const item = (seed: TemplateSeed, i: number, fallback: string) => (seed.items?.[i]?.trim() || fallback)
 /** Rough line count for a serif headline in a box, so bottom-anchored blocks
     can hug what sits under them (text renders from the top of its box). */
-function linesFor(text: string, fontSize: number, boxW: number, em = 0.5): number {
+function linesFor(text: string, fontSize: number, boxW: number, em = 0.56): number {
   const perLine = Math.max(8, Math.floor(boxW / (fontSize * em)))
   return text.split('\n').reduce((n, para) => n + Math.max(1, Math.ceil(para.replace(/\*/g, '').length / perLine)), 0)
 }
 const first = (s: string, n: number) => s.split(/\s+/).slice(0, n).join(' ')
+/** Truncate with an ellipsis so a long article heading can never blow a row. */
+const clip = (s: string, n: number) => {
+  if (s.length <= n) return s
+  const cut = s.slice(0, n - 1)
+  const at = cut.lastIndexOf(' ')
+  return (at > n * 0.6 ? cut.slice(0, at) : cut).replace(/[,;:.]+$/, '') + '…'
+}
+/** Poppins line for anything that can run long: list lines, bodies, notes.
+    Quando is reserved for headlines, names and quotes. */
+function line(content: string, box: Box, size: number, color: string, role?: string, extra?: DesignElement['style']): DesignElement {
+  return t(content, box, { color, fontKey: 'sans', fontSize: size, fontWeight: 300, lineHeight: 1.35, ...extra }, role)
+}
+/** Stack rows upward from a bottom anchor. Each row is as tall as its content
+    (heights supplied by the caller from linesFor), so real copy never overlaps.
+    Returns, top-down, each row's bottom offset (yb) and height. */
+function stackUp(_L: ReturnType<typeof layout>, yb0: number, heights: number[], gap = 0): { yb: number; h: number }[] {
+  const out: { yb: number; h: number }[] = []
+  let yb = yb0
+  for (let i = heights.length - 1; i >= 0; i--) { out.unshift({ yb, h: heights[i] }); yb += heights[i] + gap }
+  return out
+}
 
 /* Placeholder copy is deliberately real Remedae-shaped copy, so a blank
    post already looks finished and the writer only has to swap words. */
@@ -179,22 +220,26 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
     id: 'rd-list-tease', noPhoto: true, label: 'List tease', brand: 'remedae', formats: ['carousel', 'portrait', 'story'],
     build: (format, seed) => {
       const L = layout(format)
-      const rows: DesignElement[] = []
-      const shown = [item(seed, 0, 'Light before screens'), item(seed, 1, 'Warmth in the belly at dusk')]
-      for (let i = 0; i < 4; i++) {
-        const yb = 560 - i * 96
-        rows.push(rule(L.bottom(PAD, yb + 84, 920, 2)))
-        rows.push(t(`0${i + 1}`, L.bottom(PAD, yb + 30, 60, 30), { color: i < 2 ? RD.mint : 'rgba(166,216,147,0.35)', fontKey: 'sans', fontSize: 22, fontWeight: 500, letterSpacing: 0.16 }))
-        if (i < 2) rows.push(t(shown[i], L.bottom(PAD + 72, yb + 22, 840, 50), { color: RD.cream, fontKey: 'serif', fontSize: 42, letterSpacing: -0.03 }, `item${i + 1}`))
+      const shown = [clip(item(seed, 0, 'Light before screens'), 44), clip(item(seed, 1, 'Warmth in the belly at dusk'), 44)]
+      const size = Math.max(...shown.map((x) => x.length)) > 26 ? 34 : 40
+      const rows = stackUp(L, 300, [0, 1, 2, 3].map((i) => (i < 2 ? linesFor(shown[i], size, 820, 0.52) * size * 1.15 + 44 : 68)))
+      const els: DesignElement[] = []
+      rows.forEach((r, i) => {
+        els.push(rule(L.bottom(PAD, r.yb + r.h - 2, 920, 2)))
+        els.push(t(`0${i + 1}`, L.bottom(PAD, r.yb + r.h - 54, 60, 26), { color: i < 2 ? RD.mint : 'rgba(166,216,147,0.35)', fontKey: 'sans', fontSize: 22, fontWeight: 500, letterSpacing: 0.16 }))
+        if (i < 2) els.push(t(shown[i], L.bottom(PAD + 72, r.yb + 22, 840, r.h - 44), { color: RD.cream, fontKey: 'serif', fontSize: size, lineHeight: 1.15, letterSpacing: -0.03 }, `item${i + 1}`))
         else {
-          rows.push(shape(L.bottom(PAD + 72, yb + 38, 260, 12), 'rgba(255,255,232,0.12)', { radiusPx: 999 }))
-          rows.push(shape(L.bottom(PAD + 350, yb + 38, 150, 12), 'rgba(255,255,232,0.12)', { radiusPx: 999 }))
+          els.push(shape(L.bottom(PAD + 72, r.yb + 28, 260, 12), 'rgba(255,255,232,0.12)', { radiusPx: 999 }))
+          els.push(shape(L.bottom(PAD + 350, r.yb + 28, 150, 12), 'rgba(255,255,232,0.12)', { radiusPx: 999 }))
         }
-      }
+      })
+      const top = rows[0].yb + rows[0].h
+      const hText = seed.headline || 'Four things every tradition says about *sleep.*'
+      const hSize = linesFor(hText, 80, 900) > 3 ? 66 : 80
       return slide(dark(), [
         eyebrow('Sleep · six traditions', L.top(PAD, 60, 800, 30)),
-        headline(seed.headline || 'Four things every tradition says about *sleep.*', L.bottom(PAD, 690, 900, 250), 80),
-        ...rows,
+        headline(hText, L.bottom(PAD, top + 40, 900, linesFor(hText, hSize, 900) * hSize * 0.98), hSize),
+        ...els,
         cue('Keep swiping', L.bottom(PAD, 210, 900, 40)),
         ...footer(L, 'swipe for 03 and 04', 'dark', seed),
       ])
@@ -209,18 +254,22 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         ['Drink it cold.', 'Warm water, every tradition, every time.'],
         ['Skip breakfast.', 'Eat when the sun is highest: Ayurveda, TCM.'],
         ['Take it at night.', 'Bitter herbs land better before noon.'],
-      ]
-      const rows: DesignElement[] = []
+      ].map(([a, b], i) => [clip(item(seed, i, a), 60), clip(seed.itemBodies?.[i]?.trim() || b, 110)])
+      const rows = stackUp(L, 300, pairs.map(([a, b]) => Math.max(linesFor(a, 26, 400, 0.55) * 26 * 1.35, linesFor(b, 27, 540, 0.55) * 27 * 1.35) + 40))
+      const els: DesignElement[] = []
       pairs.forEach(([a, b], i) => {
-        const yb = 520 - i * 120
-        rows.push(rule(L.bottom(PAD, yb + 108, 920, 2)))
-        rows.push(t(item(seed, i, a), L.bottom(PAD, yb + 30, 420, 60), { color: 'rgba(255,255,232,0.42)', fontKey: 'sans', fontSize: 27, fontWeight: 300, letterSpacing: -0.02, strike: true, lineHeight: 1.3 }, `told${i + 1}`))
-        rows.push(t(seed.itemBodies?.[i]?.trim() || b, L.bottom(PAD + 460, yb + 20, 540, 80), { color: RD.mint, fontKey: 'serif', fontSize: 28, lineHeight: 1.28, letterSpacing: -0.02 }, `said${i + 1}`))
+        const r = rows[i]
+        els.push(rule(L.bottom(PAD, r.yb + r.h - 2, 920, 2)))
+        els.push(t(a, L.bottom(PAD, r.yb + 20, 400, r.h - 40), { color: 'rgba(255,255,232,0.42)', fontKey: 'sans', fontSize: 26, fontWeight: 300, letterSpacing: -0.01, strike: true, lineHeight: 1.35 }, `told${i + 1}`))
+        els.push(line(b, L.bottom(PAD + 460, r.yb + 20, 540, r.h - 40), 27, RD.mint, `said${i + 1}`, { fontWeight: 400 }))
       })
+      const top = rows[0].yb + rows[0].h
+      const hText = seed.headline || 'You were told one thing.\n*Six traditions say another.*'
+      const hSize = linesFor(hText, 76, 920) > 3 ? 62 : 76
       return slide(dark(), [
         eyebrow('The reframe', L.top(PAD, 60, 800, 30)),
-        headline(seed.headline || 'You were told one thing.\n*Six traditions say another.*', L.bottom(PAD, 700, 920, 260), 76),
-        ...rows,
+        headline(hText, L.bottom(PAD, top + 44, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize),
+        ...els,
         cue('Which one surprised you', L.bottom(PAD, 210, 900, 40)),
         ...footer(L, 'educational · not medical advice', 'dark', seed),
       ])
@@ -263,24 +312,32 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
     id: 'rd-save', noPhoto: true, label: 'The save · cream', brand: 'remedae',
     build: (format, seed) => {
       const L = layout(format)
-      const rows = [
+      const defaults = [
         ['TCM', 'Warm water, no ice, all day'],
         ['Ayurveda', 'Triphala, an hour after dinner'],
         ['Unani', 'Fennel steeped, taken slowly'],
         ['Kampo', 'Ginger before, not after'],
         ['Modern', 'Twelve hours between last food and first'],
       ]
-      const els: DesignElement[] = []
-      rows.forEach(([tr, line], i) => {
-        const yb = 560 - i * 78
-        els.push(rule(L.bottom(PAD, yb + 66, 920, 2), 'light'))
+      const n = format === 'square' ? 4 : 5
+      const pairs = defaults.slice(0, n).map(([tr, ln], i) => {
         const hasPairs = Boolean(seed.itemBodies?.[i]?.trim())
-        els.push(t(hasPairs ? item(seed, i, tr) : tr, L.bottom(PAD, yb + 22, 240, 30), { color: RD.forestDim, fontKey: 'sans', fontSize: 22, fontWeight: 500, letterSpacing: 0.14, uppercase: true }, `tradition${i + 1}`))
-        els.push(t(hasPairs ? seed.itemBodies![i].trim() : item(seed, i, line), L.bottom(PAD + 260, yb + 16, 660, 44), { color: RD.forest, fontKey: 'serif', fontSize: 30, letterSpacing: -0.03 }, `line${i + 1}`))
+        return [clip(hasPairs ? item(seed, i, tr) : tr, 26), clip(hasPairs ? seed.itemBodies![i].trim() : item(seed, i, ln), 90)]
       })
+      const rows = stackUp(L, 262, pairs.map(([a, b]) => Math.max(linesFor(a, 21, 230, 0.62) * 21 * 1.3, linesFor(b, 27, 660, 0.55) * 27 * 1.35) + 30))
+      const els: DesignElement[] = []
+      pairs.forEach(([a, b], i) => {
+        const r = rows[i]
+        els.push(rule(L.bottom(PAD, r.yb + r.h - 2, 920, 2), 'light'))
+        els.push(t(a, L.bottom(PAD, r.yb + 15, 230, r.h - 30), { color: RD.forestDim, fontKey: 'sans', fontSize: 21, fontWeight: 500, letterSpacing: 0.12, uppercase: true, lineHeight: 1.3 }, `tradition${i + 1}`))
+        els.push(line(b, L.bottom(PAD + 260, r.yb + 15, 660, r.h - 30), 27, RD.forest, `line${i + 1}`))
+      })
+      const top = rows[0].yb + rows[0].h
+      const hText = seed.headline || 'Save this for the next time your *stomach turns.*'
+      const hSize = linesFor(hText, 78, 920) > 3 ? 62 : 78
       return slide(dark(RD.cream), [
         eyebrow('One gut ache · five answers', L.top(PAD, 60, 800, 30), 'rgba(54,76,63,0.55)'),
-        headline(seed.headline || 'Save this for the next time your *stomach turns.*', L.bottom(PAD, 665, 920, 260), 80, RD.forest, 'headline', { hl: '#5a7a64' }),
+        headline(hText, L.bottom(PAD, top + 44, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize, RD.forest, 'headline', { hl: '#5a7a64' }),
         ...els,
         t('Traditionally used, not medical advice', L.bottom(PAD, 210, 900, 36), { color: 'rgba(54,76,63,0.65)', fontKey: 'sans', fontSize: 24, fontWeight: 500 }, 'tagline'),
         ...footer(L, 'save for later', 'light', seed),
@@ -297,7 +354,7 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
         pill('✧  2,500+ years', L.top(700, 64, 300, 56), false, 'dark', 'meta'),
         eyebrow('China · East Asia', L.bottom(PAD, 600, 900, 30), RD.mintDim, 'kicker'),
         headline(seed.headline || 'Traditional Chinese Medicine', L.bottom(PAD, 380, 920, 210), 92, RD.cream, 'headline', { lineHeight: 1.0, letterSpacing: -0.035 }),
-        body(seed.dek || 'Two and a half thousand years of moving Qi, kindling the spleen, warming the channels.', L.bottom(PAD, 260, 860, 110), 30, 'rgba(255,255,232,0.85)', 'dek'),
+        body(clip(seed.dek || 'Two and a half thousand years of moving Qi, kindling the spleen, warming the channels.', 120), L.bottom(PAD, 260, 860, 110), 30, 'rgba(255,255,232,0.85)', 'dek'),
         cue('Deep Dive', L.bottom(PAD, 190, 900, 40), RD.mint),
         ...footer(L, 'remedae.app', 'dark', seed),
       ])
@@ -308,16 +365,18 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
     id: 'rd-editorial', noPhoto: true, label: 'Editorial split', brand: 'remedae',
     build: (format, seed) => {
       const L = layout(format)
-      const photoH = format === 'story' ? 820 : format === 'square' ? 420 : 570
+      // The photo bleeds to the very top (story included); the panel starts under it.
+      const photoH = format === 'story' ? 900 : format === 'square' ? 420 : 570
       const top = seed.coverImage?.trim()
-        ? img(seed.coverImage.trim(), L.top(0, 0, L.W, photoH), 0, 'cover')
-        : shape(L.top(0, 0, L.W, photoH), RD.forest)
-      const y0 = photoH + 62 // where the panel content starts (from top)
+        ? img(seed.coverImage.trim(), L.raw(0, 0, L.W, photoH), 0, 'cover')
+        : shape(L.raw(0, 0, L.W, photoH), RD.forest)
+      const y0 = photoH + 62 // where the panel content starts (from the canvas top)
+      const dekTop = L.H - L.safeBottom - 236 - 120
       return slide(dark(RD.cream), [
         top,
-        pill('TCM, in plain English', L.top(PAD, y0, 420, 56), false, 'light', 'category'),
-        pill('11 min read', L.top(520, y0, 240, 56), false, 'light', 'meta'),
-        headline(seed.headline || 'Kampo, in English. Why Japan still writes its own prescriptions.', L.top(PAD, y0 + 96, 920, 240), 66, RD.forest, 'headline', { hl: '#5a7a64', lineHeight: 1.04, letterSpacing: -0.03 }),
+        pill('TCM, in plain English', L.raw(PAD, y0, 420, 56), false, 'light', 'category'),
+        pill('11 min read', L.raw(520, y0, 240, 56), false, 'light', 'meta'),
+        headline(seed.headline || 'Kampo, in English. Why Japan still writes its own prescriptions.', L.raw(PAD, y0 + 96, 920, Math.max(120, dekTop - (y0 + 96) - 24)), 66, RD.forest, 'headline', { hl: '#5a7a64', lineHeight: 1.04, letterSpacing: -0.03 }),
         body(seed.dek || 'Japan is the only country in the world where a doctor can prescribe you a 1,800-year-old herbal formula and your national health…', L.bottom(PAD, 236, 920, 120), 27, 'rgba(54,76,63,0.85)', 'dek'),
         rule(L.bottom(PAD, 200, 920, 2), 'light'),
         t('Yuko Tanaka', L.bottom(PAD, 150, 500, 30), { color: RD.forestDim, fontKey: 'sans', fontSize: 24, letterSpacing: 0.18, uppercase: true }, 'author'),
@@ -339,14 +398,19 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
       ]
       const n = format === 'square' ? 3 : 4
       const els: DesignElement[] = []
-      cards.slice(0, n).forEach(([tag, name, line], i) => {
+      cards.slice(0, n).forEach(([tag, name, ln], i) => {
         const yb = 140 + (n - 1 - i) * 184 + 60
+        const nm = clip(item(seed, i, name), 40)
+        const body = seed.itemBodies?.[i]?.trim()
+        // With article content the tag becomes the first words of the body line.
+        const tagText = clip(body ? (body.split(/[.:·]/)[0].length <= 28 ? body.split(/[.:·]/)[0] : 'Remedy') : tag, 30)
+        const lineText = clip(body || ln, 52)
         els.push(shape(L.bottom(93, yb, 894, 168), 'rgba(54,76,63,0.42)', { radiusPx: 22, border: '2px solid rgba(166,216,147,0.14)' }))
         const thumb = seed.itemImages?.[i]?.trim()
         els.push(thumb ? img(thumb, L.bottom(120, yb + 26, 116, 116), 14, `thumb${i + 1}`) : shape(L.bottom(120, yb + 26, 116, 116), 'rgba(166,216,147,0.18)', { radiusPx: 14 }))
-        els.push(t(tag, L.bottom(260, yb + 118, 600, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, fontWeight: 500, letterSpacing: 0.16, uppercase: true }, `tag${i + 1}`))
-        els.push(t(item(seed, i, name), L.bottom(260, yb + 72, 640, 44), { color: RD.cream, fontKey: 'serif', fontSize: 34, letterSpacing: -0.02 }, `item${i + 1}`))
-        els.push(t(seed.itemBodies?.[i]?.trim() || line, L.bottom(260, yb + 34, 640, 30), { color: RD.creamDim, fontKey: 'sans', fontSize: 22, fontWeight: 300 }, `line${i + 1}`))
+        els.push(t(tagText, L.bottom(260, yb + 118, 600, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, fontWeight: 500, letterSpacing: 0.16, uppercase: true }, `tag${i + 1}`))
+        els.push(t(nm, L.bottom(260, yb + 72, 640, 44), { color: RD.cream, fontKey: 'serif', fontSize: nm.length > 26 ? 29 : 34, letterSpacing: -0.02 }, `item${i + 1}`))
+        els.push(line(lineText, L.bottom(260, yb + 34, 640, 30), 22, RD.creamDim, `line${i + 1}`))
         els.push(t('›', L.bottom(930, yb + 66, 40, 40), { color: RD.creamFaint, fontKey: 'sans', fontSize: 34, align: 'right' }))
       })
       return slideCentered(format, seed, els)
@@ -360,30 +424,29 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
       const cardH = format === 'square' ? 700 : 830
       const cardTop = format === 'story' ? 470 : format === 'square' ? 300 : 378
       const y = (px: number) => cardTop + px
+      const hText = seed.headline || 'What the world\'s healing systems say about: *Gut Ache*'
+      const hSize = linesFor(hText, 56, 840) > 2 ? 46 : 56
+      const remedy = clip(item(seed, 0, 'Warm lemon water on waking.'), 34)
       const els: DesignElement[] = [
-        headline(seed.headline || 'What the world\'s healing systems say about: *Gut Ache*', L.top(120, 100, 840, 200), 60, RD.cream, 'headline', { align: 'center', lineHeight: 1.08 }),
+        headline(hText, L.top(120, 96, 840, 200), hSize, RD.cream, 'headline', { align: 'center', lineHeight: 1.08 }),
         shape(L.top(79, cardTop, 922, cardH), 'rgba(54,76,63,0.42)', { radiusPx: 22, border: '2px solid rgba(166,216,147,0.12)' }),
-        // header
         seed.itemImages?.[0]?.trim() ? img(seed.itemImages[0].trim(), L.top(112, y(36), 88, 88), 12, 'avatar') : shape(L.top(112, y(36), 88, 88), 'rgba(166,216,147,0.2)', { radiusPx: 12 }),
-        t('Ayurveda', L.top(264, y(30), 500, 50), { color: RD.cream, fontKey: 'serif', fontSize: 44, letterSpacing: -0.02 }, 'tradition'),
-        t('South Asia · c. 1500 BCE', L.top(264, y(96), 500, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, letterSpacing: 0.16, uppercase: true }, 'origin'),
+        t('Ayurveda', L.top(264, y(30), 420, 50), { color: RD.cream, fontKey: 'serif', fontSize: 44, letterSpacing: -0.02 }, 'tradition'),
+        t('South Asia · c. 1500 BCE', L.top(264, y(96), 420, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, letterSpacing: 0.16, uppercase: true }, 'origin'),
         pill('●  Anecdotal reports', L.top(700, y(50), 260, 50), false, 'dark', 'evidence'),
-        // remedy
-        t(item(seed, 0, 'Warm lemon water on waking.'), L.top(176, y(250), 760, 60), { color: RD.cream, fontKey: 'serif', fontSize: 46, letterSpacing: -0.02 }, 'remedy'),
-        body(seed.dek || 'Boil water, let cool to sipping temperature, squeeze in half a lemon. Drink slowly before anything else, said to open the srotas and prepare agni for the day.', L.top(176, y(320), 752, 120), 24, RD.creamDim, 'method'),
-        // meta row
+        headline(remedy, L.top(176, y(250), 760, 56), 46, RD.cream, 'remedy', { lineHeight: 1.1, letterSpacing: -0.02, hl: undefined }),
+        line(clip(seed.itemBodies?.[0]?.trim() || seed.dek || 'Boil water, let cool to sipping temperature, squeeze in half a lemon. Drink slowly before anything else, said to open the srotas and prepare agni for the day.', 200), L.top(176, y(320), 752, 120), 24, RD.creamDim, 'method', { lineHeight: 1.5 }),
         ...(['Time', '5 min', 'Type', 'Morning drink', 'Daily', 'Once'].map((s, i) => {
           const col = Math.floor(i / 2), isLabel = i % 2 === 0
           const x = 176 + [0, 200, 480][col]
           return t(s, L.top(x, y(isLabel ? 484 : 516), 240, isLabel ? 24 : 40), isLabel
             ? { color: RD.mintDim, fontKey: 'sans', fontSize: 20, letterSpacing: 0.16, uppercase: true }
-            : { color: RD.cream, fontKey: 'serif', fontSize: 30, letterSpacing: -0.02 }, isLabel ? undefined : `meta${col + 1}`)
+            : { color: RD.cream, fontKey: 'sans', fontSize: 28, fontWeight: 500, letterSpacing: -0.01 }, isLabel ? undefined : `meta${col + 1}`)
         })),
-        // two columns
         t('You\'ll need', L.top(176, y(600), 340, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, letterSpacing: 0.16, uppercase: true }),
         t('•  250ml filtered water\n•  ½ fresh lemon\n•  Optional: pinch of rock salt', L.top(176, y(640), 360, 140), { color: RD.cream, fontKey: 'sans', fontSize: 22, fontWeight: 300, lineHeight: 1.9 }, 'need'),
         t('How to do it', L.top(560, y(600), 340, 24), { color: RD.mintDim, fontKey: 'sans', fontSize: 20, letterSpacing: 0.16, uppercase: true }),
-        t('01  Boil water; let cool 2 min\n02  Squeeze lemon directly in\n03  Sip slowly, before food or tea', L.top(560, y(640), 400, 140), { color: RD.cream, fontKey: 'sans', fontSize: 22, fontWeight: 300, lineHeight: 1.9, hl: RD.mint }, 'how'),
+        t('01  Boil water; let cool 2 min\n02  Squeeze lemon directly in\n03  Sip slowly, before food or tea', L.top(560, y(640), 400, 140), { color: RD.cream, fontKey: 'sans', fontSize: 22, fontWeight: 300, lineHeight: 1.9 }, 'how'),
         ...footer(L, 'recipe · not medical advice', 'dark', seed),
       ]
       return slide(dark(), els)
@@ -423,15 +486,18 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
     id: 'rd-evidence', noPhoto: true, label: 'Evidence card', brand: 'remedae',
     build: (format, seed) => {
       const L = layout(format)
+      const finds = clip(seed.itemBodies?.[0]?.trim() || item(seed, 0, 'Glycinate, an hour before bed, improved sleep onset in a 2022 trial.'), 170)
+      const gap = clip(seed.itemBodies?.[1]?.trim() || item(seed, 1, 'Whether other forms carry the same benefit. Trials are small.'), 170)
+      const hText = seed.headline || 'What we know about *magnesium.*'
       return slide(dark(), [
         eyebrow('Reading the research', L.top(PAD, 60, 800, 30)),
-        headline(seed.headline || 'What we know about *magnesium.*', L.bottom(PAD, 720, 920, 200), 70, RD.cream, 'headline', { lineHeight: 1.0 }),
-        shape(L.bottom(PAD, 470, 920, 200), 'rgba(166,216,147,0.06)', { radiusPx: 14, border: '2px solid rgba(166,216,147,0.18)' }),
-        t('What the research finds', L.bottom(PAD + 28, 620, 800, 24), { color: RD.mint, fontKey: 'sans', fontSize: 20, letterSpacing: 0.22, uppercase: true }),
-        t(item(seed, 0, 'Glycinate, an hour before bed, improved sleep onset in a 2022 trial.'), L.bottom(PAD + 28, 500, 860, 100), { color: RD.cream, fontKey: 'serif', fontSize: 27, lineHeight: 1.3 }, 'finds'),
-        shape(L.bottom(PAD, 250, 920, 200), 'rgba(255,255,232,0.04)', { radiusPx: 14, border: '2px solid rgba(255,255,232,0.1)' }),
-        t('What it doesn\'t yet show', L.bottom(PAD + 28, 400, 800, 24), { color: RD.creamFaint, fontKey: 'sans', fontSize: 20, letterSpacing: 0.22, uppercase: true }),
-        t(item(seed, 1, 'Whether other forms carry the same benefit. Trials are small.'), L.bottom(PAD + 28, 280, 860, 100), { color: RD.cream, fontKey: 'serif', fontSize: 27, lineHeight: 1.3 }, 'gap'),
+        headline(hText, L.bottom(PAD, 720, 920, linesFor(hText, 70, 920) * 70), 70, RD.cream, 'headline', { lineHeight: 1.0 }),
+        shape(L.bottom(PAD, 470, 920, 210), 'rgba(166,216,147,0.06)', { radiusPx: 14, border: '2px solid rgba(166,216,147,0.18)' }),
+        t('What the research finds', L.bottom(PAD + 28, 632, 800, 24), { color: RD.mint, fontKey: 'sans', fontSize: 20, letterSpacing: 0.22, uppercase: true }),
+        line(finds, L.bottom(PAD + 28, 490, 860, 130), 26, RD.cream, 'finds', { fontWeight: 400 }),
+        shape(L.bottom(PAD, 240, 920, 210), 'rgba(255,255,232,0.04)', { radiusPx: 14, border: '2px solid rgba(255,255,232,0.1)' }),
+        t('What it doesn\'t yet show', L.bottom(PAD + 28, 402, 800, 24), { color: RD.creamFaint, fontKey: 'sans', fontSize: 20, letterSpacing: 0.22, uppercase: true }),
+        line(gap, L.bottom(PAD + 28, 260, 860, 130), 26, RD.cream, 'gap', { fontWeight: 400 }),
         ...footer(L, 'evidence · sources in caption', 'dark', seed),
       ])
     },
@@ -463,18 +529,21 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
     id: 'rd-six', noPhoto: true, label: 'Six traditions', brand: 'remedae', formats: ['carousel', 'portrait', 'story'],
     build: (format, seed) => {
       const L = layout(format)
-      const names = ['TCM', 'Ayurveda', 'Unani', 'Kampo', 'Native American', 'Modern medicine']
+      const names = ['TCM', 'Ayurveda', 'Unani', 'Kampo', 'Native American', 'Modern medicine'].map((n, i) => clip(item(seed, i, n), 30))
+      const size = Math.max(...names.map((n) => n.length)) > 18 ? 28 : 36
       const els: DesignElement[] = []
       names.forEach((n, i) => {
         const col = i % 2, row = Math.floor(i / 2)
         const x = PAD + col * 480, yb = 470 - row * 84
         els.push(rule(L.bottom(x, yb + 76, 440, 2)))
         els.push(t(`0${i + 1}`, L.bottom(x, yb + 32, 40, 24), { color: 'rgba(166,216,147,0.5)', fontKey: 'sans', fontSize: 20, fontWeight: 500 }))
-        els.push(t(item(seed, i, n), L.bottom(x + 50, yb + 22, 390, 44), { color: 'rgba(255,255,232,0.88)', fontKey: 'serif', fontSize: 36, letterSpacing: -0.03 }, `item${i + 1}`))
+        els.push(t(n, L.bottom(x + 50, yb + 18, 390, 52), { color: 'rgba(255,255,232,0.88)', fontKey: 'serif', fontSize: size, lineHeight: 1.1, letterSpacing: -0.03 }, `item${i + 1}`))
       })
+      const hText = seed.headline || 'Six traditions.\nOne gut ache.\n*What they each say.*'
+      const hSize = linesFor(hText, 84, 920) > 3 ? 68 : 84
       return slide(dark(), [
         eyebrow('One ache · six answers', L.top(PAD, 60, 800, 30)),
-        headline(seed.headline || 'Six traditions.\nOne gut ache.\n*What they each say.*', L.bottom(PAD, 600, 920, 300), 84),
+        headline(hText, L.bottom(PAD, 600, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize),
         ...els,
         cue('Start with TCM', L.bottom(PAD, 210, 600, 40)),
         ...footer(L, '1 of 7', 'dark', seed),
@@ -504,10 +573,181 @@ export const REMEDAE_TEMPLATES: TemplateDef[] = [
       const L = layout(format)
       return slide(dark(), [
         { id: eid('p'), type: 'pill', box: L.top(PAD, 60, 260, 56), content: '●  Remedae +', role: 'category', style: { fontKey: 'sans', fontSize: 22, fontWeight: 500, letterSpacing: 0.2, uppercase: true, italic: false, align: 'left', color: RD.yellow, bg: 'transparent', border: `2px solid ${RD.yellow}`, radiusPx: 999 } },
-        headline(seed.headline || 'A quiet\npractice,\n*kept by you.*', L.bottom(PAD, 380, 920, 420), 124, RD.cream, 'headline', { hl: RD.yellow, lineHeight: 0.94, letterSpacing: -0.05 }),
-        t(seed.dek || '14 days free, then £9 a month.', L.bottom(PAD, 300, 900, 40), { color: RD.creamDim, fontKey: 'serif', fontSize: 28, italic: true }, 'dek'),
+        headline(seed.headline || 'A quiet\npractice,\n*kept by you.*', L.bottom(PAD, 400, 920, 420), 124, RD.cream, 'headline', { hl: RD.yellow, lineHeight: 0.94, letterSpacing: -0.05 }),
+        line(clip(seed.dek || '14 days free, then £9 a month.', 90), L.bottom(PAD, 290, 860, 80), 26, RD.creamDim, 'dek'),
         cue('Start free', L.bottom(PAD, 210, 900, 40), RD.yellow),
         ...footer(L, 'remedae +', 'dark', seed),
+      ])
+    },
+  },
+  /* 19 · Orbit: six traditions around one body. Ring diagram over ground or photo. */
+  {
+    id: 'rd-orbit', label: 'Orbit diagram', brand: 'remedae',
+    build: (format, seed) => {
+      const L = layout(format)
+      const cx = 540
+      const cy = format === 'story' ? 1080 : format === 'square' ? 660 : 880
+      const r = format === 'square' ? 200 : 250
+      const names = ['Ayurveda', 'TCM', 'Kampo', 'Unani', 'Native American', 'Modern'].map((n, i) => clip(item(seed, i, n), 22))
+      const els: DesignElement[] = []
+      ;[1, 0.72, 0.44].forEach((s, i) => {
+        const d = r * 2 * s
+        els.push(shape(L.top(cx - d / 2, cy - d / 2, d, d), 'transparent', { radiusPx: 999, border: `2px solid rgba(166,216,147,${0.12 + i * 0.05})` }))
+      })
+      els.push(shape(L.top(cx - 48, cy - 48, 96, 96), RD.charcoal, { radiusPx: 999, border: `2px solid rgba(166,216,147,0.5)` }))
+      els.push(t('you', L.top(cx - 48, cy - 16, 96, 32), { color: RD.mint, fontKey: 'serif', fontSize: 26, italic: true, align: 'center' }))
+      names.forEach((n, i) => {
+        const a = (-150 + i * 60) * Math.PI / 180
+        const x = cx + Math.cos(a) * r, yv = cy + Math.sin(a) * r
+        els.push(shape(L.top(x - 8, yv - 8, 16, 16), RD.mint, { radiusPx: 999, border: '6px solid rgba(166,216,147,0.18)' }))
+        const below = Math.sin(a) > 0.3, above = Math.sin(a) < -0.3
+        const ty = above ? yv - 62 : below ? yv + 22 : yv - 16
+        const align: 'left' | 'center' | 'right' = Math.abs(Math.cos(a)) < 0.3 ? 'center' : Math.cos(a) > 0 ? 'left' : 'right'
+        const tx = align === 'center' ? x - 130 : align === 'left' ? x + 24 : x - 284
+        els.push(t(n, L.top(tx, ty, 260, 32), { color: RD.cream, fontKey: 'sans', fontSize: 25, fontWeight: 500, align, letterSpacing: -0.01 }, `item${i + 1}`))
+      })
+      const hText = seed.headline || 'Six traditions,\n*one body.*'
+      return slide(photoOr(seed, RD.ink), [
+        eyebrow('The principle', L.top(PAD, 60, 800, 30)),
+        headline(hText, L.top(PAD, 110, 920, 200), linesFor(hText, 84, 920) > 2 ? 64 : 84),
+        ...els,
+        ...footer(L, 'reading across', 'dark', seed),
+      ])
+    },
+  },
+  /* 20 · Steps: numbered rows over a photograph, glass plates. */
+  {
+    id: 'rd-steps', label: 'Numbered steps', brand: 'remedae',
+    build: (format, seed) => {
+      const L = layout(format)
+      const defaults = [
+        ['Warm water before anything', 'TCM and Ayurveda both start the day the same way: heat in the belly before food.'],
+        ['Eat when the sun is highest', 'The biggest meal at midday, when digestion is strongest.'],
+        ['Bitter before noon', 'Bitter herbs land better early. Unani has said so for a thousand years.'],
+        ['Twelve quiet hours', 'Modern medicine calls it a fasting window. Kampo just calls it dinner.'],
+      ]
+      const n = format === 'square' ? 3 : 4
+      const rows = defaults.slice(0, n).map(([h, b], i) => [clip(item(seed, i, h), 40), clip(seed.itemBodies?.[i]?.trim() || b, 120)])
+      const st = stackUp(L, 190, rows.map(([, b]) => 26 * 1.3 + linesFor(b, 21, 700, 0.55) * 21 * 1.4 + 44), 14)
+      const els: DesignElement[] = []
+      rows.forEach(([h, b], i) => {
+        const r = st[i]
+        els.push(shape(L.bottom(PAD, r.yb, 920, r.h), 'rgba(14,26,18,0.55)', { radiusPx: 18, border: '2px solid rgba(255,255,232,0.22)' }))
+        els.push(t(`0${i + 1}`, L.bottom(PAD + 30, r.yb + r.h - 64, 80, 40), { color: RD.mint, fontKey: 'serif', fontSize: 34, letterSpacing: -0.02 }))
+        els.push(t(h, L.bottom(PAD + 130, r.yb + r.h - 58, 760, 34), { color: RD.cream, fontKey: 'sans', fontSize: 26, fontWeight: 500, letterSpacing: -0.01 }, `item${i + 1}`))
+        els.push(line(b, L.bottom(PAD + 130, r.yb + 20, 760, r.h - 78), 21, 'rgba(255,255,232,0.78)', `line${i + 1}`, { lineHeight: 1.4 }))
+      })
+      const top = st[0].yb + st[0].h
+      const hText = seed.headline || 'Four reasons to *start* before breakfast.'
+      const hSize = linesFor(hText, 72, 920) > 2 ? 58 : 72
+      return slide(photoOr(seed, RD.charcoal), [
+        eyebrow('The morning, six ways', L.top(PAD, 60, 800, 30), 'rgba(255,255,232,0.8)'),
+        headline(hText, L.bottom(PAD, top + 40, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize),
+        ...els,
+        ...footer(L, 'save for later', 'dark', seed),
+      ])
+    },
+  },
+  /* 21 · Checklist: cream, corner labels, ticks. The text-heavy reference post. */
+  {
+    id: 'rd-checklist', noPhoto: true, label: 'Checklist · cream', brand: 'remedae',
+    build: (format, seed) => {
+      const L = layout(format)
+      const defaults = [
+        ['Drink something warm before tea', 'Every tradition, every morning.'],
+        ['Eat the biggest meal at midday', 'Ayurveda, TCM and Kampo agree.'],
+        ['Walk after dinner, slowly', 'Ten minutes is enough.'],
+        ['Last food twelve hours before first', 'Modern medicine caught up in 2019.'],
+        ['Screens off, light on', 'Sleep begins with the eyes.'],
+      ]
+      const hText = seed.headline || 'The morning routine six traditions *agree on.*'
+      const dek = clip(seed.dek || 'Not a protocol. Five small things that keep reappearing across the world\'s healing systems, in the order they happen.', 170)
+      const hSize = linesFor(hText, 74, 920) > 3 ? 58 : 74
+      const headH = linesFor(hText, hSize, 920) * hSize * 0.98 + 30 + linesFor(dek, 26, 860, 0.55) * 26 * 1.5 + 40
+      const avail = L.H - (format === 'story' ? 480 : 0) - 130 - 230 - headH
+      // Fit: drop sub-lines first, then rows, until the stack sits under the head.
+      let n = format === 'square' ? 4 : 5, withBodies = true
+      let rows: string[][] = [], st: { yb: number; h: number }[] = []
+      for (;;) {
+        rows = defaults.slice(0, n).map(([h, b], i) => [clip(item(seed, i, h), 48), withBodies ? clip(seed.itemBodies?.[i]?.trim() || b, 80) : ''])
+        st = stackUp(L, 230, rows.map(([h, b]) => linesFor(h, 28, 800, 0.55) * 28 * 1.3 + (b ? linesFor(b, 22, 800, 0.55) * 22 * 1.4 : 0) + 34), 0)
+        const total = st[0].yb + st[0].h - 230
+        if (total <= avail || n <= 3) break
+        if (withBodies) withBodies = false; else n -= 1
+      }
+      const els: DesignElement[] = []
+      rows.forEach(([h, b], i) => {
+        const r = st[i]
+        els.push(shape(L.bottom(PAD, r.yb + r.h - 44, 40, 40), 'transparent', { radiusPx: 999, border: '2px solid rgba(54,76,63,0.45)' }))
+        els.push(t('✓', L.bottom(PAD + 9, r.yb + r.h - 40, 30, 30), { color: RD.forest, fontKey: 'sans', fontSize: 22, fontWeight: 500 }))
+        els.push(t(h, L.bottom(PAD + 64, r.yb + r.h - 42, 800, 36), { color: RD.forest, fontKey: 'sans', fontSize: 28, fontWeight: 500, letterSpacing: -0.01, lineHeight: 1.3 }, `item${i + 1}`))
+        if (b) els.push(line(b, L.bottom(PAD + 64, r.yb + 8, 800, r.h - 50), 22, 'rgba(54,76,63,0.7)', `line${i + 1}`, { lineHeight: 1.4 }))
+      })
+      const top = st[0].yb + st[0].h
+      return slide(dark(RD.cream), [
+        eyebrow('Routine', L.top(PAD, 60, 500, 30), 'rgba(54,76,63,0.55)'),
+        t('Part 2 · Mornings', L.top(580, 60, 420, 30), { color: 'rgba(54,76,63,0.55)', fontKey: 'sans', fontSize: 24, fontWeight: 500, letterSpacing: 0.22, uppercase: true, align: 'right' }, 'meta'),
+        headline(hText, L.bottom(PAD, top + 40 + linesFor(dek, 26, 860, 0.55) * 26 * 1.5 + 30, 920, linesFor(hText, hSize, 920) * hSize * 0.98), hSize, RD.forest, 'headline', { hl: '#5a7a64' }),
+        line(dek, L.bottom(PAD, top + 40, 860, linesFor(dek, 26, 860, 0.55) * 26 * 1.5), 26, 'rgba(54,76,63,0.85)', 'dek', { lineHeight: 1.5 }),
+        ...els,
+        ...footer(L, 'save for later', 'light', seed),
+      ])
+    },
+  },
+  /* 22 · Habit cards: four cream cards on a photograph, headline between them. */
+  {
+    id: 'rd-habits', label: 'Habit cards', brand: 'remedae',
+    build: (format, seed) => {
+      const L = layout(format)
+      const defaults = [
+        ['Warm', 'Something hot before anything cold. TCM, Ayurveda, Unani.'],
+        ['Midday', 'The biggest meal when the sun is highest. Kampo agrees.'],
+        ['Walk', 'Ten slow minutes after dinner. Every tradition, every century.'],
+        ['Dark', 'Screens off an hour before bed. Sleep starts with the eyes.'],
+      ]
+      const cards = defaults.map(([h, b], i) => [clip(item(seed, i, h), 18), clip(seed.itemBodies?.[i]?.trim() || b, 96)])
+      const cardW = 430, cardH = 190, gap = 60
+      const topY = format === 'story' ? 200 : 170
+      const els: DesignElement[] = []
+      cards.forEach(([h, b], i) => {
+        const col = i % 2, rowi = Math.floor(i / 2)
+        const x = PAD + col * (cardW + gap)
+        const box = rowi === 0 ? L.top(x, topY, cardW, cardH) : L.bottom(x, 190, cardW, cardH)
+        els.push(shape(box, 'rgba(255,255,232,0.94)', { radiusPx: 22 }))
+        const inner = (dy: number, h: number) => (rowi === 0 ? L.top(x + 28, topY + dy, cardW - 56, h) : L.bottom(x + 28, 190 + cardH - dy - h, cardW - 56, h))
+        els.push(t(h, inner(28, 30), { color: RD.forest, fontKey: 'sans', fontSize: 22, fontWeight: 500, letterSpacing: 0.14, uppercase: true, align: 'center' }, `item${i + 1}`))
+        els.push(line(b, inner(70, cardH - 90), 21, 'rgba(54,76,63,0.85)', `line${i + 1}`, { align: 'center', lineHeight: 1.45 }))
+      })
+      const hText = seed.headline || 'Wellness *habits* the world agrees on'
+      const midTop = topY + cardH + 40
+      const midH = L.H - (format === 'story' ? 260 : 0) - 190 - cardH - 40 - midTop
+      const hSize = linesFor(hText, 76, 920) > 2 ? 60 : 76
+      const hH = linesFor(hText, hSize, 920) * hSize
+      return slide(photoOr(seed, RD.charcoal), [
+        headline(hText, L.top(PAD, midTop + Math.max(0, (midH - hH) / 2), 920, hH), hSize, RD.cream, 'headline', { align: 'center' }),
+        ...els,
+        ...footer(L, 'save for later', 'dark', seed),
+      ])
+    },
+  },
+  /* 23 · Myth / what the traditions say. */
+  {
+    id: 'rd-myth', label: 'Myth · truth', brand: 'remedae',
+    build: (format, seed) => {
+      const L = layout(format)
+      const myth = clip(seed.itemBodies?.[0]?.trim() || item(seed, 0, 'You need to be flexible to start yoga.'), 110)
+      const truth = seed.headline || 'Flexibility is what you build, *not what you bring.*'
+      const mH = linesFor(myth, 30, 900, 0.55) * 30 * 1.35
+      const tSize = linesFor(truth, 64, 920) > 3 ? 52 : 64
+      const tH = linesFor(truth, tSize, 920) * tSize * 1.02
+      return slide(photoOr(seed, RD.charcoal), [
+        eyebrow('Common belief', L.top(PAD, 60, 800, 30), 'rgba(255,255,232,0.8)'),
+        pill('Myth', L.bottom(PAD, 330 + tH + 90 + mH + 30, 140, 52), false, 'dark', 'kicker'),
+        t(myth, L.bottom(PAD, 330 + tH + 90, 900, mH), { color: 'rgba(255,255,232,0.72)', fontKey: 'sans', fontSize: 30, fontWeight: 300, lineHeight: 1.35, strike: true }, 'told1'),
+        pill('What the traditions say', L.bottom(PAD, 330 + tH + 20, 420, 52), true, 'dark', 'category'),
+        headline(truth, L.bottom(PAD, 320, 920, tH), tSize, RD.cream, 'headline', { lineHeight: 1.02 }),
+        cue('Save this one', L.bottom(PAD, 210, 900, 40)),
+        ...footer(L, 'educational · not medical advice', 'dark', seed),
       ])
     },
   },
@@ -519,7 +759,7 @@ function slideCentered(format: InstaFormat, seed: TemplateSeed, cards: DesignEle
   return slide(dark(), [
     t('Global remedies', L.top(PAD, 118, 920, 30), { color: RD.mintDim, fontKey: 'sans', fontSize: 24, fontWeight: 500, letterSpacing: 0.22, uppercase: true, align: 'center' }, 'eyebrow'),
     headline(seed.headline || '5 remedies for *Gut Ache*', L.top(PAD, 158, 920, 90), 72, RD.cream, 'headline', { align: 'center', lineHeight: 1.04 }),
-    t(seed.dek || 'Two and a half thousand years of moving Qi, kindling the spleen, warming the channels.', L.top(140, 318, 800, 90), { color: RD.creamDim, fontKey: 'sans', fontSize: 28, fontWeight: 300, lineHeight: 1.5, align: 'center' }, 'dek'),
+    t(clip(seed.dek || 'Two and a half thousand years of moving Qi, kindling the spleen, warming the channels.', 96), L.top(140, 318, 800, 90), { color: RD.creamDim, fontKey: 'sans', fontSize: 26, fontWeight: 300, lineHeight: 1.5, align: 'center' }, 'dek'),
     ...cards,
     ...footer(L, 'save for later', 'dark', seed),
   ])

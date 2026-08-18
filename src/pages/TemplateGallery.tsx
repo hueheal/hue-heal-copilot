@@ -16,19 +16,30 @@ export default function TemplateGallery() {
   const format = (sp.get('format') as InstaFormat) || 'portrait'
   const w = Number(sp.get('w') || 400)
   const photo = sp.get('photo') === '1'
+  const long = sp.get('long') === '1'
   const spec = INSTAGRAM_FORMATS[format] ?? INSTAGRAM_FORMATS.portrait
   const seed: TemplateSeed = useMemo(() => ({
-    headline: '',
     accent: 'copper',
     brandName,
     logoUrl: brand?.logo_url ?? undefined,
     style: resolveStyle(brand ?? undefined),
     website: brand?.website ?? undefined,
     coverImage: photo ? 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=1600&q=80' : undefined,
-  }), [brand, brandName, photo])
+    headline: long ? 'Why the world\'s oldest people all seem to eat the same *quiet breakfast*' : '',
+    dek: long ? 'Across thirteen traditions the same small morning keeps reappearing: something warm, something bitter, and nothing in a hurry.' : undefined,
+    ...(long ? {
+      items: ['Warm water before anything else in the morning', 'Eat the biggest meal when the sun is highest', 'Bitter herbs before noon, never after', 'Twelve quiet hours between the last food and the first', 'Screens off, a small light on, an hour before sleep', 'Walk slowly for ten minutes after dinner'],
+      itemBodies: ['TCM and Ayurveda both start the day the same way: heat in the belly before any food, and nothing iced until noon.', 'The biggest meal at midday, when digestion is strongest. Kampo agrees, and so does most of the modern chrononutrition literature.', 'Bitter herbs land better early. Unani has said so for a thousand years and a 2021 trial did not disagree.', 'Modern medicine calls it a fasting window. Kampo just calls it dinner, and then bed.', 'Sleep begins with the eyes; every tradition dims the room before it dims the mind.', 'Ten minutes is enough. It is the walking, not the distance.'],
+    } : {}),
+  }), [brand, brandName, photo, long])
   const list = templatesFor(brandName, format)
   const fonts = fontsFor(brandName)
-  const content = [
+  const content = long ? [
+    { heading: 'Warm water before anything else in the morning', body: 'TCM and Ayurveda both start the day the same way: heat in the belly before any food, and nothing iced until noon.' },
+    { heading: 'Eat the biggest meal when the sun is highest', body: 'The biggest meal at midday, when digestion is strongest. Kampo agrees, and so does most of the modern chrononutrition literature.', image: photo ? 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=1600&q=80' : undefined },
+    { heading: 'Bitter herbs before noon, never after', body: 'Bitter herbs land better early. Unani has said so for a thousand years and a 2021 trial did not disagree.' },
+    { heading: 'Twelve quiet hours between the last food and the first', body: 'Modern medicine calls it a fasting window. Kampo just calls it dinner, and then bed.' },
+  ] : [
     { heading: 'Warm water, first thing', body: 'TCM and Ayurveda both start the day the same way: heat in the belly before food.' },
     { heading: 'Eat when the sun is highest', body: 'The biggest meal at midday, when digestion is strongest. Kampo agrees.', image: photo ? 'https://images.unsplash.com/photo-1495195134817-aeb325a55b65?w=1600&q=80' : undefined },
     { heading: 'Bitter before noon', body: 'Bitter herbs land better early. Unani has said so for a thousand years.' },

@@ -114,6 +114,11 @@ Deno.serve(async (req) => {
     'rd-six': 'SIX TRADITIONS OPENER: headline in three short lines ending with what they each say; slides are one tradition each: heading = tradition name, body = its take in one sentence.',
     'rd-short': 'SHORT COVER: the headline is what the practitioner says on camera, one sentence, contrarian or surprising.',
     'rd-plus': 'PRODUCT PROMO: the headline is a calm promise about a personal practice; caption states the offer plainly.',
+    'rd-orbit': 'ORBIT DIAGRAM: headline "Six traditions, *one body*" or a variant; slides are one tradition each: heading = tradition name only (1 to 2 words), body = its one-line take.',
+    'rd-steps': 'NUMBERED STEPS: headline promises N reasons or steps; slides are the steps: heading = 3 to 5 words, body = one or two sentences.',
+    'rd-checklist': 'CHECKLIST: headline names the routine; slides are the items: heading = an imperative of 4 to 7 words, body = one short sentence of why.',
+    'rd-habits': 'HABIT CARDS: headline "X *habits* the world agrees on"; exactly 4 slides: heading = ONE word, body = one or two short sentences.',
+    'rd-myth': 'MYTH / TRUTH: the first slide body is the common belief as people say it (one sentence); the headline is what the traditions actually say, with the highlighted phrase on the correction.',
   }
   const remedaeRules = isRemedae
     ? `
