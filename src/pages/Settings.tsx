@@ -89,9 +89,12 @@ function BrandsPanel() {
       const done = await finishInstagramConnect()
       if (done) {
         await reload(done.brandId).catch(() => setStatus('Could not load brands'))
+        const canPost = !done.permissions || done.permissions.includes('instagram_business_content_publish')
         setIgCheck(done.error
           ? { ok: false, text: done.error }
-          : { ok: true, text: `Connected. Posts as @${done.username ?? 'instagram'}${done.expiresAt ? `, token valid until ${new Date(done.expiresAt).toLocaleDateString()}` : ''}.` })
+          : canPost
+            ? { ok: true, text: `Connected. Posts as @${done.username ?? 'instagram'}${done.expiresAt ? `, token valid until ${new Date(done.expiresAt).toLocaleDateString()}` : ''}. Granted: ${(done.permissions ?? []).join(', ') || 'unknown'}.` }
+            : { ok: false, text: `Connected as @${done.username ?? 'instagram'} but Instagram did not grant instagram_business_content_publish (granted: ${(done.permissions ?? []).join(', ') || 'none'}). Enable that permission on the Meta app (Permissions and features → Ready for testing), then Reconnect.` })
       } else {
         await reload().catch(() => setStatus('Could not load brands'))
       }

@@ -6,6 +6,7 @@
 // Deploy:  npx supabase functions deploy generate-copy
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { enforceBrandName, brandNameRule } from '../_shared/brandName.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
@@ -83,6 +84,7 @@ Deno.serve(async (req) => {
     brand.tagline ? `Brand tagline: "${brand.tagline}".` : '',
     brand.voice ? `Brand voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, never salesy or hyped.',
     brand.guidelines ? `Writing guidelines: ${brand.guidelines}` : '',
+    brandNameRule(brand.name),
     'Write in British English. Keep it elegant and specific. Never invent statistics, studies, quotes or client names.',
     'Never use em dashes or en dashes anywhere. Use commas, colons, full stops, or the word "and" instead.',
   ]
@@ -193,5 +195,5 @@ Use the compose_post tool to return the result.`
   const toolUse = (data.content ?? []).find((b: { type: string }) => b.type === 'tool_use')
   if (!toolUse) return json({ error: 'Model did not return structured output', raw: data }, 502)
 
-  return json({ model: MODEL, post: toolUse.input })
+  return json({ model: MODEL, post: enforceBrandName(toolUse.input) })
 })

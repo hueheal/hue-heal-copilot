@@ -8,6 +8,7 @@
 // Deploy:  npx supabase functions deploy generate-client-doc --project-ref <ref>
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { enforceBrandName, brandNameRule } from '../_shared/brandName.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
     (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
     (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
     '\nHouse rules: address the client by name where natural so it feels made for them, never generic. ' +
-    'Precise, warm, design-led. British English. No hype, no buzzwords, no emoji. ' +
+    'Precise, warm, design-led. British English. No hype, no buzzwords, no emoji. ' + brandNameRule(brand) + ' ' +
     'Never use em dashes or en dashes: use commas, colons, full stops, or the word "and". ' +
     'Do not invent facts, figures, dates or commitments; use [bracketed placeholders] where specifics are needed. ' +
     (isDeck
@@ -174,5 +175,5 @@ Deno.serve(async (req) => {
     : Array.isArray(result.sections) && result.sections.length
   )
   if (!ok) return json({ error: 'No draft returned' }, 502)
-  return json({ result })
+  return json({ result: enforceBrandName(result) })
 })

@@ -5,6 +5,7 @@
 // Deploy:  npx supabase functions deploy generate-ideas --project-ref <ref>
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { enforceBrandName, brandNameRule } from '../_shared/brandName.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
@@ -63,6 +64,7 @@ Deno.serve(async (req) => {
     `(hospitality, food & beverage, health & fitness, education).`,
     brand.tagline ? `Tagline: "${brand.tagline}".` : '',
     brand.voice ? `Voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, never salesy or hyped.',
+    brandNameRule(brand.name),
     'Write in British English. Ideas must be specific and useful, not generic. Never invent statistics or client names.',
     'Never use em dashes or en dashes anywhere. Use commas, colons, full stops, or the word "and" instead.',
   ]
@@ -104,5 +106,5 @@ Deno.serve(async (req) => {
   const toolUse = (data.content ?? []).find((b: { type: string }) => b.type === 'tool_use')
   if (!toolUse) return json({ error: 'Model did not return structured output', raw: data }, 502)
 
-  return json({ model: MODEL, ideas: toolUse.input.ideas ?? [] })
+  return json({ model: MODEL, ideas: enforceBrandName(toolUse.input.ideas ?? []) })
 })

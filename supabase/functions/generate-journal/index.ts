@@ -9,6 +9,7 @@
 // Deploy:  npx supabase functions deploy generate-journal --project-ref <ref>
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { enforceBrandName, brandNameRule } from '../_shared/brandName.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
@@ -172,7 +173,7 @@ Deno.serve(async (req) => {
       (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
       `\nTHE REMEDAE JOURNAL BRIEF (this governs rules and voice):\n${REMEDAE_BRIEF}\n` +
       shape +
-      'British English. Call the journal_article tool with the finished piece: sections in reading order (heading and body only), then any real attributed quotes in "quotes" and at most one numbered list in "lists", each pointing at the section it follows via afterSection.'
+      brandNameRule(brand) + ' British English. Call the journal_article tool with the finished piece: sections in reading order (heading and body only), then any real attributed quotes in "quotes" and at most one numbered list in "lists", each pointing at the section it follows via afterSection.'
     : (isReport
       ? `Write a full studio report for ${brand}, a wellness experience design studio working across digital and physical experiences. This is a wider publication (a "state of" style piece) the studio publishes under its own name: broader in scope than a journal article, surveying a territory and taking a clear editorial position. Structure it as a report with distinct chapters.\n\n`
       : `Write a full journal article for ${brand}, a wellness experience design studio working across digital and physical experiences, for the studio's website Journal.\n\n`) +
@@ -353,5 +354,5 @@ Deno.serve(async (req) => {
     return json({ error: `No article returned (stop: ${stop})`, detail: glimpse }, 502)
   }
   if (!article.title || !article.title.trim()) article.title = topic // model sometimes omits the title; fall back to the topic
-  return json({ result: article })
+  return json({ result: enforceBrandName(article) })
 })

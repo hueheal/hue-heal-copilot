@@ -56,8 +56,13 @@ async function graph(path: string, params: Record<string, string>, token: string
   const res = await fetch(`${baseFor(token)}/${path}`, { method: 'POST', body })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
-    const msg = (data as { error?: { message?: string } })?.error?.message ?? `Graph ${res.status}`
-    throw new Error(msg)
+    // Surface everything Meta tells us: message, code, subcode and the user
+    // title, so "API access blocked" comes with its reason attached.
+    const e = (data as { error?: { message?: string; code?: number; error_subcode?: number; error_user_title?: string; error_user_msg?: string; type?: string } })?.error
+    const bits = [e?.message ?? `Graph ${res.status}`]
+    if (e?.error_user_title || e?.error_user_msg) bits.push(`${e.error_user_title ?? ''}${e.error_user_title && e.error_user_msg ? ': ' : ''}${e.error_user_msg ?? ''}`.trim())
+    bits.push(`[${token.startsWith('IG') ? 'instagram' : 'facebook'} · code ${e?.code ?? res.status}${e?.error_subcode ? `/${e.error_subcode}` : ''} · ${path.replace(/^\d+\//, '{id}/')}]`)
+    throw new Error(bits.join(' '))
   }
   return data as Record<string, unknown>
 }

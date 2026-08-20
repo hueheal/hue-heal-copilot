@@ -7,6 +7,7 @@
 // Deploy:  npx supabase functions deploy generate-proposal --project-ref <ref>
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { enforceBrandName, brandNameRule } from '../_shared/brandName.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
@@ -65,6 +66,7 @@ Deno.serve(async (req) => {
     `working across hospitality, food & beverage, health & fitness and education.`,
     brand.tagline ? `Tagline: "${brand.tagline}".` : '',
     brand.voice ? `Voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, confident, never salesy.',
+    brandNameRule(brand.name),
     'Write in British English. Be specific to the brief; never invent facts, names or numbers beyond it.',
     'Never use em dashes or en dashes anywhere. Use commas, colons, full stops, or the word "and" instead.',
     'Fees should be realistic studio fees in GBP. Typical phases: Discovery, Concept, Design development, Delivery.',
@@ -109,5 +111,5 @@ Deno.serve(async (req) => {
   const toolUse = (data.content ?? []).find((b: { type: string }) => b.type === 'tool_use')
   if (!toolUse) return json({ error: 'Model did not return structured output', raw: data }, 502)
 
-  return json({ model: MODEL, proposal: toolUse.input })
+  return json({ model: MODEL, proposal: enforceBrandName(toolUse.input) })
 })

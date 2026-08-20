@@ -20,6 +20,7 @@
 //           reaches this code; the CRON_SECRET header is the real gate.)
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { enforceBrandName, brandNameRule } from '../_shared/brandName.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
@@ -190,6 +191,7 @@ async function draftPosts(brand: Brand, brief: string, avoid: string, feedback =
       ? `Use this research as the factual basis. Ground every claim in it and do not invent beyond it:\n${brief}\n\n`
       : 'No live research is available, so use evergreen angles (a digital thought piece, wellness in another industry, and the psychology of wellbeing shaping design). Do not state anything as breaking news.\n\n') +
     `Write today's 3 polished, ready-to-post Instagram posts for ${brand.name}.\n` +
+    `${brandNameRule(brand.name)}\n` +
     (voice ? `\nVOICE (follow it closely):\n${voice}\n` : '') +
     (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
     avoid +
@@ -340,7 +342,7 @@ async function runBatch(preview: boolean): Promise<Record<string, unknown>> {
   const avoid = avoidBlock(recent.titles)
 
   const brief = await research(avoid)
-  let posts = await draftPosts(brand, brief, avoid)
+  let posts = enforceBrandName(await draftPosts(brand, brief, avoid))
 
   // Repeat guard: if any post is about a subject already covered (or two posts
   // in the batch share a subject), redraft once with explicit feedback.
@@ -355,7 +357,7 @@ async function runBatch(preview: boolean): Promise<Record<string, unknown>> {
     const feedback =
       `YOUR PREVIOUS ATTEMPT REPEATED COVERAGE OF: ${dupes.join(', ')}. ` +
       'These subjects were already covered recently. Replace every repeated post with a post about a completely different company, product or subject.'
-    try { posts = await draftPosts(brand, brief, avoid, feedback) } catch { /* keep the first batch rather than fail the run */ }
+    try { posts = enforceBrandName(await draftPosts(brand, brief, avoid, feedback)) } catch { /* keep the first batch rather than fail the run */ }
   }
 
   const items: Item[] = []

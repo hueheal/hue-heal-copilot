@@ -8,6 +8,7 @@
 // Deploy:  npx supabase functions deploy generate-newsletter --project-ref <ref>
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { enforceBrandName, brandNameRule } from '../_shared/brandName.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const MODEL = Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5'
@@ -67,13 +68,14 @@ Deno.serve(async (req) => {
   const guides = (body.writingGuidelines ?? '').trim()
   const notes = (body.notes ?? '').trim()
 
+  const nameRule = brandNameRule(body.brandName)
   const prompt = body.mode === 'teaser'
     ? `Write a SHORT email teaser for ${brand} that entices readers to click through and read a full journal article titled "${topic}".\n` +
       (notes ? `The article, to draw a hook from (open a loop, do not give it all away or list the takeaways): ${notes}\n` : '') +
       (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
       (guides ? `\nWRITING GUIDELINES (follow them):\n${guides}\n` : '') +
       '\nRules: captivating and warm. Structure: a heading (you may reuse or sharpen the article title), then 1 to 2 very short paragraphs (3 to 4 sentences total) that make the reader curious, and exactly one button CTA labelled "Read the full piece". ' +
-      'Leave the reader wanting the full piece, do not summarise the whole article or reveal the takeaways. No image block. No hype, no exclamation marks, no emoji. British English. ' +
+      'Leave the reader wanting the full piece, do not summarise the whole article or reveal the takeaways. No image block. No hype, no exclamation marks, no emoji. British English. ' + nameRule + ' ' +
       'Never use em dashes or en dashes anywhere. Use full stops, commas, colons, or the word "and" instead. Leave the button href empty. ' +
       'Call the newsletter tool with the result.'
     : `Write a newsletter for ${brand} on this topic: "${topic}".\n` +
@@ -82,7 +84,7 @@ Deno.serve(async (req) => {
       (guides ? `\nWRITING GUIDELINES (follow them):\n${guides}\n` : '') +
       (body.template ? `\nThis is a "${body.template}" style edition.\n` : '') +
       '\nRules: one clear idea, developed simply. Short paragraphs. Concrete and sensory over abstract claims. ' +
-      'No hype, no buzzwords, no exclamation marks, no emoji. British English. ' +
+      'No hype, no buzzwords, no exclamation marks, no emoji. British English. ' + nameRule + ' ' +
       'Never use em dashes or en dashes anywhere. Use full stops, commas, colons, or the word "and" instead. ' +
       'Structure: a heading, 2 to 4 short text blocks, one image placeholder where a photo belongs, and exactly one button CTA at the end. ' +
       'Do not invent statistics, testimonials or facts. If a link is unknown, leave href empty. ' +
@@ -113,5 +115,5 @@ Deno.serve(async (req) => {
   const data = await resp.json()
   const toolUse = (data.content ?? []).find((b: { type: string }) => b.type === 'tool_use')
   if (!toolUse?.input) return json({ error: 'No structured result returned' }, 502)
-  return json({ newsletter: toolUse.input })
+  return json({ newsletter: enforceBrandName(toolUse.input) })
 })

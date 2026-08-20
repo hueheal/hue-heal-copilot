@@ -94,14 +94,18 @@ Deno.serve(async (req) => {
     const username = String(me.username ?? '')
     if (!userId) throw new Error('Could not read the Instagram account ID from the token')
 
+    // The short-lived exchange reports which scopes were actually granted;
+    // Meta silently drops any the app did not have enabled at approval time.
+    const permissions = Array.isArray(short.permissions) ? (short.permissions as unknown[]).map(String)
+      : typeof short.permissions === 'string' ? String(short.permissions).split(',').map((x) => x.trim()).filter(Boolean) : []
     const instagram = {
       ...(brand.instagram ?? {}),
-      user_id: userId, username, access_token: token, expires_at: expiresAt,
+      user_id: userId, username, access_token: token, expires_at: expiresAt, permissions,
       account_type: String(me.account_type ?? ''), via: 'instagram_login', connected_at: new Date().toISOString(),
     }
     const { error } = await admin.from('brand_profiles').update({ instagram }).eq('id', brand.id)
     if (error) throw new Error(error.message)
-    return json({ ok: true, username, userId, expiresAt, accountType: instagram.account_type })
+    return json({ ok: true, username, userId, expiresAt, accountType: instagram.account_type, permissions })
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 502)
   }

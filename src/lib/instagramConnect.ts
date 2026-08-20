@@ -8,7 +8,9 @@ import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
    stores it on the workspace. No Facebook Page involved.
    ============================================================ */
 
-const SCOPES = ['instagram_business_basic', 'instagram_business_content_publish', 'instagram_business_manage_comments']
+// Only what publishing needs. Asking for a scope the Meta app has not enabled
+// makes Meta drop scopes silently, which is how a token ends up unable to post.
+const SCOPES = ['instagram_business_basic', 'instagram_business_content_publish']
 const STATE_KEY = 'hh:ig-oauth-state'
 
 /** Where Instagram sends the user back. Must be registered verbatim in the
@@ -56,7 +58,7 @@ export async function startInstagramConnect(brandId: string): Promise<{ error?: 
 
 /** If the URL carries Instagram's ?code=&state=, finish the connection.
     Returns null when there is nothing to do. Cleans the URL either way. */
-export async function finishInstagramConnect(): Promise<{ brandId: string; username?: string; expiresAt?: string; error?: string } | null> {
+export async function finishInstagramConnect(): Promise<{ brandId: string; username?: string; expiresAt?: string; permissions?: string[]; error?: string } | null> {
   const params = new URLSearchParams(window.location.search)
   const code = params.get('code')
   const state = params.get('state') ?? ''
@@ -72,7 +74,7 @@ export async function finishInstagramConnect(): Promise<{ brandId: string; usern
   const res = await callFn({ code: String(code).replace(/#_$/, ''), redirectUri: instagramRedirectUri(), brandId })
   clean()
   if (res.error) return { brandId, error: res.error }
-  return { brandId, username: res.username ? String(res.username) : undefined, expiresAt: res.expiresAt ? String(res.expiresAt) : undefined }
+  return { brandId, username: res.username ? String(res.username) : undefined, expiresAt: res.expiresAt ? String(res.expiresAt) : undefined, permissions: Array.isArray(res.permissions) ? (res.permissions as unknown[]).map(String) : undefined }
 }
 
 /** Extend a long-lived token by another 60 days (works once it is 24h old). */
