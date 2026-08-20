@@ -8,16 +8,21 @@
 // never touched.
 // ============================================================================
 
-const FIXES: [RegExp, string][] = [
-  [/\bHue\s+(?:and|And|AND|\+|n)\s+Heals?\b/g, 'Hue & Heal'], // "Hue and Heal(s)"
-  [/\bHUE\s+AND\s+HEALS?\b/g, 'HUE & HEAL'], // all-caps headings keep their case
-  [/\bHue\s*&\s*Heals\b/g, 'Hue & Heal'], // "Hue & Heals"
+// All-caps occurrences (headings) keep their case; everything else becomes
+// the canonical "Hue & Heal".
+const keepCaps = (m: string) => (m === m.toUpperCase() ? 'HUE & HEAL' : 'Hue & Heal')
+const FIXES: [RegExp, string | ((m: string) => string)][] = [
+  [/\bhue\s+(?:and|\+|n)\s+heals?\b/gi, keepCaps], // "hue and heal(s)" in any case
+  [/\bhue\s+&\s+heals?\b/gi, keepCaps], // "hue & heal(s)" with spaces, any case
+  [/\bHue\s*&\s*Heals\b/g, 'Hue & Heal'], // "Hue & Heals" / "Hue&Heals"
   [/\bHue\s*&\s*Heal\b/g, 'Hue & Heal'], // normalise "Hue&Heal" / odd spacing
+  // NOT matched on purpose: "hueandheal.com" (no spaces) and the lowercase
+  // wordmark "hue&heal." (no spaces), which are design/domain, not prose.
 ]
 
 export function fixBrandName(text: string): string {
   let out = text
-  for (const [re, to] of FIXES) out = out.replace(re, to)
+  for (const [re, to] of FIXES) out = typeof to === 'string' ? out.replace(re, to) : out.replace(re, to)
   return out
 }
 
