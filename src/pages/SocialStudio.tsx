@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { fileNameFromTitle } from '../lib/fileName'
 import { useParams } from 'react-router-dom'
 import EditorShell from '../components/EditorShell'
 import { useAuth } from '../lib/auth'
@@ -457,7 +458,7 @@ export default function SocialStudio() {
     if (!canvasRef.current) return
     setBusy(true); setStatus('Exporting…')
     try {
-      const base = (post!.headline || post!.topic || 'post').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'post'
+      const base = fileNameFromTitle(post!.headline || post!.topic, 'Post')
       if (design!.format === 'carousel' && design!.slides.length > 1) {
         const urls: string[] = []
         const orig = active

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { fileNameFromTitle } from '../lib/fileName'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
 import EditorShell from '../components/EditorShell'
@@ -199,10 +200,13 @@ export default function ClientDocEditor() {
   useEffect(() => {
     if (!printing) return
     document.body.classList.add('hh-print-doc')
+    // The browser names the saved PDF after document.title: use the cover title.
+    const previousTitle = document.title
+    document.title = fileNameFromTitle(doc?.title, 'Document')
     const t = setTimeout(() => window.print(), 120)
-    const done = () => { document.body.classList.remove('hh-print-doc'); setPrinting(false) }
+    const done = () => { document.body.classList.remove('hh-print-doc'); document.title = previousTitle; setPrinting(false) }
     window.addEventListener('afterprint', done)
-    return () => { clearTimeout(t); window.removeEventListener('afterprint', done); document.body.classList.remove('hh-print-doc') }
+    return () => { clearTimeout(t); window.removeEventListener('afterprint', done); document.body.classList.remove('hh-print-doc'); document.title = previousTitle }
   }, [printing])
 
   if (gated) {

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
+import { fileNameFromTitle } from '../lib/fileName'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
 import InvoiceDocument from '../components/InvoiceDocument'
 import { type Invoice, getInvoice, updateInvoice, deleteInvoice, INVOICE_STATUSES } from '../lib/studioOps'
-import { slugify } from '../lib/pdf'
 import type { LineItem, InvoiceStatus } from '../lib/database.types'
 
 const inputStyle: React.CSSProperties = {
@@ -37,7 +37,7 @@ export default function InvoiceEditor() {
     setBusy(true); setStatus('Preparing PDF…')
     try {
       const { downloadInvoicePdf } = await import('../lib/pdfDoc')
-      await downloadInvoicePdf(inv!, `${slugify(inv!.client_name)}-invoice.pdf`)
+      await downloadInvoicePdf(inv!, `${fileNameFromTitle(inv!.title, `${inv!.client_name} Invoice`)}.pdf`)
       setStatus('PDF downloaded')
     } catch (e) {
       setStatus(`Couldn’t make PDF: ${e instanceof Error ? e.message : e}`)

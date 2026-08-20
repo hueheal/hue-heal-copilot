@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { fileNameFromTitle } from '../lib/fileName'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PillButton } from '../components/PageHeader'
 import ConfirmButton from '../components/ConfirmButton'
@@ -11,7 +12,6 @@ import {
   generateProposalDraft,
   phasesTotal,
 } from '../lib/studioOps'
-import { slugify } from '../lib/pdf'
 import type { ProposalPhase } from '../lib/database.types'
 
 const inputStyle: React.CSSProperties = {
@@ -63,7 +63,7 @@ export default function ProposalEditor() {
     setBusy(true); setStatus('Preparing PDF…')
     try {
       const { downloadProposalPdf } = await import('../lib/pdfDoc')
-      await downloadProposalPdf(p!, `${slugify(p!.client_name)}-proposal.pdf`)
+      await downloadProposalPdf(p!, `${fileNameFromTitle(p!.title, `${p!.client_name} Proposal`)}.pdf`)
       setStatus('PDF downloaded')
     } catch (e) {
       setStatus(`Couldn’t make PDF: ${e instanceof Error ? e.message : e}`)
