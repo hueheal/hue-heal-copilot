@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import VersionHistory from '../components/chrome/VersionHistory'
+import { saveVersion } from '../lib/assets'
 import { fileNameFromTitle } from '../lib/fileName'
 import { useParams, useNavigate } from 'react-router-dom'
 import { PillButton } from '../components/PageHeader'
@@ -75,10 +77,12 @@ export default function ProposalEditor() {
   async function save() {
     setBusy(true); setStatus(null)
     try {
-      await updateProposal(p!.id, {
+      const payload = {
         title: p!.title, client_name: p!.client_name, content: p!.content,
         phases: p!.phases, amount_gbp: phasesTotal(p!.phases),
-      })
+      }
+      await updateProposal(p!.id, payload)
+      void saveVersion('proposal', p!.id, payload as unknown as Record<string, unknown>, p!.title)
       setStatus('Saved')
     } catch (e) {
       setStatus(`Couldn’t save: ${e instanceof Error ? e.message : e}`)
@@ -102,6 +106,10 @@ export default function ProposalEditor() {
           >
             Delete
           </ConfirmButton>
+          <VersionHistory kind="proposal" assetId={p?.id ?? null} onRestore={(sn) => {
+            setP((prev) => (prev ? { ...prev, title: String(sn.title ?? prev.title), client_name: String(sn.client_name ?? prev.client_name), content: (sn.content as typeof prev.content) ?? prev.content, phases: (sn.phases as typeof prev.phases) ?? prev.phases } : prev))
+            setStatus('Restored — Save to keep it')
+          }} />
           <PillButton tone="ghost" onClick={save}>{busy ? 'Working…' : 'Save'}</PillButton>
           <PillButton tone="ink" onClick={downloadPdf}>↧ Download PDF</PillButton>
         </div>

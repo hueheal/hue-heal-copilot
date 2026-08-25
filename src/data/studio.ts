@@ -2,7 +2,7 @@
    Stand-in for the operations backend. Shapes are designed to map cleanly
    onto a real API later (clients, proposals, invoices, social content). */
 
-export type NavKey = 'dashboard' | 'create' | 'calendar' | 'clients' | 'proposals' | 'social' | 'newsletter' | 'journal' | 'reports' | 'settings' | 'research' | 'linkedin'
+export type NavKey = 'dashboard' | 'create' | 'library' | 'calendar' | 'clients' | 'proposals' | 'social' | 'newsletter' | 'journal' | 'reports' | 'settings' | 'library' | 'research' | 'linkedin'
 
 export interface NavItem {
   key: NavKey

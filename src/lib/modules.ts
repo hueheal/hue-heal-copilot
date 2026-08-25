@@ -3,7 +3,7 @@ import type { NavKey } from '../data/studio'
 /* Copilot modules. A brand world enables a subset during onboarding and the
    sidebar is built from them. Dashboard + Settings are always present. */
 
-export const CORE_NAV: NavKey[] = ['dashboard', 'create', 'settings']
+export const CORE_NAV: NavKey[] = ['dashboard', 'create', 'library', 'settings']
 
 export interface ModuleOption {
   key: string

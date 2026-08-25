@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import VersionHistory from '../components/chrome/VersionHistory'
+import { saveVersion } from '../lib/assets'
 import { useSearchParams } from 'react-router-dom'
 import EditorShell from '../components/EditorShell'
 import ConfirmButton from '../components/ConfirmButton'
@@ -187,7 +189,7 @@ export default function NewsletterEditor() {
     setBusy(true); setStatus(null)
     try {
       const payload = { subject, preheader, template: templateId, blocks: blocks as unknown[] }
-      if (currentId) { await updateNewsletter(currentId, payload); setStatus('Saved') }
+      if (currentId) { await updateNewsletter(currentId, payload); void saveVersion('newsletter', currentId, payload as unknown as Record<string, unknown>, subject) ; setStatus('Saved') }
       else { const nl = await saveNewsletter(payload); setCurrentId(nl.id); setStatus('Saved to drafts') }
       await reload()
     } catch (e) { setStatus(`Couldn’t save: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
@@ -238,6 +240,12 @@ export default function NewsletterEditor() {
     <EditorShell
       ctype="Edition"
       subline={`${brand?.name ?? 'Hue & Heal'} · autosaved`}
+      headerExtra={<VersionHistory kind="newsletter" assetId={currentId} onRestore={(sn) => {
+        setSubject(String(sn.subject ?? '')); setPreheader(String(sn.preheader ?? ''))
+        if (sn.template) setTemplateId(String(sn.template))
+        setBlocks((sn.blocks as Block[]) ?? [])
+        setStatus('Restored — Save to keep it')
+      }} />}
       status={status}
       busy={busy}
       onNew={blank}

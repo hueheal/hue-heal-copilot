@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import VersionHistory from '../components/chrome/VersionHistory'
+import { saveVersion } from '../lib/assets'
 import { fileNameFromTitle } from '../lib/fileName'
 import { useParams } from 'react-router-dom'
 import EditorShell from '../components/EditorShell'
@@ -484,10 +486,12 @@ export default function SocialStudio() {
   async function save() {
     setBusy(true); setStatus(null)
     try {
-      await updatePost(post!.id, {
+      const payload = {
         design: design as unknown as Record<string, unknown>, format: design!.format, platform: 'instagram', accent: design!.accent,
         topic: post!.topic, headline: post!.headline, caption: post!.caption, hashtags: post!.hashtags ?? [], slides: post!.slides ?? [],
-      })
+      }
+      await updatePost(post!.id, payload)
+      void saveVersion('social', post!.id, payload, post!.headline || post!.topic || '')
       setStatus('Saved')
     } catch (e) { setStatus(`Couldn’t save: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
   }
@@ -610,6 +614,12 @@ export default function SocialStudio() {
     <EditorShell
       ctype={spec.label}
       subline={`${spec.w}×${spec.h} · ${brandWorld?.name ?? 'Hue & Heal'}`}
+      headerExtra={<VersionHistory kind="social" assetId={post.id} onRestore={(sn) => {
+        const d = sn.design
+        if (isDesign(d)) setDesign(d as unknown as Design)
+        setPost((p) => (p ? { ...p, topic: String(sn.topic ?? p.topic), headline: (sn.headline as string) ?? p.headline, caption: (sn.caption as string) ?? p.caption, hashtags: (sn.hashtags as string[]) ?? p.hashtags, slides: (sn.slides as Post['slides']) ?? p.slides } : p))
+        setActive(0); setSelId(null); setStatus('Restored — Save to keep it')
+      }} />}
       status={status}
       busy={busy}
       onDone={save}

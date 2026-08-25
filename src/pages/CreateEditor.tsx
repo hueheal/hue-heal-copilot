@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import VersionHistory from '../components/chrome/VersionHistory'
+import { saveVersion } from '../lib/assets'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import ConfirmButton from '../components/ConfirmButton'
 import EditorShell from '../components/EditorShell'
@@ -260,7 +262,7 @@ export default function CreateEditor() {
   async function save(): Promise<string | null> {
     setBusy(true); setStatus(null)
     try {
-      if (currentId) { await updateJournal(currentId, payload()); setStatus('Saved'); await reload(); return currentId }
+      if (currentId) { const pl = payload(); await updateJournal(currentId, pl); void saveVersion('journal', currentId, pl as unknown as Record<string, unknown>, title); setStatus('Saved'); await reload(); return currentId }
       const a = await saveJournal(payload()); setCurrentId(a.id); setStatus('Saved to drafts'); await reload(); return a.id
     } catch (e) { setStatus(`Couldn’t save: ${e instanceof Error ? e.message : e}`); return null } finally { setBusy(false) }
   }
@@ -343,6 +345,11 @@ export default function CreateEditor() {
       busy={busy}
       onNew={blank}
       onDone={save}
+      headerExtra={<VersionHistory kind="journal" assetId={currentId} onRestore={(sn) => {
+        setTitle(String(sn.title ?? '')); setDek(String(sn.dek ?? '')); setHero(String(sn.hero_image ?? ''))
+        setBlocks((sn.blocks as Block[]) ?? []); setTakeaways(((sn.takeaways as string[]) ?? []).join('\n'))
+        setStatus('Restored — Save to keep it')
+      }} />}
       doneDisabled={!title.trim()}
       view={mView}
       onViewChange={setMView}

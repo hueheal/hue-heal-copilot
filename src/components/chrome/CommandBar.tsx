@@ -60,6 +60,7 @@ export default function CommandBar({ open, onOpenChange }: { open: boolean; onOp
           <Command.Group heading="Go to">
             <Command.Item onSelect={() => go('/')}><IcHome /> Home</Command.Item>
             <Command.Item onSelect={() => go('/create')}><IcCreate /> Create</Command.Item>
+            <Command.Item onSelect={() => go('/library')}><IcLayers /> Library</Command.Item>
             <Command.Item onSelect={() => go('/clients')}><IcClients /> Clients</Command.Item>
             <Command.Item onSelect={() => go('/calendar')}><IcCalendar /> Calendar</Command.Item>
             <Command.Item onSelect={() => go('/reports')}><IcChart /> Analytics</Command.Item>
