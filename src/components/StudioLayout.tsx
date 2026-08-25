@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import Sidebar from './Sidebar'
 import MobileNav from './MobileNav'
+import AppSidebar from './chrome/AppSidebar'
+import CommandBar from './chrome/CommandBar'
 import AuthGate from './AuthGate'
 import WorkspaceSelect from './WorkspaceSelect'
 import { BrandProvider, useBrand } from '../lib/brandContext'
@@ -19,6 +21,7 @@ export default function StudioLayout() {
 function LayoutInner() {
   const { current, chosen } = useBrand()
   const isMobile = useIsMobile()
+  const [cmd, setCmd] = useState(false)
   // On entry (and when "switch workspace" is used) show the brand-world picker.
   if (!chosen) return <WorkspaceSelect />
 
@@ -33,12 +36,13 @@ function LayoutInner() {
           <Outlet />
         </main>
         <MobileNav />
+        <CommandBar open={cmd} onOpenChange={setCmd} />
       </div>
     )
   }
 
   return (
-    <div style={{ width: '100%', height: '100vh', overflow: 'hidden', background: 'var(--hh-monterey)' }}>
+    <div style={{ width: '100%', height: '100vh', overflow: 'hidden', background: 'var(--ck-bg)' }}>
       <div
         style={{
           display: 'flex',
@@ -51,13 +55,14 @@ function LayoutInner() {
           overflow: 'hidden',
         }}
       >
-        <Sidebar />
+        <AppSidebar onOpenCommand={() => setCmd(true)} />
         {/* Keying on the brand id remounts the page when you switch worlds, so
             every page re-fetches its data scoped to the new brand. */}
         <main key={current?.id ?? 'none'} style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
           <Outlet />
         </main>
       </div>
+      <CommandBar open={cmd} onOpenChange={setCmd} />
     </div>
   )
 }

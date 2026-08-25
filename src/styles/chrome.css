@@ -1,0 +1,166 @@
+/* ============================================================
+   Copilot chrome — the tool's own interface system.
+   shadcn/Apple treatment per the master redesign brief (§23–31):
+   Geist, warm neutrals, tonal layering, restrained radii, light
+   and dark. These tokens style ONLY the tool around the work.
+   Brand canvases keep the --hh-* system and never read these.
+   Naming: --ck-* (copilot kit). Classes: .ck-*.
+   ============================================================ */
+
+:root {
+  /* Light (default) — brief §24 */
+  --ck-bg: #F7F7F5;
+  --ck-surface: #FFFFFF;
+  --ck-surface-2: #F1F0ED;
+  --ck-ink: #151515;
+  --ck-muted: #6B6B6B;
+  --ck-faint: #999999;
+  --ck-line: rgba(0, 0, 0, 0.07);
+  --ck-line-strong: rgba(0, 0, 0, 0.12);
+  --ck-hover: rgba(0, 0, 0, 0.045);
+  --ck-active: rgba(0, 0, 0, 0.07);
+  --ck-accent: #B5632F; /* workspace accent, overridden per world */
+  --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --ck-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --ck-scrim: rgba(21, 21, 21, 0.28);
+  --ck-font: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ck-radius: 8px;
+  --ck-radius-lg: 12px;
+  --ck-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  color-scheme: light;
+}
+/* Dark — brief §25. System preference… */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ck-bg: #1A1918; --ck-surface: #242321; --ck-surface-2: #2A2926;
+    --ck-ink: #F0EFED; --ck-muted: #A8A8A8; --ck-faint: #707070;
+    --ck-line: rgba(255, 255, 255, 0.08); --ck-line-strong: rgba(255, 255, 255, 0.13);
+    --ck-hover: rgba(255, 255, 255, 0.055); --ck-active: rgba(255, 255, 255, 0.09);
+    --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --ck-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+    --ck-scrim: rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+/* …and the explicit toggle wins in both directions. */
+:root[data-theme='dark'] {
+  --ck-bg: #1A1918; --ck-surface: #242321; --ck-surface-2: #2A2926;
+  --ck-ink: #F0EFED; --ck-muted: #A8A8A8; --ck-faint: #707070;
+  --ck-line: rgba(255, 255, 255, 0.08); --ck-line-strong: rgba(255, 255, 255, 0.13);
+  --ck-hover: rgba(255, 255, 255, 0.055); --ck-active: rgba(255, 255, 255, 0.09);
+  --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --ck-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --ck-scrim: rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+/* ---- Sidebar ---- */
+.ck-sidebar {
+  height: 100%; flex-shrink: 0; box-sizing: border-box;
+  display: flex; flex-direction: column;
+  background: var(--ck-bg); color: var(--ck-ink);
+  border-right: 1px solid var(--ck-line);
+  font-family: var(--ck-font); font-size: 13.5px;
+  padding: 14px 10px 12px;
+  width: 248px; transition: width 180ms var(--ck-ease);
+}
+.ck-sidebar[data-rail='1'] { width: 64px; }
+.ck-side-section { display: flex; flex-direction: column; gap: 1px; }
+.ck-side-gap { flex: 1; min-height: 16px; }
+
+.ck-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  border: none; background: none; text-align: left; cursor: pointer;
+  padding: 8px 10px; border-radius: var(--ck-radius);
+  color: var(--ck-muted); font-family: var(--ck-font); font-size: 13.5px; font-weight: 400;
+  text-decoration: none; box-sizing: border-box; white-space: nowrap;
+  transition: background 120ms var(--ck-ease), color 120ms var(--ck-ease);
+}
+.ck-item:hover { background: var(--ck-hover); color: var(--ck-ink); }
+.ck-item[data-active='1'], .ck-item[aria-current='page'] { background: var(--ck-active); color: var(--ck-ink); font-weight: 500; }
+.ck-item:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: -2px; }
+.ck-item svg { flex-shrink: 0; color: var(--ck-faint); }
+.ck-item:hover svg, .ck-item[data-active='1'] svg, .ck-item[aria-current='page'] svg { color: var(--ck-ink); }
+.ck-sidebar[data-rail='1'] .ck-item { justify-content: center; padding: 9px 0; }
+.ck-sidebar[data-rail='1'] .ck-label { display: none; }
+.ck-kbd {
+  margin-left: auto; font-size: 10.5px; color: var(--ck-faint);
+  border: 1px solid var(--ck-line); border-radius: 5px; padding: 1px 5px;
+  font-family: var(--ck-font); letter-spacing: 0.02em;
+}
+.ck-sidebar[data-rail='1'] .ck-kbd { display: none; }
+
+/* Workspace switcher trigger */
+.ck-ws {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  border: 1px solid var(--ck-line); background: var(--ck-surface);
+  border-radius: 10px; padding: 9px 10px; cursor: pointer;
+  color: var(--ck-ink); font-family: var(--ck-font); font-size: 13.5px; font-weight: 500;
+  box-sizing: border-box; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.ck-ws:hover { border-color: var(--ck-line-strong); }
+.ck-ws:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 1px; }
+.ck-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; background: var(--ck-accent); }
+.ck-sidebar[data-rail='1'] .ck-ws { justify-content: center; padding: 11px 0; }
+.ck-sidebar[data-rail='1'] .ck-ws .ck-label, .ck-sidebar[data-rail='1'] .ck-ws .ck-chev { display: none; }
+
+/* ---- Menus (radix dropdown) ---- */
+.ck-menu {
+  min-width: 224px; background: var(--ck-surface); color: var(--ck-ink);
+  border-radius: var(--ck-radius-lg); box-shadow: var(--ck-shadow-lg);
+  padding: 5px; font-family: var(--ck-font); font-size: 13.5px; z-index: 300;
+}
+.ck-menu-item {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border-radius: var(--ck-radius); cursor: pointer; color: var(--ck-ink); outline: none;
+}
+.ck-menu-item[data-highlighted] { background: var(--ck-hover); }
+.ck-menu-item .ck-sub { color: var(--ck-faint); font-size: 12px; margin-left: auto; }
+.ck-menu-sep { height: 1px; background: var(--ck-line); margin: 5px 6px; }
+.ck-menu-label { padding: 7px 10px 3px; font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ck-faint); font-weight: 500; }
+
+/* ---- Tooltip ---- */
+.ck-tip {
+  background: var(--ck-ink); color: var(--ck-bg);
+  border-radius: 6px; padding: 5px 9px; font-family: var(--ck-font); font-size: 12px;
+  box-shadow: var(--ck-shadow-md); z-index: 400;
+}
+
+/* ---- Command palette (cmdk) ---- */
+.ck-cmd-overlay {
+  position: fixed; inset: 0; background: var(--ck-scrim); z-index: 500;
+  display: flex; align-items: flex-start; justify-content: center; padding: 12vh 16px 16px;
+  backdrop-filter: blur(2px);
+}
+.ck-cmd {
+  width: 100%; max-width: 580px; background: var(--ck-surface); color: var(--ck-ink);
+  border-radius: 14px; box-shadow: var(--ck-shadow-lg); overflow: hidden;
+  font-family: var(--ck-font);
+}
+.ck-cmd [cmdk-input] {
+  width: 100%; box-sizing: border-box; border: none; outline: none;
+  background: transparent; color: var(--ck-ink);
+  padding: 16px 18px; font-size: 15px; font-family: var(--ck-font);
+  border-bottom: 1px solid var(--ck-line);
+}
+.ck-cmd [cmdk-input]::placeholder { color: var(--ck-faint); }
+.ck-cmd [cmdk-list] { max-height: 46vh; overflow-y: auto; padding: 7px; scroll-padding-block: 8px; }
+.ck-cmd [cmdk-group-heading] {
+  padding: 9px 11px 4px; font-size: 10.5px; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--ck-faint); font-weight: 500;
+}
+.ck-cmd [cmdk-item] {
+  display: flex; align-items: center; gap: 11px; padding: 9px 11px;
+  border-radius: var(--ck-radius); font-size: 13.5px; cursor: pointer; color: var(--ck-ink);
+}
+.ck-cmd [cmdk-item][data-selected='true'] { background: var(--ck-hover); }
+.ck-cmd [cmdk-item] svg { color: var(--ck-faint); flex-shrink: 0; }
+.ck-cmd [cmdk-empty] { padding: 22px; text-align: center; color: var(--ck-faint); font-size: 13.5px; }
+.ck-cmd-hintbar {
+  display: flex; gap: 14px; padding: 9px 14px; border-top: 1px solid var(--ck-line);
+  color: var(--ck-faint); font-size: 11.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ck-sidebar, .ck-item { transition: none; }
+}
