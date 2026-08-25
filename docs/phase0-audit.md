@@ -62,8 +62,19 @@ Shell (replace), Dashboard→Home (replace), Create hub (rework), EditorShell
 chrome (evolve to canvas-first), Settings→Brand+Knowledge (split), lists→
 Library (rework), tokens (extend + dark).
 
+## Chrome vs canvas (confirmed direction)
+The refactor is the TOOL'S INTERFACE ONLY. Two systems, hard boundary:
+chrome (shell, sidebar, cmdK, Home, Create, Library, Settings, editor rails,
+dialogs) = new shadcn/Apple theme, Geist/Inter, neutral palette, light+dark.
+Canvas/output (slide canvases + social exports, journal previews + remedae
+publishing, newsletters, proposal/invoice PDFs, client docs + share pages,
+template previews) = each brand world's identity, untouched. --hh-* tokens
+and brand engines become output tokens owned by the canvas layer. Workspace
+accent may tint small chrome touches; chrome never inherits brand fonts;
+canvases never inherit chrome styling.
+
 ## 0.10 Sequence & recommendations
-shadcn: HYBRID. Tailwind+shadcn for new shell/surfaces themed by the brief's
+shadcn: owns the chrome, and only the chrome. Tailwind+shadcn for new shell/surfaces themed by the brief's
 tokens; existing editors keep inline styles, migrate screen-by-screen in
 Phase 7. Tokens file is the bridge.
 Order: 1 tokens+dark · 2 shell+cmdK · 3 Home · 4 Create composer ·
@@ -85,6 +96,8 @@ pending; font decision (Geist for UI chrome vs Prata/Poppins identity; Ivy
 Ora not embeddable); Library thumbnail capture for documents; no cost
 tracking; version-history retention policy; mobile scope confirmation.
 
-## Decisions needed before Phase 2
-1) hybrid shadcn approach  2) rollout C over B  3) UI typeface
-4) Library/Projects pulled ahead of creator rework.
+## Decisions
+RESOLVED: 1) shadcn = tool chrome only, canvases untouched  3) chrome type =
+Geist/Inter, brand faces live on in outputs.
+STILL NEEDED before Phase 2: 2) rollout C over B  4) Library/Projects pulled
+ahead of creator rework.
