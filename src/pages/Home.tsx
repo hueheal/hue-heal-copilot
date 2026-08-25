@@ -42,7 +42,7 @@ function ago(iso: string): string {
 export default function Home() {
   const { current } = useBrand()
   const nav = useNavigate()
-  const [recents, setRecents] = useState<Recent[]>([])
+  const [recents, setRecents] = useState<Recent[] | null>(null)
   const [journals, setJournals] = useState<JournalArticle[]>([])
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
 
@@ -79,7 +79,7 @@ export default function Home() {
   /* Sparse, honest suggestions from what's actually in the workspace. */
   const suggestions = useMemo(() => {
     const out: { label: string; sub: string; to: string }[] = []
-    const draft = recents.find((r) => r.sub.includes('draft') || (r.kind === 'social' && r.sub.includes('Instagram')))
+    const draft = (recents ?? []).find((r) => r.sub.includes('draft') || (r.kind === 'social' && r.sub.includes('Instagram')))
     if (draft) out.push({ label: `Continue “${draft.title}”`, sub: ago(draft.when), to: draft.to })
     const published = journals.find((a) => a.published_at)
     if (published) out.push({ label: `Turn “${published.title}” into a carousel`, sub: 'Journal → Instagram', to: `/create/journal?open=${published.id}` })
@@ -101,7 +101,12 @@ export default function Home() {
 
         <Composer />
 
-        {recents.length > 0 && (
+        {recents === null ? (
+          <>
+            <div className="ck-sectiongap" />
+            <div className="ck-cards">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="ck-skeleton" />)}</div>
+          </>
+        ) : recents.length > 0 && (
           <>
             <div className="ck-sectiongap" />
             <h2 className="ck-h2">Continue working</h2>

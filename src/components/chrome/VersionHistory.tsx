@@ -29,7 +29,7 @@ export default function VersionHistory({ kind, assetId, onRestore }: {
   return (
     <>
       <button className="hh-btn" onClick={() => setOpen(true)}
-        style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>
+        style={{ background: 'none', border: '1px solid rgba(0,0,0,0.09)', borderRadius: 8, padding: '7px 13px', fontSize: 12.5, color: '#6B6B6B', cursor: 'pointer', fontFamily: "'Geist', 'Inter', system-ui, sans-serif" }}>
         History
       </button>
       {open && (

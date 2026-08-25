@@ -94,18 +94,22 @@ export default function EditorShell({
     return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
   }, [onViewChange])
 
+  /* Chrome header (Phase 7): the tool bar around the canvas follows the ck
+     system — Geist, quiet neutrals, one dark action. Fixed light values while
+     the editor pages themselves are still light surfaces. */
+  const chromeFont = "'Geist', 'Inter', -apple-system, system-ui, sans-serif"
   const header = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: isMobile ? '12px 16px' : '16px 40px', borderBottom: '1px solid var(--hh-line)', position: 'sticky', top: 0, background: 'var(--hh-monterey)', zIndex: 5 }}>
-      <button onClick={() => nav(backTo)} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 15, cursor: 'pointer', padding: 4 }}>‹</button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: isMobile ? '10px 14px' : '12px 24px', borderBottom: '1px solid rgba(0,0,0,0.07)', position: 'sticky', top: 0, background: '#F7F7F5', zIndex: 5, fontFamily: chromeFont }}>
+      <button onClick={() => nav(backTo)} aria-label="Back" className="hh-btn" style={{ background: 'none', border: '1px solid rgba(0,0,0,0.09)', borderRadius: 8, width: 28, height: 28, color: '#6B6B6B', fontSize: 14, cursor: 'pointer', lineHeight: 1 }}>‹</button>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-strong)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Editor · {ctype}</div>
-        <div style={{ fontSize: 11, color: 'var(--text-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{status && isMobile ? status : subline}</div>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: '#151515', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ctype}</div>
+        <div style={{ fontSize: 11, color: '#999999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{status && isMobile ? status : subline}</div>
       </div>
-      {status && !isMobile && <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{status}</span>}
+      {status && !isMobile && <span style={{ fontSize: 12, color: '#6B6B6B' }}>{status}</span>}
       {headerExtra}
-      {onNew && <button className="hh-btn" onClick={onNew} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, color: 'var(--text-muted)', cursor: 'pointer' }}>New</button>}
+      {onNew && <button className="hh-btn" onClick={onNew} style={{ background: 'none', border: '1px solid rgba(0,0,0,0.09)', borderRadius: 8, padding: '7px 13px', fontSize: 12.5, color: '#6B6B6B', cursor: 'pointer', fontFamily: chromeFont }}>New</button>}
       <button className="hh-btn" onClick={onDone} disabled={busy || doneDisabled}
-        style={{ background: 'var(--hh-anthracite)', color: 'var(--text-on-ink)', border: '1px solid var(--hh-anthracite)', borderRadius: 999, padding: '8px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || doneDisabled ? 0.55 : 1 }}>
+        style={{ background: '#151515', color: '#F7F7F5', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || doneDisabled ? 0.5 : 1, fontFamily: chromeFont }}>
         {busy ? '…' : doneLabel}
       </button>
     </div>
