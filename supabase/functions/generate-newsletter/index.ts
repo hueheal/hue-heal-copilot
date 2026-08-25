@@ -17,6 +17,7 @@ interface Body {
   topic: string
   notes?: string
   brandName?: string
+  knowledge?: string
   toneOfVoice?: string
   writingGuidelines?: string
   template?: string
@@ -68,7 +69,7 @@ Deno.serve(async (req) => {
   const guides = (body.writingGuidelines ?? '').trim()
   const notes = (body.notes ?? '').trim()
 
-  const nameRule = brandNameRule(body.brandName)
+  const nameRule = brandNameRule(body.brandName) + (body.knowledge ? ` COMPANY KNOWLEDGE (facts to draw on; never contradict them or invent beyond them): ${body.knowledge}` : '')
   const prompt = body.mode === 'teaser'
     ? `Write a SHORT email teaser for ${brand} that entices readers to click through and read a full journal article titled "${topic}".\n` +
       (notes ? `The article, to draw a hook from (open a loop, do not give it all away or list the takeaways): ${notes}\n` : '') +

@@ -1,4 +1,5 @@
 import { generateCopy, savePost } from './socialCopilot'
+import { knowledgeDigest } from './knowledge'
 import { journalUrl } from './journal'
 import type { Block } from './newsletter'
 import type { Sector } from './database.types'
@@ -14,7 +15,7 @@ import { defaultTemplateFor } from './social/templates'
 
 export type SocialFormat = 'portrait' | 'carousel' | 'story'
 
-interface BrandLike { name?: string | null; tone_of_voice?: string | null; writing_guidelines?: string | null; website?: string | null; tagline?: string | null }
+interface BrandLike { name?: string | null; tone_of_voice?: string | null; writing_guidelines?: string | null; website?: string | null; tagline?: string | null; knowledge?: Record<string, string> | null }
 
 /** Sections in reading order, each carrying the images that sit inside it, so
     an image can be placed on the slide whose idea it illustrates. */
@@ -72,7 +73,7 @@ export async function createPostFromArticle(input: {
     accent: 'copper',
     article: { title: input.title, dek: input.dek, body: input.bodyText, url, takeaways: input.takeaways },
     template: defaultTemplateFor(input.brand?.name, input.format, Boolean(input.hero)),
-    brandOverride: input.brand ? { name: input.brand.name ?? undefined, voice: input.brand.tone_of_voice ?? undefined, guidelines: input.brand.writing_guidelines ?? undefined, tagline: input.brand.tagline ?? undefined } : undefined,
+    brandOverride: input.brand ? { name: input.brand.name ?? undefined, voice: input.brand.tone_of_voice ?? undefined, guidelines: input.brand.writing_guidelines ?? undefined, tagline: input.brand.tagline ?? undefined, knowledge: knowledgeDigest(input.brand.knowledge) || undefined } : undefined,
   })
 
   const isMulti = input.format === 'carousel' || input.format === 'story'

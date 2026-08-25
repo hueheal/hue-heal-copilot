@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { knowledgeDigest } from '../lib/knowledge'
+import { useBrand } from '../lib/brandContext'
 import VersionHistory from '../components/chrome/VersionHistory'
 import { saveVersion } from '../lib/assets'
 import { fileNameFromTitle } from '../lib/fileName'
@@ -23,6 +25,7 @@ const inputStyle: React.CSSProperties = {
 const labelStyle: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6, display: 'block' }
 
 export default function ProposalEditor() {
+  const { current: brandWorld } = useBrand()
   const { id } = useParams()
   const nav = useNavigate()
   const [p, setP] = useState<Proposal | null>(null)
@@ -49,7 +52,7 @@ export default function ProposalEditor() {
   async function draftWithAI() {
     setBusy(true); setStatus(null)
     try {
-      const { draft, source } = await generateProposalDraft(p!.client_name, brief)
+      const { draft, source } = await generateProposalDraft(p!.client_name, brief, undefined, knowledgeDigest(brandWorld?.knowledge) || undefined)
       set({
         title: draft.title || p!.title,
         phases: draft.phases,

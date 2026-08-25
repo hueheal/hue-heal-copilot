@@ -17,6 +17,7 @@ import {
   inviteBrandMember,
   removeBrandMember,
 } from '../lib/brand'
+import { KNOWLEDGE_FIELDS, type Knowledge } from '../lib/knowledge'
 import { startInstagramConnect, finishInstagramConnect, refreshInstagramToken } from '../lib/instagramConnect'
 import {
   type AppMember,
@@ -33,7 +34,7 @@ const area: React.CSSProperties = { ...inp, lineHeight: 1.55, resize: 'vertical'
 const hint: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.5 }
 
 export default function Settings() {
-  const [tab, setTab] = useState<'brands' | 'team'>('brands')
+  const [tab, setTab] = useState<'brands' | 'knowledge' | 'team'>('brands')
 
   return (
     <div>
@@ -43,7 +44,7 @@ export default function Settings() {
         subtitle="Manage your brand worlds (voice + creative direction) and who's allowed into the studio workspace."
       />
       <div style={{ display: 'flex', gap: 4, padding: '14px 40px 0', borderBottom: '1px solid var(--hh-line)' }}>
-        {(['brands', 'team'] as const).map((t) => (
+        {(['brands', 'knowledge', 'team'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -54,11 +55,11 @@ export default function Settings() {
               borderBottom: tab === t ? '2px solid var(--hh-copper)' : '2px solid transparent', marginBottom: -1,
             }}
           >
-            {t === 'brands' ? 'Brand worlds' : 'Team'}
+            {t === 'brands' ? 'Brand' : t === 'knowledge' ? 'Knowledge' : 'Team'}
           </button>
         ))}
       </div>
-      {tab === 'brands' ? <BrandsPanel /> : <TeamPanel />}
+      {tab === 'brands' ? <BrandsPanel /> : tab === 'knowledge' ? <KnowledgePanel /> : <TeamPanel />}
     </div>
   )
 }
@@ -497,5 +498,50 @@ function TeamPanel() {
         {members.length === 0 && <div style={{ padding: '16px', fontSize: 13, color: 'var(--text-muted)' }}>No members loaded.</div>}
       </div>
     </section>
+  )
+}
+
+
+/* ------------------------------------------------------------ Knowledge */
+/* Phase 9: structured company context for the ACTIVE workspace. Everything
+   here is injected into every generator, so the copilot writes with the
+   facts of the business. */
+function KnowledgePanel() {
+  const { current, reload } = useBrand()
+  const [k, setK] = useState<Knowledge>({})
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
+
+  useEffect(() => { setK((current?.knowledge as Knowledge) ?? {}) }, [current?.id])
+
+  async function save() {
+    if (!current) return
+    setBusy(true); setStatus(null)
+    try {
+      await updateBrand(current.id, { knowledge: k as Record<string, string> })
+      await reload()
+      setStatus('Saved. Every generator now writes with this context.')
+    } catch (e) { setStatus(String(e)) } finally { setBusy(false) }
+  }
+
+  return (
+    <div style={{ padding: '28px 40px 80px', maxWidth: 780 }}>
+      <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '62ch' }}>
+        What <strong>{current?.name ?? 'this workspace'}</strong> knows about itself. The copilot draws on these facts in journals,
+        social, newsletters, proposals and client documents, and never invents beyond them. Leave anything blank; only filled
+        sections are used.
+      </p>
+      {KNOWLEDGE_FIELDS.map((f) => (
+        <div key={f.key}>
+          <label style={label}>{f.label}</label>
+          <textarea rows={3} value={k[f.key] ?? ''} onChange={(e) => setK((prev) => ({ ...prev, [f.key]: e.target.value }))} style={area} />
+          <p style={hint}>{f.hint}</p>
+        </div>
+      ))}
+      <div style={{ marginTop: 22, display: 'flex', gap: 12, alignItems: 'center' }}>
+        <PillButton tone="accent" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save knowledge'}</PillButton>
+        {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
+      </div>
+    </div>
   )
 }

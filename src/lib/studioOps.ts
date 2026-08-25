@@ -248,6 +248,7 @@ export async function generateProposalDraft(
   client: string,
   brief: string,
   sector?: string,
+  knowledge?: string,
 ): Promise<{ draft: DraftedProposal; source: 'claude' | 'local' }> {
   if (isSupabaseConfigured && supabase && functionsBase) {
     const { data: sessionData } = await supabase.auth.getSession()
@@ -266,7 +267,7 @@ export async function generateProposalDraft(
         const res = await fetch(`${functionsBase}/generate-proposal`, {
           method: 'POST',
           headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-          body: JSON.stringify({ client, brief, sector, brand }),
+          body: JSON.stringify({ client, brief, sector, brand: { ...brand, knowledge: knowledge || undefined } }),
         })
         if (res.ok) {
           const { proposal } = await res.json()

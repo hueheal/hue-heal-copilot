@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { knowledgeDigest } from '../lib/knowledge'
 import { fileNameFromTitle } from '../lib/fileName'
 import { createPortal } from 'react-dom'
 import { useParams } from 'react-router-dom'
@@ -131,6 +132,7 @@ export default function ClientDocEditor() {
           notes: aiNotes,
           structure: !isForm ? slides.filter((sl) => sl.layout !== 'cover').map((sl) => ({ eyebrow: sl.eyebrow, title: sl.title, layout: sl.layout })) : undefined,
           brandName: brand?.name, toneOfVoice: brand?.tone_of_voice, writingGuidelines: brand?.writing_guidelines,
+          knowledge: knowledgeDigest(brand?.knowledge) || undefined,
         }),
       })
       const data = await res.json().catch(() => ({}))

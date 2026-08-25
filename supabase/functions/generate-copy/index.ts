@@ -21,6 +21,7 @@ interface Brief {
     tagline?: string
     voice?: string
     guidelines?: string
+    knowledge?: string
   }
   /** The studio template the copy will be laid into (e.g. 'rd-question'), so
       the headline can take that hook's shape. */
@@ -85,6 +86,7 @@ Deno.serve(async (req) => {
     brand.voice ? `Brand voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, never salesy or hyped.',
     brand.guidelines ? `Writing guidelines: ${brand.guidelines}` : '',
     brandNameRule(brand.name),
+    brand.knowledge ? `COMPANY KNOWLEDGE (facts to draw on; never contradict them or invent beyond them):\n${brand.knowledge}` : '',
     'Write in British English. Keep it elegant and specific. Never invent statistics, studies, quotes or client names.',
     'Never use em dashes or en dashes anywhere. Use commas, colons, full stops, or the word "and" instead.',
   ]

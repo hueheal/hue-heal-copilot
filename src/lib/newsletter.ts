@@ -303,6 +303,7 @@ export async function generateNewsletter(input: {
   writingGuidelines?: string
   template?: string
   mode?: string
+  knowledge?: string
 }): Promise<{ result: GeneratedNewsletter | null; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { result: null, error: 'Not connected' }
   const { data: sessionData } = await supabase.auth.getSession()

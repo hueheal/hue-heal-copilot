@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { knowledgeDigest } from '../lib/knowledge'
 import VersionHistory from '../components/chrome/VersionHistory'
 import { saveVersion } from '../lib/assets'
 import { fileNameFromTitle } from '../lib/fileName'
@@ -459,7 +460,7 @@ export default function SocialStudio() {
     try {
       const { copy, source } = await generateCopy({
         topic: copyTopic, format: design.format, sector: post.sector, accent: design.accent, template: tid,
-        brandOverride: brandWorld ? { name: brandWorld.name, voice: brandWorld.tone_of_voice ?? undefined, guidelines: brandWorld.writing_guidelines ?? undefined, tagline: brandWorld.tagline ?? undefined } : undefined,
+        brandOverride: brandWorld ? { name: brandWorld.name, voice: brandWorld.tone_of_voice ?? undefined, guidelines: brandWorld.writing_guidelines ?? undefined, tagline: brandWorld.tagline ?? undefined, knowledge: knowledgeDigest(brandWorld.knowledge) || undefined } : undefined,
       })
       // "The number" hook arrives as "3bn | statement": the number is its own element.
       let headline = copy.headline

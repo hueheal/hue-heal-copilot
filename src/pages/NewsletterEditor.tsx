@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { knowledgeDigest } from '../lib/knowledge'
 import VersionHistory from '../components/chrome/VersionHistory'
 import { saveVersion } from '../lib/assets'
 import { useSearchParams } from 'react-router-dom'
@@ -128,6 +129,7 @@ export default function NewsletterEditor() {
       toneOfVoice: brand?.tone_of_voice,
       writingGuidelines: brand?.writing_guidelines,
       template: TEMPLATES.find((t) => t.id === templateId)?.label,
+      knowledge: knowledgeDigest(brand?.knowledge) || undefined,
     })
     setAiBusy(false)
     if (error || !result) { setStatus(error ?? 'Could not draft'); return }

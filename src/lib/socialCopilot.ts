@@ -14,7 +14,7 @@ export interface Brief {
   article?: { title: string; dek?: string; body?: string; url: string; takeaways?: string[] }
   /** The active brand world's identity (name, voice, guidelines, tagline). When
       set it replaces the legacy brand-kit lookup so every workspace sounds like itself. */
-  brandOverride?: { name?: string; tagline?: string; voice?: string; guidelines?: string }
+  brandOverride?: { name?: string; tagline?: string; voice?: string; guidelines?: string; knowledge?: string }
   /** Studio template the copy is laid into (e.g. 'rd-question'); shapes the hook. */
   template?: string
 }

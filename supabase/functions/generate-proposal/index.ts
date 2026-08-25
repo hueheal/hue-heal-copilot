@@ -67,6 +67,7 @@ Deno.serve(async (req) => {
     brand.tagline ? `Tagline: "${brand.tagline}".` : '',
     brand.voice ? `Voice: ${brand.voice}` : 'Voice: warm, editorial, grounded, confident, never salesy.',
     brandNameRule(brand.name),
+    (brand as { knowledge?: string }).knowledge ? `COMPANY KNOWLEDGE (facts to draw on; never contradict them or invent beyond them):\n${(brand as { knowledge?: string }).knowledge}` : '',
     'Write in British English. Be specific to the brief; never invent facts, names or numbers beyond it.',
     'Never use em dashes or en dashes anywhere. Use commas, colons, full stops, or the word "and" instead.',
     'Fees should be realistic studio fees in GBP. Typical phases: Discovery, Concept, Design development, Delivery.',

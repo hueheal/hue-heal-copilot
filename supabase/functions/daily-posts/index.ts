@@ -50,7 +50,7 @@ const TOPIC_BUCKETS = [
 
 interface CarouselSlide { heading: string; body: string }
 interface Post { title: string; format: string; caption: string; hashtags: string[]; sector: string; subject?: string; slides?: CarouselSlide[]; sourceUrl?: string }
-interface Brand { id: string; name: string; created_by?: string | null; tone_of_voice?: string | null; writing_guidelines?: string | null; accent_color?: string | null }
+interface Brand { id: string; name: string; created_by?: string | null; tone_of_voice?: string | null; writing_guidelines?: string | null; accent_color?: string | null; knowledge?: Record<string, string> | null }
 interface Item { post: Post; draftId: string | null }
 
 function esc(s: string): string {
@@ -192,6 +192,7 @@ async function draftPosts(brand: Brand, brief: string, avoid: string, feedback =
       : 'No live research is available, so use evergreen angles (a digital thought piece, wellness in another industry, and the psychology of wellbeing shaping design). Do not state anything as breaking news.\n\n') +
     `Write today's 3 polished, ready-to-post Instagram posts for ${brand.name}.\n` +
     `${brandNameRule(brand.name)}\n` +
+    (brand.knowledge && Object.values(brand.knowledge).some((v) => (v ?? '').trim()) ? `\nCOMPANY KNOWLEDGE (facts to draw on; never contradict them or invent beyond them):\n${Object.entries(brand.knowledge).filter(([, v]) => (v ?? '').trim()).map(([k, v]) => `${k.toUpperCase()}: ${String(v).slice(0, 600)}`).join('\n')}\n` : '') +
     (voice ? `\nVOICE (follow it closely):\n${voice}\n` : '') +
     (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
     avoid +
@@ -325,7 +326,7 @@ async function runBatch(preview: boolean): Promise<Record<string, unknown>> {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE)
 
   // Resolve the Hue & Heal brand (by name, then default, then first available).
-  const cols = 'id, name, created_by, tone_of_voice, writing_guidelines, accent_color'
+  const cols = 'id, name, created_by, tone_of_voice, writing_guidelines, accent_color, knowledge'
   let brand = (await admin.from('brand_profiles').select(cols).ilike('name', 'Hue & Heal').maybeSingle()).data as Brand | null
   if (!brand) brand = (await admin.from('brand_profiles').select(cols).eq('is_default', true).maybeSingle()).data as Brand | null
   if (!brand) brand = (await admin.from('brand_profiles').select(cols).limit(1).maybeSingle()).data as Brand | null

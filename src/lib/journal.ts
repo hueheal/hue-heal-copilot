@@ -92,6 +92,7 @@ export async function generateJournal(input: {
   topic: string
   notes?: string
   brandName?: string
+  knowledge?: string
   toneOfVoice?: string
   writingGuidelines?: string
   /** 'report' writes in the wider-publication register (state-of-the-sector). */

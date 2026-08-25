@@ -25,6 +25,7 @@ interface Body {
   clientNote?: string
   notes?: string
   brandName?: string
+  knowledge?: string
   toneOfVoice?: string
   writingGuidelines?: string
 }
@@ -143,7 +144,7 @@ Deno.serve(async (req) => {
     (voice ? `\nTONE OF VOICE (follow it closely):\n${voice}\n` : '') +
     (guides ? `\nWRITING GUIDELINES:\n${guides}\n` : '') +
     '\nHouse rules: address the client by name where natural so it feels made for them, never generic. ' +
-    'Precise, warm, design-led. British English. No hype, no buzzwords, no emoji. ' + brandNameRule(brand) + ' ' +
+    'Precise, warm, design-led. British English. No hype, no buzzwords, no emoji. ' + brandNameRule(brand) + ' ' + (body.knowledge ? `\nCOMPANY KNOWLEDGE (facts to draw on; never contradict them or invent beyond them):\n${body.knowledge}\n` : '') +
     'Never use em dashes or en dashes: use commas, colons, full stops, or the word "and". ' +
     'Do not invent facts, figures, dates or commitments; use [bracketed placeholders] where specifics are needed. ' +
     (isDeck

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { knowledgeDigest } from '../lib/knowledge'
 import VersionHistory from '../components/chrome/VersionHistory'
 import { saveVersion } from '../lib/assets'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -195,7 +196,7 @@ export default function CreateEditor() {
   async function write() {
     if (!aiTopic.trim()) return
     setAiBusy(true); setStatus(null)
-    const { result, error } = await generateJournal({ topic: aiTopic, notes: aiNotes, kind: family === 'report' ? 'report' : 'article', articleType, length, brandName: brand?.name, toneOfVoice: brand?.tone_of_voice, writingGuidelines: brand?.writing_guidelines })
+    const { result, error } = await generateJournal({ topic: aiTopic, notes: aiNotes, kind: family === 'report' ? 'report' : 'article', articleType, length, brandName: brand?.name, toneOfVoice: brand?.tone_of_voice, writingGuidelines: brand?.writing_guidelines, knowledge: knowledgeDigest(brand?.knowledge) })
     setAiBusy(false)
     if (error || !result) { setStatus(error ?? 'Could not write it'); return }
     setTitle(result.title); setDek(result.dek); setReadingTime(result.readingTime ?? '')

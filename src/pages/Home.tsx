@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
-import { listPosts, savePost, type Post } from '../lib/socialCopilot'
+import { listPosts, type Post } from '../lib/socialCopilot'
 import { listJournal, type JournalArticle } from '../lib/journal'
 import { listNewsletters, type Newsletter } from '../lib/newsletter'
 import { listProposals, type Proposal } from '../lib/studioOps'
@@ -9,6 +9,7 @@ import { isDesign, type Design } from '../lib/social/design'
 import { fontsFor } from '../lib/social/templates'
 import { INSTAGRAM_FORMATS } from '../lib/social/formats'
 import { SlideCanvas } from './SocialStudio'
+import Composer from '../components/chrome/Composer'
 import type { PostFormat } from '../lib/database.types'
 
 /* ============================================================
@@ -16,29 +17,6 @@ import type { PostFormat } from '../lib/database.types'
    the work you were in the middle of, and a few honest
    suggestions. Chrome surface: --ck-* tokens, light + dark.
    ============================================================ */
-
-type Kind = 'auto' | 'carousel' | 'portrait' | 'story' | 'journal' | 'newsletter' | 'proposal'
-const PILLS: { key: Kind; label: string }[] = [
-  { key: 'auto', label: 'Auto' },
-  { key: 'carousel', label: 'Carousel' },
-  { key: 'portrait', label: 'Post' },
-  { key: 'story', label: 'Story' },
-  { key: 'journal', label: 'Journal' },
-  { key: 'newsletter', label: 'Newsletter' },
-  { key: 'proposal', label: 'Proposal' },
-]
-
-/** Local intent read: fast, transparent, overridable via the pills. */
-function detect(prompt: string): Exclude<Kind, 'auto'> {
-  const p = prompt.toLowerCase()
-  if (/(carousel|slides|swipe)/.test(p)) return 'carousel'
-  if (/(story|stories|reel)/.test(p)) return 'story'
-  if (/(newsletter|email|subscriber)/.test(p)) return 'newsletter'
-  if (/(journal|article|long[- ]form|blog|essay|piece about)/.test(p)) return 'journal'
-  if (/(proposal|pitch|quote for|invoice)/.test(p)) return 'proposal'
-  if (/(instagram|social|post)/.test(p)) return 'portrait'
-  return 'carousel'
-}
 
 interface Recent {
   id: string
@@ -64,9 +42,6 @@ function ago(iso: string): string {
 export default function Home() {
   const { current } = useBrand()
   const nav = useNavigate()
-  const [prompt, setPrompt] = useState('')
-  const [pill, setPill] = useState<Kind>('auto')
-  const [busy, setBusy] = useState(false)
   const [recents, setRecents] = useState<Recent[]>([])
   const [journals, setJournals] = useState<JournalArticle[]>([])
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
@@ -101,23 +76,6 @@ export default function Home() {
     return () => { off = true }
   }, [current?.id])
 
-  const detected = pill === 'auto' ? detect(prompt) : pill
-  const canGo = prompt.trim().length > 0 || pill !== 'auto'
-
-  async function go() {
-    if (busy) return
-    const kind = detected
-    const topic = prompt.trim()
-    if (kind === 'journal') { nav(`/create/journal${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`); return }
-    if (kind === 'newsletter') { nav(`/create/newsletter${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`); return }
-    if (kind === 'proposal') { nav('/proposals'); return }
-    setBusy(true)
-    try {
-      const post = await savePost({ topic, format: kind, sector: 'hospitality', accent: 'copper', platform: 'instagram', headline: '', caption: '', hashtags: [], slides: [], image_url: null, status: 'draft' })
-      nav(`/create/social/${post.id}`)
-    } finally { setBusy(false) }
-  }
-
   /* Sparse, honest suggestions from what's actually in the workspace. */
   const suggestions = useMemo(() => {
     const out: { label: string; sub: string; to: string }[] = []
@@ -141,23 +99,7 @@ export default function Home() {
         <div className="ck-eyebrow">{day} · {current?.name ?? 'Studio'}</div>
         <h1 className="ck-h1">{greeting}. What shall we make?</h1>
 
-        <div className="ck-composer">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={`Describe it — “a carousel on why every tradition warms the stomach before breakfast”`}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && canGo) { e.preventDefault(); void go() } }}
-          />
-          <div className="ck-composer-row">
-            {PILLS.map((p) => (
-              <button key={p.key} className="ck-pill" data-on={pill === p.key || (pill === 'auto' && p.key !== 'auto' && detected === p.key && prompt.trim() !== '') ? '1' : '0'}
-                onClick={() => setPill(p.key)} aria-pressed={pill === p.key}>
-                {p.label}
-              </button>
-            ))}
-            <button className="ck-go" onClick={() => void go()} disabled={!canGo || busy}>{busy ? 'Starting…' : 'Create'}</button>
-          </div>
-        </div>
+        <Composer />
 
         {recents.length > 0 && (
           <>
