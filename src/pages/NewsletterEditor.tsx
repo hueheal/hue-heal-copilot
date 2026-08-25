@@ -67,7 +67,7 @@ export default function NewsletterEditor() {
   const [sending, setSending] = useState(false)
   const [uploadingId, setUploadingId] = useState<string | null>(null)
   const [mView, setMView] = useState<'edit' | 'preview'>('edit')
-  const [aiTopic, setAiTopic] = useState('')
+  const [aiTopic, setAiTopic] = useState(() => params.get('topic') ?? '')
   const [aiNotes, setAiNotes] = useState('')
   const [aiBusy, setAiBusy] = useState(false)
 

@@ -164,3 +164,69 @@
 @media (prefers-reduced-motion: reduce) {
   .ck-sidebar, .ck-item { transition: none; }
 }
+
+/* ---- Home (Phase 5): the first full chrome page ---- */
+.ck-page {
+  min-height: 100%; box-sizing: border-box; background: var(--ck-bg); color: var(--ck-ink);
+  font-family: var(--ck-font); padding: 56px 40px 80px;
+}
+.ck-page-inner { max-width: 880px; margin: 0 auto; }
+.ck-eyebrow { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ck-faint); font-weight: 500; }
+.ck-h1 { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; margin: 8px 0 40px; line-height: 1.2; }
+.ck-h2 { font-size: 13px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ck-muted); margin: 0 0 14px; }
+.ck-sectiongap { height: 48px; }
+
+.ck-composer {
+  background: var(--ck-surface); border: 1px solid var(--ck-line); border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 28px rgba(0,0,0,0.05); padding: 18px 18px 14px;
+}
+.ck-composer textarea {
+  width: 100%; box-sizing: border-box; border: none; outline: none; resize: none;
+  background: transparent; color: var(--ck-ink); font-family: var(--ck-font);
+  font-size: 16.5px; line-height: 1.5; min-height: 54px; padding: 2px 2px 10px;
+}
+.ck-composer textarea::placeholder { color: var(--ck-faint); }
+.ck-composer-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ck-pill {
+  border: 1px solid var(--ck-line); background: transparent; color: var(--ck-muted);
+  border-radius: 999px; padding: 5px 12px; font-family: var(--ck-font); font-size: 12.5px;
+  cursor: pointer; transition: all 120ms var(--ck-ease);
+}
+.ck-pill:hover { border-color: var(--ck-line-strong); color: var(--ck-ink); }
+.ck-pill[data-on='1'] { background: var(--ck-ink); border-color: var(--ck-ink); color: var(--ck-bg); }
+.ck-pill:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 1px; }
+.ck-go {
+  margin-left: auto; border: none; border-radius: 999px; padding: 9px 18px;
+  background: var(--ck-accent); color: #FFF; font-family: var(--ck-font);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.ck-go:disabled { opacity: 0.45; cursor: default; }
+.ck-go:focus-visible { outline: 2px solid var(--ck-ink); outline-offset: 2px; }
+
+.ck-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.ck-card {
+  display: block; text-align: left; background: var(--ck-surface); border: 1px solid var(--ck-line);
+  border-radius: var(--ck-radius-lg); overflow: hidden; cursor: pointer; padding: 0;
+  color: var(--ck-ink); font-family: var(--ck-font); text-decoration: none;
+  transition: border-color 140ms var(--ck-ease), transform 140ms var(--ck-ease), box-shadow 140ms var(--ck-ease);
+}
+.ck-card:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck-shadow-md); transform: translateY(-1px); }
+.ck-card:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 2px; }
+.ck-thumb { height: 136px; background: var(--ck-surface-2); position: relative; overflow: hidden; }
+.ck-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ck-thumb .ck-typo { position: absolute; inset: 0; padding: 16px 18px; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; color: var(--ck-muted); overflow: hidden; }
+.ck-card-meta { padding: 11px 14px 12px; }
+.ck-card-title { font-size: 13.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-card-sub { font-size: 11.5px; color: var(--ck-faint); margin-top: 3px; display: flex; gap: 6px; align-items: center; }
+
+.ck-suggest { display: flex; flex-direction: column; gap: 6px; }
+.ck-suggest button {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  background: none; border: 1px solid var(--ck-line); border-radius: 10px;
+  padding: 11px 14px; color: var(--ck-ink); font-family: var(--ck-font); font-size: 13.5px; cursor: pointer;
+  transition: border-color 120ms var(--ck-ease), background 120ms var(--ck-ease);
+}
+.ck-suggest button:hover { background: var(--ck-hover); border-color: var(--ck-line-strong); }
+.ck-suggest button:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 1px; }
+.ck-suggest .ck-sub { margin-left: auto; color: var(--ck-faint); font-size: 12px; }
+@media (max-width: 700px) { .ck-page { padding: 28px 16px 64px; } .ck-h1 { font-size: 26px; } }

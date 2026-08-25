@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import ConfirmButton from '../components/ConfirmButton'
 import EditorShell from '../components/EditorShell'
 import { useAuth } from '../lib/auth'
@@ -99,6 +99,7 @@ const BLOCK_LABEL: Record<string, string> = { heading: 'Heading', text: 'Text', 
 
 export default function CreateEditor() {
   const { family: famParam } = useParams()
+  const [params] = useSearchParams()
   const family: Family = famParam === 'report' ? 'report' : 'journal'
   const meta = FAMILY_META[family]
   const structures = STRUCTURES[family]
@@ -109,7 +110,7 @@ export default function CreateEditor() {
   const isMobile = useIsMobile()
   const gated = auth.mode === 'connected' && !auth.session
 
-  const [aiTopic, setAiTopic] = useState('')
+  const [aiTopic, setAiTopic] = useState(() => params.get('topic') ?? '')
   const [aiNotes, setAiNotes] = useState('')
   const [articleType, setArticleType] = useState<ArticleTypeKey>('story')
   const [length, setLength] = useState<LengthKey>('medium')

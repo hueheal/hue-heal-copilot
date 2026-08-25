@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import StudioLayout from './components/StudioLayout'
-import Dashboard from './pages/Dashboard'
+import Home from './pages/Home'
 import Calendar from './pages/Calendar'
 import Clients from './pages/Clients'
 import ClientRoom from './pages/ClientRoom'
@@ -44,7 +44,7 @@ export default function App() {
       <Route path="/templates" element={<AuthGate><BrandProvider><TemplateGallery /></BrandProvider></AuthGate>} />
 
       <Route element={<StudioLayout />}>
-        <Route index element={<Dashboard />} />
+        <Route index element={<Home />} />
         <Route path="create" element={<Create />} />
         <Route path="create/newsletter" element={<NewsletterEditor />} />
         <Route path="create/:family" element={<CreateEditor />} />
