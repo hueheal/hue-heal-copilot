@@ -9,7 +9,7 @@ import ConfirmButton from '../components/ConfirmButton'
 import { listBrands, resolveActiveBrand, getActiveBrandId, type BrandProfile } from '../lib/brand'
 import { useBrand } from '../lib/brandContext'
 import { INSTAGRAM_FORMAT_LIST, INSTAGRAM_FORMATS, type InstaFormat } from '../lib/social/formats'
-import { templatesFor, defaultTemplateFor, fontsFor, buildDesign, templateById, type ContentSlideInput } from '../lib/social/templates'
+import { templatesFor, defaultTemplateFor, fontsFor, buildDesign, buildContentSlide, templateById, type ContentSlideInput } from '../lib/social/templates'
 import { REMEDAE_PALETTE, isRemedae } from '../lib/social/remedae'
 import { resolveStyle } from '../lib/social/style'
 import { TYPE_ROLES, CANVAS_TYPE_SIZE } from '../lib/typeScale'
@@ -175,6 +175,9 @@ export default function SocialStudio() {
   const [brands, setBrands] = useState<BrandProfile[]>([])
   const [brandId] = useState<string | null>(getActiveBrandId())
   const [mView, setMView] = useState<'edit' | 'preview'>('preview') // mobile opens on the canvas
+  // Staged pipeline for fresh drafts: topic -> template -> edit. Posts that
+  // already carry copy, a photo or a saved design go straight to the editor.
+  const [step, setStep] = useState<'topic' | 'template' | 'edit'>('edit')
   const [copyTopic, setCopyTopic] = useState('')
   const [copyBusy, setCopyBusy] = useState(false)
   const { current: brandWorld } = useBrand()
@@ -200,6 +203,10 @@ export default function SocialStudio() {
       const loaded = isDesign(p.design) ? (p.design as unknown as Design) : buildDesign(fmt, seedTemplate, seed, 3, content)
       // Older saved designs predate per-brand fonts; attach the pairing on load.
       setDesign(loaded.fonts ? loaded : { ...loaded, fonts: fontsFor(brandWorld?.name) })
+      // A genuinely blank draft (straight from a Create tile) enters the staged
+      // flow; anything with copy, a photo or a saved design opens for editing.
+      const blank = !isDesign(p.design) && !(p.headline ?? '').trim() && !(p.caption ?? '').trim() && !(p.slides ?? []).length && !p.image_url
+      setStep(blank ? ((p.topic ?? '').trim() ? 'template' : 'topic') : 'edit')
     }).catch(() => setStatus('Could not load post'))
   }, [id])
 
@@ -339,9 +346,33 @@ export default function SocialStudio() {
     commit({ ...built, slides: [mergeCover(built.slides[0], design!.slides[0], templateById(design!.templateId).noPhoto), ...built.slides.slice(1)] })
     setActive(0); setSelId(null)
   }
-  // Switching template restyles the cover; content slides are left intact, and
-  // edited text carries over by role.
+  /** What a body slide is saying, read back off its elements. */
+  function slideContent(s: Slide): { heading: string; body: string; image?: string } {
+    const heading = s.elements.find((e) => e.role === 'heading' || e.role === 'headline')?.content ?? ''
+    const body = s.elements.find((e) => e.role === 'body' || e.role === 'dek')?.content ?? ''
+    const image = s.background.type === 'image' ? s.background.value : s.elements.find((e) => e.type === 'image' && (e.role === 'image' || e.role === 'cover'))?.content
+    return { heading, body, image }
+  }
+  /** Build one body slide in a given layout (or the standard content layout). */
+  function buildBodySlide(tid: string | undefined, format: InstaFormat, index: number, total: number, c: { heading: string; body: string; image?: string }): Slide {
+    if (tid && tid !== 'body') {
+      const def = templateById(tid)
+      const seed = { ...seedFrom(c.heading || `Point ${index + 1}`), dek: c.body || undefined, coverImage: def.noPhoto ? undefined : c.image }
+      return { ...def.build(format, seed), templateId: tid }
+    }
+    return buildContentSlide(format, { index, total, heading: c.heading, body: c.body, accent: design!.accent, style: resolveStyle(brandWorld ?? undefined), image: c.image, seed: seedFrom(post!.headline || post!.topic) })
+  }
+  // Template chips act on the SELECTED slide: on the cover they restyle the
+  // cover (edited text carries over by role); on a body slide they swap that
+  // slide's layout alone, keeping its heading, body and photo.
   function applyTemplate(tid: string) {
+    if (active > 0) {
+      const total = design!.slides.length - (remedae && design!.format === 'carousel' ? 2 : 1)
+      const next = buildBodySlide(tid === 'body' ? undefined : tid, design!.format, active - 1, Math.max(total, 1), slideContent(design!.slides[active]))
+      commit({ ...design!, slides: design!.slides.map((s, i) => (i === active ? next : s)) })
+      setSelId(null)
+      return
+    }
     const map = coverContent()
     const seed = seedFrom(map.headline || post!.headline || post!.topic)
     const cover = templateById(tid).build(design!.format, seed)
@@ -419,25 +450,31 @@ export default function SocialStudio() {
 
   /* Brief the copilot: write headline + caption + hashtags (and carousel content)
      for the topic, lay it into the canvas, and keep the current background. */
-  async function generateCopyNow() {
+  async function generateCopyNow(tidOverride?: string) {
     if (!copyTopic.trim() || !post || !design) return
+    const tid = tidOverride ?? design.templateId
     setCopyBusy(true); setStatus('Writing copy…')
     try {
       const { copy, source } = await generateCopy({
-        topic: copyTopic, format: design.format, sector: post.sector, accent: design.accent, template: design.templateId,
+        topic: copyTopic, format: design.format, sector: post.sector, accent: design.accent, template: tid,
         brandOverride: brandWorld ? { name: brandWorld.name, voice: brandWorld.tone_of_voice ?? undefined, guidelines: brandWorld.writing_guidelines ?? undefined, tagline: brandWorld.tagline ?? undefined } : undefined,
       })
       // "The number" hook arrives as "3bn | statement": the number is its own element.
       let headline = copy.headline
       let stat: string | undefined
-      if (design.templateId === 'rd-number' && headline.includes('|')) { const [n, ...rest] = headline.split('|'); stat = n.trim(); headline = rest.join('|').trim() }
+      if (tid === 'rd-number' && headline.includes('|')) { const [n, ...rest] = headline.split('|'); stat = n.trim(); headline = rest.join('|').trim() }
       setPost((p) => (p ? { ...p, topic: copyTopic, headline, caption: copy.caption, hashtags: copy.hashtags, slides: copy.slides as unknown as Post['slides'] } : p))
-      const built = buildDesign(design.format, design.templateId, seedFrom(headline), Math.max(design.slides.length, 1), (copy.slides ?? []) as ContentSlideInput[])
+      const built = buildDesign(design.format, tid, seedFrom(headline), Math.max(design.slides.length, 1), (copy.slides ?? []) as ContentSlideInput[])
       const prev = design.slides[0]
-      const keepPhoto = prev.background.type === 'image' && !templateById(design.templateId).noPhoto
+      const keepPhoto = prev.background.type === 'image' && !templateById(tid).noPhoto
       const cover = keepPhoto ? { ...built.slides[0], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength, scrimTint: prev.scrimTint } : (remedae ? built.slides[0] : { ...built.slides[0], background: prev.background, scrim: prev.scrim, scrimStrength: prev.scrimStrength })
       if (stat) cover.elements = cover.elements.map((el) => (el.role === 'stat' ? { ...el, content: stat! } : el))
-      commit({ ...built, slides: [cover, ...built.slides.slice(1)] })
+      // A body slide that was given its own layout keeps it through a rewrite.
+      const rest = built.slides.slice(1).map((s, i) => {
+        const was = design.slides[i + 1]
+        return was?.templateId ? buildBodySlide(was.templateId, built.format, i, built.slides.length - 1, slideContent(s)) : s
+      })
+      commit({ ...built, slides: [cover, ...rest] })
       setActive(0); setSelId(null)
       setStatus(source === 'claude' ? 'Copy drafted with Claude' : 'Drafted on-device')
       if (isMobile) setMView('preview')
@@ -512,6 +549,63 @@ export default function SocialStudio() {
   const railLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '18px 0 8px' }
   const chip = (activeC: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '7px 13px', fontSize: 12, border: activeC ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: activeC ? 'var(--hh-anthracite)' : 'transparent', color: activeC ? 'var(--text-on-ink)' : 'var(--text-body)' })
 
+  function PillButtonLike({ children, disabled, onClick }: { children: React.ReactNode; disabled?: boolean; onClick: () => void }) {
+    return (
+      <button className="hh-btn" onClick={onClick} disabled={disabled}
+        style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '12px 22px', fontSize: 13.5, fontWeight: 500, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1 }}>
+        {children}
+      </button>
+    )
+  }
+
+  /* ---- Staged flow: 1 topic -> 2 template -> 3 edit ---- */
+  if (step !== 'edit') {
+    const stepBox: React.CSSProperties = { maxWidth: 880, margin: '0 auto', padding: '56px 24px 80px' }
+    const stepEyebrow: React.CSSProperties = { fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 10 }
+    const stepH1: React.CSSProperties = { fontFamily: 'var(--font-serif)', fontSize: 34, color: 'var(--text-strong)', margin: '0 0 8px' }
+    const stepSub: React.CSSProperties = { fontSize: 14, color: 'var(--text-muted)', margin: '0 0 26px', lineHeight: 1.55 }
+    if (step === 'topic') {
+      return (
+        <div style={stepBox}>
+          <div style={stepEyebrow}>New Instagram {spec.label.toLowerCase()} · step 1 of 3</div>
+          <h1 style={stepH1}>What is this post about?</h1>
+          <p style={stepSub}>One topic, as specific as you can make it. The copilot writes the copy for the template you pick next.</p>
+          <textarea value={copyTopic} onChange={(e) => setCopyTopic(e.target.value)} rows={3} autoFocus
+            placeholder="e.g. why every tradition warms the stomach before breakfast"
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && copyTopic.trim()) { e.preventDefault(); setStep('template') } }}
+            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 12, padding: '14px 16px', fontSize: 16, fontFamily: 'var(--font-sans)', resize: 'vertical' }} />
+          <div style={{ display: 'flex', gap: 12, marginTop: 18, alignItems: 'center' }}>
+            <PillButtonLike disabled={!copyTopic.trim()} onClick={() => setStep('template')}>Choose a template →</PillButtonLike>
+            <button className="hh-btn" onClick={() => setStep('template')} style={{ background: 'none', border: 'none', fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer' }}>Skip, start blank</button>
+          </div>
+        </div>
+      )
+    }
+    // step === 'template': every template this workspace has, previewed live.
+    const previewSeed = seedFrom('')
+    return (
+      <div style={{ ...stepBox, maxWidth: 1180 }}>
+        <div style={stepEyebrow}>New Instagram {spec.label.toLowerCase()} · step 2 of 3</div>
+        <h1 style={stepH1}>Choose a template</h1>
+        <p style={stepSub}>
+          {copyTopic.trim() ? <>The copy for “{copyTopic.trim()}” is written into the template you pick.</> : 'Pick a starting layout; you can switch any time.'}
+          {' '}<button className="hh-btn" onClick={() => setStep('topic')} style={{ background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--text-accent)', cursor: 'pointer' }}>← Change topic</button>
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22 }}>
+          {TEMPLATES.map((t) => (
+            <div key={t.id} onClick={() => { applyTemplate(t.id); setStep('edit'); if (copyTopic.trim()) void generateCopyNow(t.id) }}
+              style={{ cursor: 'pointer' }}>
+              <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--hh-line)', boxShadow: 'var(--shadow-raised)' }}>
+                <SlideCanvas slide={t.build(design.format, previewSeed)} spec={spec} displayW={196} fonts={design.fonts} />
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--text-body)', marginTop: 7, textAlign: 'center' }}>{t.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <EditorShell
       ctype={spec.label}
@@ -530,9 +624,9 @@ export default function SocialStudio() {
           {/* Brief the copilot */}
           <div style={{ border: '1px solid var(--hh-line)', borderRadius: 14, padding: 14, background: 'var(--hh-bone)', marginTop: 4 }}>
             <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>✦ Brief the copilot</div>
-            <input value={copyTopic} onChange={(e) => setCopyTopic(e.target.value)} placeholder="Topic — e.g. wellness design in hotels" onKeyDown={(e) => { if (e.key === 'Enter') generateCopyNow() }}
+            <input value={copyTopic} onChange={(e) => setCopyTopic(e.target.value)} placeholder="Topic — e.g. wellness design in hotels" onKeyDown={(e) => { if (e.key === 'Enter') void generateCopyNow() }}
               style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13, fontFamily: 'var(--font-sans)' }} />
-            <button className="hh-btn" onClick={generateCopyNow} disabled={copyBusy || !copyTopic.trim()}
+            <button className="hh-btn" onClick={() => void generateCopyNow()} disabled={copyBusy || !copyTopic.trim()}
               style={{ marginTop: 8, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '10px 16px', fontSize: 12.5, fontWeight: 500, cursor: copyBusy || !copyTopic.trim() ? 'default' : 'pointer', opacity: copyBusy || !copyTopic.trim() ? 0.55 : 1 }}>
               {copyBusy ? 'Writing…' : '✦ Generate copy'}
             </button>
@@ -547,14 +641,19 @@ export default function SocialStudio() {
           </div>
 
           <div style={{ ...railLabel, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span>Template</span>
+            <span>{active === 0 ? 'Template · cover' : `Layout · slide ${active + 1}`}</span>
             <a href={`/templates?format=${design.format}${post.image_url ? '&photo=1' : ''}`} target="_blank" rel="noopener" style={{ fontSize: 11, letterSpacing: 0, textTransform: 'none', color: 'var(--text-muted)' }}>See all ↗</a>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {active > 0 && (
+              <button className="hh-btn" onClick={() => applyTemplate('body')} style={chip(!slide.templateId)}>Body layout</button>
+            )}
             {TEMPLATES.map((t) => (
-              <button key={t.id} className="hh-btn" onClick={() => applyTemplate(t.id)} style={chip(design.templateId === t.id)}>{t.label}</button>
+              <button key={t.id} className="hh-btn" onClick={() => applyTemplate(t.id)}
+                style={chip(active === 0 ? design.templateId === t.id : slide.templateId === t.id)}>{t.label}</button>
             ))}
           </div>
+          {active > 0 && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Applies to this slide only. Body layout is the standard numbered slide.</div>}
 
           <div style={railLabel}>Background</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>

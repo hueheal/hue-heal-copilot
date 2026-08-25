@@ -104,9 +104,14 @@ slide automatically.
 
 ## Using it
 
-- Create → Social → any format. A Remedae draft opens on The question (text)
-  or the Editorial cover (with a photo); stories open on Short cover; carousels
-  on Six traditions (or the cover when there is a hero).
+- Create → Social → any format opens the staged flow: 1) name the topic,
+  2) choose a template from live previews, 3) edit copy and imagery on the
+  canvas. The copy is written for the template you picked. Posts arriving with
+  content (an article, a daily post) skip straight to the editor.
+- In a carousel, the template chips act on the selected slide: on the cover
+  they restyle the cover, on a body slide they swap that slide's layout alone
+  (any template, or back to the standard numbered Body layout). Per-slide
+  layouts survive a copy rewrite.
 - Article → Instagram from a journal piece opens on the Editorial cover with
   the hero, article images on the body slides they belong to, and the closing
   slide pointing to remedae.app.

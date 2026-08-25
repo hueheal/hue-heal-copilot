@@ -62,6 +62,10 @@ export interface Slide {
   scrimStrength?: number // 0–100 intensity, default 55
   /** Scrim colour as an "r,g,b" triplet; default is the house warm black. */
   scrimTint?: string
+  /** Per-slide layout override (a TemplateDef id). Absent on body slides that
+      use the standard content layout, and on the cover (which follows
+      Design.templateId). */
+  templateId?: string
   elements: DesignElement[]
 }
 
