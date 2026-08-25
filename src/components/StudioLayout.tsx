@@ -28,8 +28,8 @@ function LayoutInner() {
   // Mobile: an app shell with a slim top bar and a bottom tab bar.
   if (isMobile) {
     return (
-      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--hh-monterey)', color: 'var(--text-strong)', fontFamily: 'var(--font-sans)' }}>
-        <header style={{ height: 50, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', background: 'var(--hh-anthracite)', color: 'var(--text-on-ink)' }}>
+      <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ck-bg)', color: 'var(--ck-ink)', fontFamily: 'var(--ck-font)' }}>
+        <header style={{ height: 50, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', background: 'var(--ck-bg)', color: 'var(--ck-ink)', borderBottom: '1px solid var(--ck-line)', fontFamily: 'var(--ck-font)' }}>
           <span style={{ fontFamily: 'var(--font-serif)', fontSize: 17 }}>{current?.name ?? 'Hue & Heal'}</span>
         </header>
         <main key={current?.id ?? 'none'} style={{ flex: 1, minWidth: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 'calc(66px + env(safe-area-inset-bottom))' }}>
@@ -49,9 +49,9 @@ function LayoutInner() {
           height: '100%',
           minHeight: 720,
           width: '100%',
-          background: 'var(--hh-monterey)',
-          color: 'var(--text-strong)',
-          fontFamily: 'var(--font-sans)',
+          background: 'var(--ck-bg)',
+          color: 'var(--ck-ink)',
+          fontFamily: 'var(--ck-font)',
           overflow: 'hidden',
         }}
       >

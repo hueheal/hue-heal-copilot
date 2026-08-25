@@ -28,10 +28,10 @@ import {
   removeMember,
 } from '../lib/members'
 
-const label: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '20px 0 8px', display: 'block' }
-const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '10px 12px', fontSize: 13.5, fontFamily: 'var(--font-sans)' }
+const label: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '20px 0 8px', display: 'block' }
+const inp: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '10px 12px', fontSize: 13.5, fontFamily: 'var(--ck-font)' }
 const area: React.CSSProperties = { ...inp, lineHeight: 1.55, resize: 'vertical' }
-const hint: React.CSSProperties = { fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.5 }
+const hint: React.CSSProperties = { fontSize: 12, color: 'var(--ck-muted)', margin: '4px 0 0', lineHeight: 1.5 }
 
 export default function Settings() {
   const [tab, setTab] = useState<'brands' | 'knowledge' | 'team'>('brands')
@@ -43,7 +43,7 @@ export default function Settings() {
         title="Brands & Team"
         subtitle="Manage your brand worlds (voice + creative direction) and who's allowed into the studio workspace."
       />
-      <div style={{ display: 'flex', gap: 4, padding: '14px 40px 0', borderBottom: '1px solid var(--hh-line)' }}>
+      <div style={{ display: 'flex', gap: 4, padding: '14px 40px 0', borderBottom: '1px solid var(--ck-line)' }}>
         {(['brands', 'knowledge', 'team'] as const).map((t) => (
           <button
             key={t}
@@ -51,7 +51,7 @@ export default function Settings() {
             className="hh-btn"
             style={{
               border: 'none', background: 'none', padding: '8px 14px 14px', fontSize: 14, textTransform: 'capitalize',
-              color: tab === t ? 'var(--text-strong)' : 'var(--text-muted)',
+              color: tab === t ? 'var(--ck-ink)' : 'var(--ck-muted)',
               borderBottom: tab === t ? '2px solid var(--hh-copper)' : '2px solid transparent', marginBottom: -1,
             }}
           >
@@ -230,38 +230,38 @@ function BrandsPanel() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'stretch' }}>
-      <aside style={{ width: 220, flexShrink: 0, borderRight: '1px solid var(--hh-line)', padding: '20px 16px', minHeight: 400 }}>
+      <aside style={{ width: 220, flexShrink: 0, borderRight: '1px solid var(--ck-line)', padding: '20px 16px', minHeight: 400 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>Brands</div>
-          <button className="hh-btn" onClick={addBrand} style={{ border: 'none', background: 'none', color: 'var(--hh-copper)', fontSize: 18, lineHeight: 1, padding: 0 }} title="New brand">+</button>
+          <div style={{ fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ck-faint)' }}>Brands</div>
+          <button className="hh-btn" onClick={addBrand} style={{ border: 'none', background: 'none', color: 'var(--ck-accent)', fontSize: 18, lineHeight: 1, padding: 0 }} title="New brand">+</button>
         </div>
         {brands.map((b) => (
           <button key={b.id} onClick={() => select(b.id)} className="hh-btn"
             style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', borderRadius: 8, padding: '9px 11px', marginBottom: 4, fontSize: 13.5,
-              background: b.id === selId ? 'var(--hh-mushroom)' : 'transparent', color: b.id === selId ? '#2A211A' : 'var(--text-strong)' }}>
-            {b.name}{b.is_default && <span style={{ fontSize: 10, color: 'var(--hh-copper)', marginLeft: 6 }}>· default</span>}
+              background: b.id === selId ? 'var(--hh-mushroom)' : 'transparent', color: b.id === selId ? '#2A211A' : 'var(--ck-ink)' }}>
+            {b.name}{b.is_default && <span style={{ fontSize: 10, color: 'var(--ck-accent)', marginLeft: 6 }}>· default</span>}
           </button>
         ))}
-        {brands.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>No brands yet.</div>}
+        {brands.length === 0 && <div style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>No brands yet.</div>}
       </aside>
 
       <section style={{ flex: 1, minWidth: 0, padding: '20px 40px 60px' }}>
         {!draft ? (
-          <div style={{ fontSize: 14, color: 'var(--text-muted)', paddingTop: 30 }}>Select or create a brand to edit.</div>
+          <div style={{ fontSize: 14, color: 'var(--ck-muted)', paddingTop: 30 }}>Select or create a brand to edit.</div>
         ) : (
           <div style={{ maxWidth: 760 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <input value={draft.name} onChange={(e) => patch({ name: e.target.value })} style={{ ...inp, fontSize: 18, fontWeight: 500, maxWidth: 360 }} />
               {!draft.is_default && <PillButton tone="ghost" onClick={makeDefault}>Set as default</PillButton>}
-              {draft.is_default && <span style={{ fontSize: 12, color: 'var(--hh-copper)' }}>Default brand</span>}
+              {draft.is_default && <span style={{ fontSize: 12, color: 'var(--ck-accent)' }}>Default brand</span>}
             </div>
 
-            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '26px 0 2px' }}>Workspace identity</div>
+            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', margin: '26px 0 2px' }}>Workspace identity</div>
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginTop: 12 }}>
               <div>
                 <label style={{ ...label, margin: '0 0 8px' }}>Accent colour</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <input type="color" value={draft.accent_color || '#B5632F'} onChange={(e) => patch({ accent_color: e.target.value })} style={{ width: 38, height: 34, border: '1px solid var(--hh-line)', borderRadius: 8, background: 'none', padding: 2, cursor: 'pointer' }} />
+                  <input type="color" value={draft.accent_color || '#B5632F'} onChange={(e) => patch({ accent_color: e.target.value })} style={{ width: 38, height: 34, border: '1px solid var(--ck-line)', borderRadius: 8, background: 'none', padding: 2, cursor: 'pointer' }} />
                   <input value={draft.accent_color || ''} onChange={(e) => patch({ accent_color: e.target.value })} style={{ ...inp, width: 110 }} />
                 </div>
               </div>
@@ -277,13 +277,13 @@ function BrandsPanel() {
                 <label style={{ ...label, margin: '0 0 8px' }}>Logo</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   {draft.logo_url
-                    ? <img src={draft.logo_url} alt="" style={{ height: 34, maxWidth: 90, objectFit: 'contain', background: 'var(--hh-anthracite)', borderRadius: 6, padding: 4 }} />
+                    ? <img src={draft.logo_url} alt="" style={{ height: 34, maxWidth: 90, objectFit: 'contain', background: 'var(--ck-ink)', borderRadius: 6, padding: 4 }} />
                     : <div style={{ height: 34, width: 60, borderRadius: 6, border: '1px dashed var(--hh-line)' }} />}
-                  <label className="hh-btn" style={{ cursor: 'pointer', border: '1px solid var(--hh-line)', borderRadius: 8, padding: '9px 14px', fontSize: 12.5, color: 'var(--text-strong)' }}>
+                  <label className="hh-btn" style={{ cursor: 'pointer', border: '1px solid var(--ck-line)', borderRadius: 8, padding: '9px 14px', fontSize: 12.5, color: 'var(--ck-ink)' }}>
                     {draft.logo_url ? 'Replace' : 'Upload'}
                     <input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" style={{ display: 'none' }} onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
                   </label>
-                  {draft.logo_url && <button className="hh-btn" onClick={() => patch({ logo_url: '' })} style={{ background: 'none', border: 'none', color: 'var(--hh-ember)', fontSize: 12 }}>Remove</button>}
+                  {draft.logo_url && <button className="hh-btn" onClick={() => patch({ logo_url: '' })} style={{ background: 'none', border: 'none', color: 'var(--ck-accent)', fontSize: 12 }}>Remove</button>}
                 </div>
                 <input value={draft.logo_url || ''} onChange={(e) => patch({ logo_url: e.target.value })} placeholder="…or paste a logo URL" style={{ ...inp, marginTop: 8 }} />
               </div>
@@ -306,7 +306,7 @@ function BrandsPanel() {
               </div>
             </div>
 
-            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '30px 0 2px' }}>Instagram · this workspace posts as</div>
+            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', margin: '30px 0 2px' }}>Instagram · this workspace posts as</div>
             <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginTop: 12 }}>
               <div style={{ flex: 1, minWidth: 200 }}>
                 <label style={{ ...label, margin: '0 0 8px' }}>Instagram account ID</label>
@@ -331,7 +331,7 @@ function BrandsPanel() {
                 <PillButton onClick={renewInstagram} disabled={busy}>Renew token</PillButton>
               )}
               {igCheck && (
-                <span style={{ fontSize: 12.5, lineHeight: 1.5, color: igCheck.ok ? 'var(--hh-copper)' : 'var(--text-strong)', maxWidth: 640 }}>
+                <span style={{ fontSize: 12.5, lineHeight: 1.5, color: igCheck.ok ? 'var(--ck-accent)' : 'var(--ck-ink)', maxWidth: 640 }}>
                   {igCheck.ok ? '✓ ' : '✕ '}{igCheck.text}
                 </span>
               )}
@@ -344,7 +344,7 @@ function BrandsPanel() {
               )}
             </div>
 
-            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '30px 0 2px' }}>Verbal identity</div>
+            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', margin: '30px 0 2px' }}>Verbal identity</div>
             <label style={label}>Tone of voice</label>
             <textarea rows={4} value={draft.tone_of_voice} onChange={(e) => patch({ tone_of_voice: e.target.value })} style={area} />
             <p style={hint}>How the brand sounds. Injected into the newsletter & caption writer.</p>
@@ -352,7 +352,7 @@ function BrandsPanel() {
             <textarea rows={4} value={draft.writing_guidelines} onChange={(e) => patch({ writing_guidelines: e.target.value })} style={area} />
             <p style={hint}>Structure, do's & don'ts, sign-off style.</p>
 
-            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', margin: '30px 0 2px' }}>Visual identity — image generation</div>
+            <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', margin: '30px 0 2px' }}>Visual identity — image generation</div>
             <label style={label}>Creative direction (master prompt)</label>
             <textarea rows={14} value={draft.image_master_prompt} onChange={(e) => patch({ image_master_prompt: e.target.value })} style={area} />
             <p style={hint}>Prepended to every image the studio generates for this brand.</p>
@@ -362,11 +362,11 @@ function BrandsPanel() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 28 }}>
               <PillButton onClick={save}>{busy ? 'Saving…' : 'Save changes'}</PillButton>
               {!draft.is_default && (
-                <button className="hh-btn" onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '11px 22px', fontSize: 13, color: '#B23B2E', cursor: 'pointer' }}>
+                <button className="hh-btn" onClick={() => setConfirmDelete(true)} style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '11px 22px', fontSize: 13, color: '#B23B2E', cursor: 'pointer' }}>
                   Delete workspace
                 </button>
               )}
-              {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
+              {status && <span style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>{status}</span>}
             </div>
 
             <BrandMembersSection brandId={draft.id} />
@@ -409,23 +409,23 @@ function BrandMembersSection({ brandId }: { brandId: string }) {
   }
 
   return (
-    <div style={{ borderTop: '1px solid var(--hh-line)', marginTop: 34, paddingTop: 22 }}>
-      <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-copper)', marginBottom: 4 }}>Brand members</div>
+    <div style={{ borderTop: '1px solid var(--ck-line)', marginTop: 34, paddingTop: 22 }}>
+      <div style={{ fontSize: 12.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', marginBottom: 4 }}>Brand members</div>
       <p style={hint}>People invited here can access this brand world. They still need product access (Team tab) to sign in.</p>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', margin: '14px 0 16px' }}>
         <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@studio.com" style={{ ...inp, maxWidth: 280 }} onKeyDown={(e) => { if (e.key === 'Enter') invite() }} />
         <PillButton tone="ghost" onClick={invite}>Invite</PillButton>
-        {note && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{note}</span>}
+        {note && <span style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>{note}</span>}
       </div>
-      <div style={{ border: '1px solid var(--hh-line)', borderRadius: 10, overflow: 'hidden', maxWidth: 480 }}>
+      <div style={{ border: '1px solid var(--ck-line)', borderRadius: 10, overflow: 'hidden', maxWidth: 480 }}>
         {members.map((m) => (
-          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--hh-line)' }}>
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderBottom: '1px solid var(--ck-line)' }}>
             <div style={{ flex: 1, minWidth: 0, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.email}</div>
-            <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: m.role === 'owner' ? 'var(--hh-copper)' : 'var(--text-faint)' }}>{m.role}</span>
-            {m.role !== 'owner' && <ConfirmButton onConfirm={() => removeBrandMember(m.id).then(reload)} style={{ background: 'none', border: 'none', color: 'var(--hh-ember)', fontSize: 12 }}>Remove</ConfirmButton>}
+            <span style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: m.role === 'owner' ? 'var(--ck-accent)' : 'var(--ck-faint)' }}>{m.role}</span>
+            {m.role !== 'owner' && <ConfirmButton onConfirm={() => removeBrandMember(m.id).then(reload)} style={{ background: 'none', border: 'none', color: 'var(--ck-accent)', fontSize: 12 }}>Remove</ConfirmButton>}
           </div>
         ))}
-        {members.length === 0 && <div style={{ padding: 14, fontSize: 12.5, color: 'var(--text-muted)' }}>No members yet.</div>}
+        {members.length === 0 && <div style={{ padding: 14, fontSize: 12.5, color: 'var(--ck-muted)' }}>No members yet.</div>}
       </div>
     </div>
   )
@@ -459,11 +459,11 @@ function TeamPanel() {
   return (
     <section style={{ padding: '24px 40px 60px', maxWidth: 720 }}>
       {!gateActive && (
-        <div style={{ background: 'var(--hh-lotus)', border: '1px solid var(--hh-line)', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+        <div style={{ background: 'var(--ck-surface)', border: '1px solid var(--ck-line)', borderRadius: 10, padding: '12px 14px', fontSize: 13, color: 'var(--ck-muted)', marginBottom: 20 }}>
           The approval gate isn’t active yet — run migration&nbsp;0006 in Supabase to switch it on. Until then anyone with a magic link can enter.
         </div>
       )}
-      <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '4px 0 20px', lineHeight: 1.55 }}>
+      <p style={{ fontSize: 14, color: 'var(--ck-muted)', margin: '4px 0 20px', lineHeight: 1.55 }}>
         Only approved emails can access the workspace. {isAdmin ? 'Add people below.' : 'Ask an admin to add people.'}
       </p>
 
@@ -475,27 +475,27 @@ function TeamPanel() {
             <option value="admin">Admin</option>
           </select>
           <PillButton onClick={add}>Approve</PillButton>
-          {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
+          {status && <span style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>{status}</span>}
         </div>
       )}
 
-      <div style={{ border: '1px solid var(--hh-line)', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ border: '1px solid var(--ck-line)', borderRadius: 12, overflow: 'hidden' }}>
         {members.map((m) => (
-          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--hh-line)' }}>
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--ck-line)' }}>
             <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.email}</div>
-            <span style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: m.role === 'admin' ? 'var(--hh-copper)' : 'var(--text-faint)' }}>{m.role}</span>
+            <span style={{ fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: m.role === 'admin' ? 'var(--ck-accent)' : 'var(--ck-faint)' }}>{m.role}</span>
             {isAdmin && auth.email?.toLowerCase() !== m.email.toLowerCase() && (
               <>
-                <button className="hh-btn" onClick={() => toggle(m)} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, padding: '3px 10px', fontSize: 11.5, color: 'var(--text-muted)' }}>
+                <button className="hh-btn" onClick={() => toggle(m)} style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 6, padding: '3px 10px', fontSize: 11.5, color: 'var(--ck-muted)' }}>
                   Make {m.role === 'admin' ? 'member' : 'admin'}
                 </button>
-                <ConfirmButton onConfirm={() => remove(m.id)} style={{ background: 'none', border: 'none', color: 'var(--hh-ember)', fontSize: 12 }}>Remove</ConfirmButton>
+                <ConfirmButton onConfirm={() => remove(m.id)} style={{ background: 'none', border: 'none', color: 'var(--ck-accent)', fontSize: 12 }}>Remove</ConfirmButton>
               </>
             )}
-            {auth.email?.toLowerCase() === m.email.toLowerCase() && <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>you</span>}
+            {auth.email?.toLowerCase() === m.email.toLowerCase() && <span style={{ fontSize: 11, color: 'var(--ck-faint)' }}>you</span>}
           </div>
         ))}
-        {members.length === 0 && <div style={{ padding: '16px', fontSize: 13, color: 'var(--text-muted)' }}>No members loaded.</div>}
+        {members.length === 0 && <div style={{ padding: '16px', fontSize: 13, color: 'var(--ck-muted)' }}>No members loaded.</div>}
       </div>
     </section>
   )
@@ -526,7 +526,7 @@ function KnowledgePanel() {
 
   return (
     <div style={{ padding: '28px 40px 80px', maxWidth: 780 }}>
-      <p style={{ fontSize: 13.5, color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '62ch' }}>
+      <p style={{ fontSize: 13.5, color: 'var(--ck-muted)', lineHeight: 1.6, maxWidth: '62ch' }}>
         What <strong>{current?.name ?? 'this workspace'}</strong> knows about itself. The copilot draws on these facts in journals,
         social, newsletters, proposals and client documents, and never invents beyond them. Leave anything blank; only filled
         sections are used.
@@ -540,7 +540,7 @@ function KnowledgePanel() {
       ))}
       <div style={{ marginTop: 22, display: 'flex', gap: 12, alignItems: 'center' }}>
         <PillButton tone="accent" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save knowledge'}</PillButton>
-        {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
+        {status && <span style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>{status}</span>}
       </div>
     </div>
   )

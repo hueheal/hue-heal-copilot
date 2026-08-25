@@ -23,7 +23,7 @@ import {
 import type { ProposalStatus, InvoiceStatus } from '../lib/database.types'
 
 function toneColor(t: ReturnType<typeof statusTone>) {
-  return t === 'warning' || t === 'accent' ? 'var(--hh-copper)' : t === 'positive' ? 'var(--status-positive)' : 'var(--text-muted)'
+  return t === 'warning' || t === 'accent' ? 'var(--ck-accent)' : t === 'positive' ? 'var(--status-positive)' : 'var(--ck-muted)'
 }
 function fmtDate(d: string | null): string {
   return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
@@ -44,7 +44,7 @@ function StatusSelect({ value, options, onChange }: { value: string; options: st
       value={value}
       onClick={(e) => e.stopPropagation()}
       onChange={(e) => onChange(e.target.value)}
-      style={{ fontSize: 11, color: toneColor(statusTone(value as ProposalStatus | InvoiceStatus)), background: 'transparent', border: '1px solid var(--hh-line)', borderRadius: 6, padding: '3px 6px', fontFamily: 'var(--font-sans)', textTransform: 'capitalize' }}
+      style={{ fontSize: 11, color: toneColor(statusTone(value as ProposalStatus | InvoiceStatus)), background: 'transparent', border: '1px solid var(--ck-line)', borderRadius: 6, padding: '3px 6px', fontFamily: 'var(--ck-font)', textTransform: 'capitalize' }}
     >
       {options.map((o) => <option key={o} value={o}>{o}</option>)}
     </select>
@@ -64,10 +64,10 @@ function Table({
   onDelete: (id: string) => void
 }) {
   return (
-    <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 16, padding: 24 }}>
+    <div style={{ background: 'var(--ck-surface)', border: '1px solid var(--ck-line-strong)', borderRadius: 16, padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
         <div className="hh-serif" style={{ fontSize: 22 }}>{title}</div>
-        <button onClick={onNew} className="hh-btn" style={{ fontSize: 12, background: 'none', border: 'none', color: 'var(--hh-copper)', borderBottom: '1px solid var(--hh-copper)', paddingBottom: 2 }}>
+        <button onClick={onNew} className="hh-btn" style={{ fontSize: 12, background: 'none', border: 'none', color: 'var(--ck-accent)', borderBottom: '1px solid var(--hh-copper)', paddingBottom: 2 }}>
           New {kind} ⟶
         </button>
       </div>
@@ -76,27 +76,27 @@ function Table({
           key={r.id}
           onClick={() => onOpen(r.id)}
           className="hh-btn"
-          style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '15px 4px', borderTop: '1px solid var(--hh-line)', cursor: 'pointer' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '15px 4px', borderTop: '1px solid var(--ck-line)', cursor: 'pointer' }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 600 }}>{r.client}</div>
-            <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 2 }}>{r.title}</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ck-muted)', marginTop: 2 }}>{r.title}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
             <StatusSelect value={r.status} options={statuses} onChange={(v) => onStatus(r.id, v)} />
-            {r.date && <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{r.date}</div>}
+            {r.date && <div style={{ fontSize: 11, color: 'var(--ck-faint)' }}>{r.date}</div>}
           </div>
-          <div className="hh-serif" style={{ fontSize: 20, color: 'var(--hh-copper)', minWidth: 96, textAlign: 'right' }}>{gbpFull(r.amount)}</div>
+          <div className="hh-serif" style={{ fontSize: 20, color: 'var(--ck-accent)', minWidth: 96, textAlign: 'right' }}>{gbpFull(r.amount)}</div>
           <ConfirmButton
             onConfirm={() => onDelete(r.id)}
             title={`Delete ${kind}`}
-            style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 16, lineHeight: 1 }}
+            style={{ background: 'none', border: 'none', color: 'var(--ck-faint)', fontSize: 16, lineHeight: 1 }}
           >
             ×
           </ConfirmButton>
         </div>
       ))}
-      {rows.length === 0 && <p style={{ fontSize: 13, color: 'var(--text-faint)', margin: '12px 0 0' }}>None yet — hit “New {kind}”.</p>}
+      {rows.length === 0 && <p style={{ fontSize: 13, color: 'var(--ck-faint)', margin: '12px 0 0' }}>None yet — hit “New {kind}”.</p>}
     </div>
   )
 }
@@ -144,7 +144,7 @@ export default function Proposals() {
           <div style={{ background: '#F6E7DD', border: '1px solid var(--hh-copper)', color: 'var(--hh-terracotta)', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13.5 }}>{err}</div>
         )}
         {gated ? (
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+          <p style={{ fontSize: 14, color: 'var(--ck-muted)' }}>
             Sign in on the <strong>Social Copilot</strong> page to load your proposals and invoices.
           </p>
         ) : (

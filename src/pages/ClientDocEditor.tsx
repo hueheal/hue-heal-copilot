@@ -21,10 +21,10 @@ import { type DeckSlide, type SlideLayout, type SlideTheme, sid } from '../lib/d
      copilot, added, reordered, restyled (layout + surface) and deleted.
    - form: step-by-step questionnaires completed in the client space. */
 
-const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--font-sans)', boxSizing: 'border-box' }
-const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '20px 0 10px' }
-const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--text-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
-const miniSelect: React.CSSProperties = { border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 6, padding: '3px 6px', fontSize: 11, fontFamily: 'var(--font-sans)', color: 'var(--text-muted)' }
+const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--ck-font)', boxSizing: 'border-box' }
+const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '20px 0 10px' }
+const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--ck-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--ck-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
+const miniSelect: React.CSSProperties = { border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 6, padding: '3px 6px', fontSize: 11, fontFamily: 'var(--ck-font)', color: 'var(--ck-muted)' }
 
 const STEP_TYPES: { key: FormStep['type']; label: string }[] = [
   { key: 'text', label: 'Short answer' },
@@ -212,22 +212,22 @@ export default function ClientDocEditor() {
   }, [printing])
 
   if (gated) {
-    return <EditorShell ctype="Document" subline="Sign in to edit" backTo={`/clients/${clientId}`} onDone={() => {}} doneDisabled rail={<p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to edit.</p>} canvas={<div />} />
+    return <EditorShell ctype="Document" subline="Sign in to edit" backTo={`/clients/${clientId}`} onDone={() => {}} doneDisabled rail={<p style={{ fontSize: 14, color: 'var(--ck-muted)' }}>Sign in (bottom-left) to edit.</p>} canvas={<div />} />
   }
   if (!doc) {
-    return <EditorShell ctype="Document" subline="Loading…" backTo={`/clients/${clientId}`} onDone={() => {}} doneDisabled rail={<p style={{ fontSize: 14, color: 'var(--text-faint)' }}>{status ?? 'Loading…'}</p>} canvas={<div />} />
+    return <EditorShell ctype="Document" subline="Loading…" backTo={`/clients/${clientId}`} onDone={() => {}} doneDisabled rail={<p style={{ fontSize: 14, color: 'var(--ck-faint)' }}>{status ?? 'Loading…'}</p>} canvas={<div />} />
   }
 
   const headerExtra = (
     <>
       {!isForm && (
         <button className="hh-btn" onClick={() => setPrinting(true)}
-          style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12, color: 'var(--ck-muted)', cursor: 'pointer', whiteSpace: 'nowrap' }}>
           {isMobile ? '↧ PDF' : '↧ Download PDF'}
         </button>
       )}
       <button className="hh-btn" onClick={toggleShare}
-        style={{ background: shared ? 'var(--status-positive)' : 'none', color: shared ? '#F6EFE4' : 'var(--text-muted)', border: shared ? '1px solid var(--status-positive)' : '1px solid var(--hh-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+        style={{ background: shared ? 'var(--status-positive)' : 'none', color: shared ? '#F6EFE4' : 'var(--ck-muted)', border: shared ? '1px solid var(--status-positive)' : '1px solid var(--ck-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
         {shared ? '✓ Shared' : 'Share'}
       </button>
     </>
@@ -289,15 +289,15 @@ export default function ClientDocEditor() {
         previewLabel={isForm ? 'Preview' : 'Pages'}
         rail={
           <div>
-            <div style={{ border: '1px solid var(--hh-line)', borderRadius: 14, padding: 16, background: 'var(--hh-bone)' }}>
-              <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
+            <div style={{ border: '1px solid var(--ck-line)', borderRadius: 14, padding: 16, background: 'var(--ck-surface)' }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
               <textarea style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} rows={3} value={aiNotes} onChange={(e) => setAiNotes(e.target.value)}
                 placeholder={`Anything this ${kindLabel.toLowerCase()} should cover for ${client?.name ?? 'this client'} (optional)`} />
               <button className="hh-btn" onClick={generate} disabled={aiBusy}
-                style={{ marginTop: 10, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy ? 'default' : 'pointer', opacity: aiBusy ? 0.55 : 1 }}>
+                style={{ marginTop: 10, width: '100%', background: 'var(--ck-accent)', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy ? 'default' : 'pointer', opacity: aiBusy ? 0.55 : 1 }}>
                 {aiBusy ? 'Drafting…' : `✦ Fill this ${isForm ? 'questionnaire' : isA4 ? 'document' : 'deck'}`}
               </button>
-              <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Keeps the structure, written for {client?.name ?? 'the client'} in {brand?.name ?? 'the brand'}’s voice.</div>
+              <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Keeps the structure, written for {client?.name ?? 'the client'} in {brand?.name ?? 'the brand'}’s voice.</div>
             </div>
 
             {isForm ? (
@@ -309,9 +309,9 @@ export default function ClientDocEditor() {
                 <div style={rail}>Steps</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {steps.map((s, i) => (
-                    <div key={s.id} style={{ border: '1px solid var(--hh-line)', borderRadius: 10, padding: 10, background: 'var(--hh-bone)' }}>
+                    <div key={s.id} style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: 10, background: 'var(--ck-surface)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', flex: 1 }}>Step {i + 1}</span>
+                        <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ck-faint)', flex: 1 }}>Step {i + 1}</span>
                         <button className="hh-btn" onClick={() => moveStep(i, -1)} style={miniBtn}>↑</button>
                         <button className="hh-btn" onClick={() => moveStep(i, 1)} style={miniBtn}>↓</button>
                         <ConfirmButton onConfirm={() => removeStep(s.id)} style={{ ...miniBtn, border: 'none' }}>×</ConfirmButton>
@@ -335,9 +335,9 @@ export default function ClientDocEditor() {
                 <div style={rail}>Pages · {slides.length}</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {slides.map((sl, i) => (
-                    <div key={sl.id} style={{ border: '1px solid var(--hh-line)', borderRadius: 10, padding: 10, background: 'var(--hh-bone)' }}>
+                    <div key={sl.id} style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: 10, background: 'var(--ck-surface)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', flex: 1 }}>Page {i + 1}</span>
+                        <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ck-faint)', flex: 1 }}>Page {i + 1}</span>
                         <select value={sl.layout} onChange={(e) => setSlide(sl.id, { layout: e.target.value as SlideLayout })} style={miniSelect}>
                           {LAYOUTS.map((l) => <option key={l.key} value={l.key}>{l.label}</option>)}
                         </select>
@@ -356,7 +356,7 @@ export default function ClientDocEditor() {
                           onChange={(e) => setSlide(sl.id, { bullets: e.target.value.split('\n') })} />
                       )}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                        {sl.image && <img src={sl.image} alt="" style={{ height: 28, width: 28, objectFit: 'cover', borderRadius: 5, border: '1px solid var(--hh-line)' }} />}
+                        {sl.image && <img src={sl.image} alt="" style={{ height: 28, width: 28, objectFit: 'cover', borderRadius: 5, border: '1px solid var(--ck-line)' }} />}
                         <label className="hh-btn" style={{ ...miniBtn, width: 'auto', padding: '6px 10px', fontSize: 11, cursor: uploadingId === sl.id ? 'default' : 'pointer', opacity: uploadingId === sl.id ? 0.6 : 1 }}>
                           {uploadingId === sl.id ? 'Uploading…' : sl.image ? 'Replace image' : '⭱ Image'}
                           <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingId === sl.id} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadSlideImage(sl.id, f); e.currentTarget.value = '' }} />

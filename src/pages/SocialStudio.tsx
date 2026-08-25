@@ -153,7 +153,7 @@ export function SlideCanvas({
             {selected && (
               <div
                 onPointerDown={(e) => { e.stopPropagation(); onResizePointerDown?.(el.id, e) }}
-                style={{ position: 'absolute', right: -9, bottom: -9, width: 18, height: 18, background: 'var(--hh-copper)', borderRadius: 4, cursor: 'nwse-resize', touchAction: 'none', border: '2px solid #fff' }}
+                style={{ position: 'absolute', right: -9, bottom: -9, width: 18, height: 18, background: 'var(--ck-accent)', borderRadius: 4, cursor: 'nwse-resize', touchAction: 'none', border: '2px solid #fff' }}
               />
             )}
           </div>
@@ -263,7 +263,7 @@ export default function SocialStudio() {
     return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
   }, [active])
 
-  if (!design || !post) return <div style={{ padding: 40, color: 'var(--text-muted)' }}>{status ?? 'Loading studio…'}</div>
+  if (!design || !post) return <div style={{ padding: 40, color: 'var(--ck-muted)' }}>{status ?? 'Loading studio…'}</div>
 
   const slide = design.slides[active] ?? design.slides[0]
   const selEl = slide.elements.find((e) => e.id === selId) ?? null
@@ -551,13 +551,13 @@ export default function SocialStudio() {
     } catch (e) { setStatus(`Post failed: ${e instanceof Error ? e.message : e}`) } finally { setBusy(false) }
   }
 
-  const railLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '18px 0 8px' }
-  const chip = (activeC: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '7px 13px', fontSize: 12, border: activeC ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: activeC ? 'var(--hh-anthracite)' : 'transparent', color: activeC ? 'var(--text-on-ink)' : 'var(--text-body)' })
+  const railLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '18px 0 8px' }
+  const chip = (activeC: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '7px 13px', fontSize: 12, border: activeC ? '1px solid var(--ck-ink)' : '1px solid var(--ck-line)', background: activeC ? 'var(--ck-ink)' : 'transparent', color: activeC ? 'var(--ck-bg)' : 'var(--ck-ink)' })
 
   function PillButtonLike({ children, disabled, onClick }: { children: React.ReactNode; disabled?: boolean; onClick: () => void }) {
     return (
       <button className="hh-btn" onClick={onClick} disabled={disabled}
-        style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '12px 22px', fontSize: 13.5, fontWeight: 500, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1 }}>
+        style={{ background: 'var(--ck-accent)', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '12px 22px', fontSize: 13.5, fontWeight: 500, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.55 : 1 }}>
         {children}
       </button>
     )
@@ -566,9 +566,9 @@ export default function SocialStudio() {
   /* ---- Staged flow: 1 topic -> 2 template -> 3 edit ---- */
   if (step !== 'edit') {
     const stepBox: React.CSSProperties = { maxWidth: 880, margin: '0 auto', padding: '56px 24px 80px' }
-    const stepEyebrow: React.CSSProperties = { fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 10 }
-    const stepH1: React.CSSProperties = { fontFamily: 'var(--font-serif)', fontSize: 34, color: 'var(--text-strong)', margin: '0 0 8px' }
-    const stepSub: React.CSSProperties = { fontSize: 14, color: 'var(--text-muted)', margin: '0 0 26px', lineHeight: 1.55 }
+    const stepEyebrow: React.CSSProperties = { fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ck-accent)', marginBottom: 10 }
+    const stepH1: React.CSSProperties = { fontFamily: 'var(--font-serif)', fontSize: 34, color: 'var(--ck-ink)', margin: '0 0 8px' }
+    const stepSub: React.CSSProperties = { fontSize: 14, color: 'var(--ck-muted)', margin: '0 0 26px', lineHeight: 1.55 }
     if (step === 'topic') {
       return (
         <div style={stepBox}>
@@ -578,10 +578,10 @@ export default function SocialStudio() {
           <textarea value={copyTopic} onChange={(e) => setCopyTopic(e.target.value)} rows={3} autoFocus
             placeholder="e.g. why every tradition warms the stomach before breakfast"
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && copyTopic.trim()) { e.preventDefault(); setStep('template') } }}
-            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 12, padding: '14px 16px', fontSize: 16, fontFamily: 'var(--font-sans)', resize: 'vertical' }} />
+            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 12, padding: '14px 16px', fontSize: 16, fontFamily: 'var(--ck-font)', resize: 'vertical' }} />
           <div style={{ display: 'flex', gap: 12, marginTop: 18, alignItems: 'center' }}>
             <PillButtonLike disabled={!copyTopic.trim()} onClick={() => setStep('template')}>Choose a template →</PillButtonLike>
-            <button className="hh-btn" onClick={() => setStep('template')} style={{ background: 'none', border: 'none', fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer' }}>Skip, start blank</button>
+            <button className="hh-btn" onClick={() => setStep('template')} style={{ background: 'none', border: 'none', fontSize: 13, color: 'var(--ck-muted)', cursor: 'pointer' }}>Skip, start blank</button>
           </div>
         </div>
       )
@@ -594,16 +594,16 @@ export default function SocialStudio() {
         <h1 style={stepH1}>Choose a template</h1>
         <p style={stepSub}>
           {copyTopic.trim() ? <>The copy for “{copyTopic.trim()}” is written into the template you pick.</> : 'Pick a starting layout; you can switch any time.'}
-          {' '}<button className="hh-btn" onClick={() => setStep('topic')} style={{ background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--text-accent)', cursor: 'pointer' }}>← Change topic</button>
+          {' '}<button className="hh-btn" onClick={() => setStep('topic')} style={{ background: 'none', border: 'none', padding: 0, fontSize: 14, color: 'var(--ck-accent)', cursor: 'pointer' }}>← Change topic</button>
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 22 }}>
           {TEMPLATES.map((t) => (
             <div key={t.id} onClick={() => { applyTemplate(t.id); setStep('edit'); if (copyTopic.trim()) void generateCopyNow(t.id) }}
               style={{ cursor: 'pointer' }}>
-              <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--hh-line)', boxShadow: 'var(--shadow-raised)' }}>
+              <div style={{ borderRadius: 6, overflow: 'hidden', border: '1px solid var(--ck-line)', boxShadow: 'var(--shadow-raised)' }}>
                 <SlideCanvas slide={t.build(design.format, previewSeed)} spec={spec} displayW={196} fonts={design.fonts} />
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--text-body)', marginTop: 7, textAlign: 'center' }}>{t.label}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--ck-ink)', marginTop: 7, textAlign: 'center' }}>{t.label}</div>
             </div>
           ))}
         </div>
@@ -633,15 +633,15 @@ export default function SocialStudio() {
       rail={
         <div>
           {/* Brief the copilot */}
-          <div style={{ border: '1px solid var(--hh-line)', borderRadius: 14, padding: 14, background: 'var(--hh-bone)', marginTop: 4 }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>✦ Brief the copilot</div>
+          <div style={{ border: '1px solid var(--ck-line)', borderRadius: 14, padding: 14, background: 'var(--ck-surface)', marginTop: 4 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', marginBottom: 8 }}>✦ Brief the copilot</div>
             <input value={copyTopic} onChange={(e) => setCopyTopic(e.target.value)} placeholder="Topic — e.g. wellness design in hotels" onKeyDown={(e) => { if (e.key === 'Enter') void generateCopyNow() }}
-              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13, fontFamily: 'var(--font-sans)' }} />
+              style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '9px 11px', fontSize: 13, fontFamily: 'var(--ck-font)' }} />
             <button className="hh-btn" onClick={() => void generateCopyNow()} disabled={copyBusy || !copyTopic.trim()}
-              style={{ marginTop: 8, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '10px 16px', fontSize: 12.5, fontWeight: 500, cursor: copyBusy || !copyTopic.trim() ? 'default' : 'pointer', opacity: copyBusy || !copyTopic.trim() ? 0.55 : 1 }}>
+              style={{ marginTop: 8, width: '100%', background: 'var(--ck-accent)', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '10px 16px', fontSize: 12.5, fontWeight: 500, cursor: copyBusy || !copyTopic.trim() ? 'default' : 'pointer', opacity: copyBusy || !copyTopic.trim() ? 0.55 : 1 }}>
               {copyBusy ? 'Writing…' : '✦ Generate copy'}
             </button>
-            <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Headline, caption, hashtags and carousel content — laid into the canvas.</div>
+            <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Headline, caption, hashtags and carousel content — laid into the canvas.</div>
           </div>
 
           <div style={railLabel}>Format</div>
@@ -653,7 +653,7 @@ export default function SocialStudio() {
 
           <div style={{ ...railLabel, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span>{active === 0 ? 'Template · cover' : `Layout · slide ${active + 1}`}</span>
-            <a href={`/templates?format=${design.format}${post.image_url ? '&photo=1' : ''}`} target="_blank" rel="noopener" style={{ fontSize: 11, letterSpacing: 0, textTransform: 'none', color: 'var(--text-muted)' }}>See all ↗</a>
+            <a href={`/templates?format=${design.format}${post.image_url ? '&photo=1' : ''}`} target="_blank" rel="noopener" style={{ fontSize: 11, letterSpacing: 0, textTransform: 'none', color: 'var(--ck-muted)' }}>See all ↗</a>
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {active > 0 && (
@@ -664,7 +664,7 @@ export default function SocialStudio() {
                 style={chip(active === 0 ? design.templateId === t.id : slide.templateId === t.id)}>{t.label}</button>
             ))}
           </div>
-          {active > 0 && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Applies to this slide only. Body layout is the standard numbered slide.</div>}
+          {active > 0 && <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Applies to this slide only. Body layout is the standard numbered slide.</div>}
 
           <div style={railLabel}>Background</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
@@ -685,13 +685,13 @@ export default function SocialStudio() {
             onChange={(e) => setImgNotes(e.target.value)}
             placeholder="Inspiration / art-direction notes (optional)"
             rows={2}
-            style={{ width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '8px 10px', fontSize: 12.5, fontFamily: 'var(--font-sans)', marginTop: 8, resize: 'vertical' }}
+            style={{ width: '100%', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '8px 10px', fontSize: 12.5, fontFamily: 'var(--ck-font)', marginTop: 8, resize: 'vertical' }}
           />
           <div style={{ display: 'flex', gap: 8, marginTop: 8, alignItems: 'center' }}>
-            <button className="hh-btn" onClick={aiBackground} style={{ background: 'var(--hh-copper)', color: '#F6EFE4', border: 'none', borderRadius: 999, padding: '8px 16px', fontSize: 12.5 }}>
+            <button className="hh-btn" onClick={aiBackground} style={{ background: 'var(--ck-accent)', color: '#F6EFE4', border: 'none', borderRadius: 999, padding: '8px 16px', fontSize: 12.5 }}>
               ✦ Generate image
             </button>
-            <label className="hh-btn" style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, color: 'var(--text-muted)', cursor: 'pointer' }}>
+            <label className="hh-btn" style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, color: 'var(--ck-muted)', cursor: 'pointer' }}>
               ↥ Match a reference
               <input type="file" accept="image/*" style={{ display: 'none' }} onChange={(e) => e.target.files?.[0] && onReference(e.target.files[0])} />
             </label>
@@ -699,7 +699,7 @@ export default function SocialStudio() {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {PALETTE.map((c) => (
               <button key={c} onClick={() => setBackground({ type: 'solid', value: c })} title={c}
-                style={{ width: 22, height: 22, borderRadius: 6, background: c, border: slide.background.type === 'solid' && slide.background.value === c ? '2px solid var(--hh-copper)' : '1px solid var(--hh-line)' }} />
+                style={{ width: 22, height: 22, borderRadius: 6, background: c, border: slide.background.type === 'solid' && slide.background.value === c ? '2px solid var(--hh-copper)' : '1px solid var(--ck-line)' }} />
             ))}
           </div>
 
@@ -713,7 +713,7 @@ export default function SocialStudio() {
           </div>
           {slide.scrim && slide.scrim !== 'none' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
-              <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Intensity</span>
+              <span style={{ fontSize: 11, color: 'var(--ck-faint)' }}>Intensity</span>
               <input type="range" min={10} max={100} value={slide.scrimStrength ?? 55} onChange={(e) => updateSlide({ scrimStrength: Number(e.target.value) })} style={{ flex: 1 }} />
             </div>
           )}
@@ -729,9 +729,9 @@ export default function SocialStudio() {
             <>
               <div style={railLabel}>Text</div>
               <textarea value={selEl.content} onChange={(e) => updateEl(selEl.id, { content: e.target.value })} rows={2}
-                style={{ width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'var(--font-sans)', resize: 'vertical' }} />
+                style={{ width: '100%', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '8px 10px', fontSize: 13, fontFamily: 'var(--ck-font)', resize: 'vertical' }} />
               {remedae && selEl.type === 'text' && (
-                <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 4 }}>Wrap one phrase in *asterisks* to set it in mint. One per slide.</div>
+                <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 4 }}>Wrap one phrase in *asterisks* to set it in mint. One per slide.</div>
               )}
               <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                 {FONTS.map((f) => (
@@ -747,9 +747,9 @@ export default function SocialStudio() {
                 ))}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8 }}>
-                <span style={{ fontSize: 11, color: 'var(--text-faint)', minWidth: 34 }}>Custom</span>
+                <span style={{ fontSize: 11, color: 'var(--ck-faint)', minWidth: 34 }}>Custom</span>
                 <input type="range" min={16} max={200} value={selEl.style.fontSize ?? 48} onChange={(e) => updateElStyle(selEl.id, { fontSize: Number(e.target.value) })} style={{ flex: 1 }} />
-                <span style={{ fontSize: 11, color: 'var(--text-faint)', minWidth: 34, textAlign: 'right' }}>{Math.round(selEl.style.fontSize ?? 48)}px</span>
+                <span style={{ fontSize: 11, color: 'var(--ck-faint)', minWidth: 34, textAlign: 'right' }}>{Math.round(selEl.style.fontSize ?? 48)}px</span>
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
                 {(['left', 'center', 'right'] as const).map((a) => (
@@ -761,18 +761,18 @@ export default function SocialStudio() {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
                 {PALETTE.map((c) => (
                   <button key={c} onClick={() => updateElStyle(selEl.id, { color: c })} title={c}
-                    style={{ width: 20, height: 20, borderRadius: 5, background: c, border: selEl.style.color === c ? '2px solid var(--hh-copper)' : '1px solid var(--hh-line)' }} />
+                    style={{ width: 20, height: 20, borderRadius: 5, background: c, border: selEl.style.color === c ? '2px solid var(--hh-copper)' : '1px solid var(--ck-line)' }} />
                 ))}
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 10, alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: 'var(--text-faint)' }}>Backing</span>
+                <span style={{ fontSize: 11, color: 'var(--ck-faint)' }}>Backing</span>
                 {(['none', 'dark', 'light'] as const).map((pl) => (
                   <button key={pl} className="hh-btn" onClick={() => updateElStyle(selEl.id, { plate: pl })} style={chip((selEl.style.plate ?? 'none') === pl)}>
                     {pl === 'none' ? 'None' : pl === 'dark' ? 'Dark' : 'Light'}
                   </button>
                 ))}
               </div>
-              <button className="hh-btn" onClick={() => deleteEl(selEl.id)} style={{ marginTop: 12, background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '7px 14px', fontSize: 12, color: 'var(--text-muted)' }}>Delete element</button>
+              <button className="hh-btn" onClick={() => deleteEl(selEl.id)} style={{ marginTop: 12, background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '7px 14px', fontSize: 12, color: 'var(--ck-muted)' }}>Delete element</button>
             </>
           )}
 
@@ -780,26 +780,26 @@ export default function SocialStudio() {
           <div style={{ display: 'flex', gap: 8 }}>
             {(['lime', 'terracotta', 'copper'] as Accent[]).map((a) => (
               <button key={a} onClick={() => applyAccent(a)} title={a}
-                style={{ width: 24, height: 24, borderRadius: '50%', background: accentHex(a), border: design.accent === a ? '2px solid var(--hh-anthracite)' : '1px solid var(--hh-line)' }} />
+                style={{ width: 24, height: 24, borderRadius: '50%', background: accentHex(a), border: design.accent === a ? '2px solid var(--ck-ink)' : '1px solid var(--ck-line)' }} />
             ))}
           </div>
 
           <div style={railLabel}>Caption</div>
           <textarea value={post.caption ?? ''} onChange={(e) => setPost((p) => (p ? { ...p, caption: e.target.value } : p))} rows={4}
             placeholder="The post description that ships with the image."
-            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 13, fontFamily: 'var(--font-sans)', resize: 'vertical', lineHeight: 1.5 }} />
+            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '9px 11px', fontSize: 13, fontFamily: 'var(--ck-font)', resize: 'vertical', lineHeight: 1.5 }} />
           <div style={railLabel}>Hashtags</div>
           <textarea value={(post.hashtags ?? []).join(' ')} onChange={(e) => setPost((p) => (p ? { ...p, hashtags: e.target.value.split(/\s+/).filter(Boolean) } : p))} rows={2}
             placeholder="#WellnessDesign #ExperienceDesign"
-            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '9px 11px', fontSize: 12.5, fontFamily: 'var(--font-sans)', resize: 'vertical', lineHeight: 1.5, color: 'var(--text-accent)' }} />
+            style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '9px 11px', fontSize: 12.5, fontFamily: 'var(--ck-font)', resize: 'vertical', lineHeight: 1.5, color: 'var(--ck-accent)' }} />
 
           <div style={railLabel}>Publish</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-            <button className="hh-btn" onClick={exportImages} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '10px 16px', fontSize: 12.5, color: 'var(--text-body)', cursor: 'pointer' }}>
+            <button className="hh-btn" onClick={exportImages} style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '10px 16px', fontSize: 12.5, color: 'var(--ck-ink)', cursor: 'pointer' }}>
               ↧ Export {design.format === 'carousel' ? 'ZIP' : 'PNG'}
             </button>
             <ConfirmButton onConfirm={postToInstagram} confirmLabel="Post now?"
-              style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: '1px solid var(--hh-copper)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }}>
+              style={{ background: 'var(--ck-accent)', color: '#FFFFFF', border: '1px solid var(--hh-copper)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer' }}>
               ↗ Post to Instagram
             </ConfirmButton>
           </div>
@@ -820,7 +820,7 @@ export default function SocialStudio() {
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
               {design.slides.map((s, i) => (
                 <div key={s.id} onClick={() => { setActive(i); setSelId(null) }}
-                  style={{ border: i === active ? '2px solid var(--hh-copper)' : '1px solid var(--hh-line)', borderRadius: 4, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}>
+                  style={{ border: i === active ? '2px solid var(--hh-copper)' : '1px solid var(--ck-line)', borderRadius: 4, overflow: 'hidden', cursor: 'pointer', position: 'relative' }}>
                   <SlideCanvas slide={s} spec={spec} displayW={72} fonts={design.fonts} />
                   {design.slides.length > 1 && (
                     <button onClick={(e) => { e.stopPropagation(); removeSlide(i) }} style={{ position: 'absolute', top: 2, right: 2, width: 16, height: 16, borderRadius: 4, background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', fontSize: 11, lineHeight: 1 }}>×</button>

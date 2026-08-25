@@ -94,22 +94,21 @@ export default function EditorShell({
     return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
   }, [onViewChange])
 
-  /* Chrome header (Phase 7): the tool bar around the canvas follows the ck
-     system — Geist, quiet neutrals, one dark action. Fixed light values while
-     the editor pages themselves are still light surfaces. */
-  const chromeFont = "'Geist', 'Inter', -apple-system, system-ui, sans-serif"
+  /* Chrome (Phase 7): everything around the canvas is ck — Geist, tonal
+     neutrals, one strong action — and follows the light/dark theme. Only the
+     canvas keeps the brand world's own system. */
   const header = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: isMobile ? '10px 14px' : '12px 24px', borderBottom: '1px solid rgba(0,0,0,0.07)', position: 'sticky', top: 0, background: '#F7F7F5', zIndex: 5, fontFamily: chromeFont }}>
-      <button onClick={() => nav(backTo)} aria-label="Back" className="hh-btn" style={{ background: 'none', border: '1px solid rgba(0,0,0,0.09)', borderRadius: 8, width: 28, height: 28, color: '#6B6B6B', fontSize: 14, cursor: 'pointer', lineHeight: 1 }}>‹</button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: isMobile ? '10px 14px' : '12px 24px', borderBottom: '1px solid var(--ck-line)', position: 'sticky', top: 0, background: 'var(--ck-bg)', zIndex: 5, fontFamily: 'var(--ck-font)' }}>
+      <button onClick={() => nav(backTo)} aria-label="Back" className="hh-btn" style={{ background: 'none', border: '1px solid var(--ck-line-strong)', borderRadius: 8, width: 28, height: 28, color: 'var(--ck-muted)', fontSize: 14, cursor: 'pointer', lineHeight: 1 }}>‹</button>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 500, color: '#151515', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ctype}</div>
-        <div style={{ fontSize: 11, color: '#999999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{status && isMobile ? status : subline}</div>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ck-ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ctype}</div>
+        <div style={{ fontSize: 11, color: 'var(--ck-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{status && isMobile ? status : subline}</div>
       </div>
-      {status && !isMobile && <span style={{ fontSize: 12, color: '#6B6B6B' }}>{status}</span>}
+      {status && !isMobile && <span style={{ fontSize: 12, color: 'var(--ck-muted)' }}>{status}</span>}
       {headerExtra}
-      {onNew && <button className="hh-btn" onClick={onNew} style={{ background: 'none', border: '1px solid rgba(0,0,0,0.09)', borderRadius: 8, padding: '7px 13px', fontSize: 12.5, color: '#6B6B6B', cursor: 'pointer', fontFamily: chromeFont }}>New</button>}
+      {onNew && <button className="hh-btn" onClick={onNew} style={{ background: 'none', border: '1px solid var(--ck-line-strong)', borderRadius: 8, padding: '7px 13px', fontSize: 12.5, color: 'var(--ck-muted)', cursor: 'pointer', fontFamily: 'var(--ck-font)' }}>New</button>}
       <button className="hh-btn" onClick={onDone} disabled={busy || doneDisabled}
-        style={{ background: '#151515', color: '#F7F7F5', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || doneDisabled ? 0.5 : 1, fontFamily: chromeFont }}>
+        style={{ background: 'var(--ck-ink)', color: 'var(--ck-bg)', border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || doneDisabled ? 0.5 : 1, fontFamily: 'var(--ck-font)' }}>
         {busy ? '…' : doneLabel}
       </button>
     </div>
@@ -123,13 +122,13 @@ export default function EditorShell({
         <div style={{ padding: `16px 16px ${sheetH + 28}px` }}>{canvas}</div>
 
         {/* Control sheet */}
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: NAVBAR, height: sheetH, zIndex: 30, background: 'var(--hh-bone)', borderTop: '1px solid var(--hh-line)', borderRadius: '18px 18px 0 0', boxShadow: '0 -12px 32px rgba(30,27,24,0.14)', display: 'flex', flexDirection: 'column', transition: drag.current ? 'none' : 'height 200ms cubic-bezier(0.22, 1, 0.36, 1)' }}>
+        <div style={{ position: 'fixed', left: 0, right: 0, bottom: NAVBAR, height: sheetH, zIndex: 30, background: 'var(--ck-surface)', borderTop: '1px solid var(--ck-line)', borderRadius: '18px 18px 0 0', boxShadow: '0 -12px 32px rgba(30,27,24,0.14)', display: 'flex', flexDirection: 'column', transition: drag.current ? 'none' : 'height 200ms cubic-bezier(0.22, 1, 0.36, 1)' }}>
           <div
             onPointerDown={(e) => { drag.current = { startY: e.clientY, startH: sheetH }; (e.target as HTMLElement).setPointerCapture?.(e.pointerId) }}
             style={{ flexShrink: 0, padding: '10px 0 8px', cursor: 'grab', touchAction: 'none' }}
           >
-            <div style={{ width: 44, height: 5, borderRadius: 3, background: 'var(--hh-mushroom)', margin: '0 auto' }} />
-            <div style={{ textAlign: 'center', fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', marginTop: 6 }}>{editLabel}</div>
+            <div style={{ width: 44, height: 5, borderRadius: 3, background: 'var(--ck-line-strong)', margin: '0 auto' }} />
+            <div style={{ textAlign: 'center', fontSize: 10.5, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', marginTop: 6, fontFamily: 'var(--ck-font)' }}>{editLabel}</div>
           </div>
           <div style={{ flex: 1, overflowY: sheetH > PEEK + 40 ? 'auto' : 'hidden', WebkitOverflowScrolling: 'touch', padding: '0 16px 24px' }}>
             {rail}
@@ -144,9 +143,9 @@ export default function EditorShell({
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flexShrink: 0 }}>{header}</div>
-      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: `${railWidth + 64}px 1fr` }}>
-        <div style={{ minWidth: 0, overflowY: 'auto', padding: '20px 24px 48px 40px', borderRight: '1px solid var(--hh-line)' }}>{rail}</div>
-        <div style={{ minWidth: 0, overflowY: 'auto', padding: '24px 40px 48px 32px', background: 'var(--hh-monterey)' }}>{canvas}</div>
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: `${railWidth + 48}px 1fr`, background: 'var(--ck-bg)' }}>
+        <div className="ck-rail" style={{ minWidth: 0, overflowY: 'auto', padding: '18px 20px 48px 24px', borderRight: '1px solid var(--ck-line)' }}>{rail}</div>
+        <div style={{ minWidth: 0, overflowY: 'auto', padding: '28px 40px 56px 32px', background: 'var(--ck-surface-2)' }}>{canvas}</div>
       </div>
     </div>
   )

@@ -93,10 +93,10 @@ const STRUCTURES: Record<Family, { id: string; label: string; blocks: () => Bloc
   ],
 }
 
-const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--font-sans)', boxSizing: 'border-box' }
-const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '20px 0 10px' }
-const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--text-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
-const chip = (active: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-body)' })
+const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--ck-font)', boxSizing: 'border-box' }
+const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '20px 0 10px' }
+const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--ck-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--ck-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
+const chip = (active: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', border: active ? '1px solid var(--ck-ink)' : '1px solid var(--ck-line)', background: active ? 'var(--ck-ink)' : 'transparent', color: active ? 'var(--ck-bg)' : 'var(--ck-ink)' })
 
 const BLOCK_LABEL: Record<string, string> = { heading: 'Heading', text: 'Text', image: 'Image', quote: 'Quote', list: 'Numbered list' }
 
@@ -334,7 +334,7 @@ export default function CreateEditor() {
   if (gated) {
     return (
       <EditorShell ctype={meta.ctype} subline="Sign in to write and save" onDone={() => {}} doneDisabled
-        rail={<p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to write and save.</p>} canvas={<div />} />
+        rail={<p style={{ fontSize: 14, color: 'var(--ck-muted)' }}>Sign in (bottom-left) to write and save.</p>} canvas={<div />} />
     )
   }
 
@@ -357,20 +357,20 @@ export default function CreateEditor() {
       rail={
         <div>
                 {/* Copilot brief */}
-                <div style={{ border: '1px solid var(--hh-line)', borderRadius: 14, padding: 16, background: 'var(--hh-bone)' }}>
-                  <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
+                <div style={{ border: '1px solid var(--ck-line)', borderRadius: 14, padding: 16, background: 'var(--ck-surface)' }}>
+                  <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
                   <input style={{ ...inp, marginBottom: 8 }} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder={meta.topicPlaceholder} onKeyDown={(e) => { if (e.key === 'Enter') write() }} />
                   <textarea style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} rows={2} value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="Notes, angles, references (optional)" />
                   {family === 'journal' && (
                     <>
-                      <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '12px 0 6px' }}>Type of piece</div>
+                      <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '12px 0 6px' }}>Type of piece</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {ARTICLE_TYPES.map((t) => (
                           <button key={t.key} className="hh-btn" onClick={() => setArticleType(t.key)} title={t.hint} style={{ ...chip(articleType === t.key), padding: '6px 11px', fontSize: 11.5 }}>{t.label}</button>
                         ))}
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6, lineHeight: 1.45 }}>{ARTICLE_TYPES.find((t) => t.key === articleType)?.hint}</div>
-                      <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '12px 0 6px' }}>Length</div>
+                      <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6, lineHeight: 1.45 }}>{ARTICLE_TYPES.find((t) => t.key === articleType)?.hint}</div>
+                      <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '12px 0 6px' }}>Length</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {LENGTHS.map((l) => (
                           <button key={l.key} className="hh-btn" onClick={() => setLength(l.key)} style={{ ...chip(length === l.key), padding: '6px 11px', fontSize: 11.5 }}>{l.label} <span style={{ opacity: 0.6 }}>· {l.hint}</span></button>
@@ -379,7 +379,7 @@ export default function CreateEditor() {
                     </>
                   )}
                   <button className="hh-btn" onClick={write} disabled={aiBusy || !aiTopic.trim()}
-                    style={{ marginTop: 12, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy || !aiTopic.trim() ? 'default' : 'pointer', opacity: aiBusy || !aiTopic.trim() ? 0.55 : 1 }}>
+                    style={{ marginTop: 12, width: '100%', background: 'var(--ck-accent)', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy || !aiTopic.trim() ? 'default' : 'pointer', opacity: aiBusy || !aiTopic.trim() ? 0.55 : 1 }}>
                     {aiBusy ? (length === 'long' ? 'Writing… (about 90s)' : 'Writing… (about a minute)') : '✦ Generate'}
                   </button>
                 </div>
@@ -388,7 +388,7 @@ export default function CreateEditor() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {structures.map((s) => <button key={s.id} className="hh-btn" onClick={() => applyStructure(s.id)} style={chip(structureId === s.id)}>{s.label}</button>)}
                 </div>
-                {hasContent && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Templates seed an empty document — they won’t overwrite writing.</div>}
+                {hasContent && <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Templates seed an empty document — they won’t overwrite writing.</div>}
 
                 <div style={rail}>Title</div>
                 <input style={inp} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={family === 'report' ? 'The state of wellness in…' : 'Article title'} />
@@ -397,7 +397,7 @@ export default function CreateEditor() {
 
                 <div style={rail}>Hero image</div>
                 {hero && (
-                  <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', marginBottom: 8, border: '1px solid var(--hh-line)' }}>
+                  <div style={{ position: 'relative', borderRadius: 10, overflow: 'hidden', marginBottom: 8, border: '1px solid var(--ck-line)' }}>
                     <img src={hero} alt="" style={{ display: 'block', width: '100%', height: 110, objectFit: 'cover' }} />
                     <span style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,10,7,0) 30%, rgba(5,10,7,0.7) 100%)' }} />
                     <span style={{ position: 'absolute', left: 10, bottom: 8, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>Cover</span>
@@ -418,10 +418,10 @@ export default function CreateEditor() {
                 <div style={rail}>Sections</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {blocks.map((b, i) => (
-                    <div key={b.id} style={{ border: '1px solid var(--hh-line)', borderRadius: 10, padding: 10, background: 'var(--hh-bone)' }}>
+                    <div key={b.id} style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: 10, background: 'var(--ck-surface)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <span style={{ color: 'var(--text-faint)', fontSize: 11, cursor: 'default' }}>⋮⋮</span>
-                        <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', flex: 1 }}>{BLOCK_LABEL[b.type] ?? b.type}</span>
+                        <span style={{ color: 'var(--ck-faint)', fontSize: 11, cursor: 'default' }}>⋮⋮</span>
+                        <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ck-faint)', flex: 1 }}>{BLOCK_LABEL[b.type] ?? b.type}</span>
                         <button className="hh-btn" onClick={() => moveBlock(i, -1)} style={miniBtn} title="Move up">↑</button>
                         <button className="hh-btn" onClick={() => moveBlock(i, 1)} style={miniBtn} title="Move down">↓</button>
                         <ConfirmButton onConfirm={() => removeBlock(b.id)} style={{ ...miniBtn, border: 'none' }}>×</ConfirmButton>
@@ -431,7 +431,7 @@ export default function CreateEditor() {
                       {b.type === 'image' && (
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            {b.url && <img src={b.url} alt="" style={{ height: 40, width: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--hh-line)' }} />}
+                            {b.url && <img src={b.url} alt="" style={{ height: 40, width: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--ck-line)' }} />}
                             <label className="hh-btn" style={{ ...miniBtn, width: 'auto', padding: '9px 12px', flex: 1, textAlign: 'center', cursor: uploadingId === b.id ? 'default' : 'pointer', opacity: uploadingId === b.id ? 0.6 : 1 }}>
                               {uploadingId === b.id ? 'Uploading…' : b.url ? 'Replace image' : '⭱ Upload image'}
                               <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingId === b.id} onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadBlockImage(b.id, f); e.currentTarget.value = '' }} />
@@ -466,22 +466,22 @@ export default function CreateEditor() {
                 <div style={rail}>Share</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   <button className="hh-btn" onClick={toNewsletter} disabled={busy || !title.trim() || !blocks.length}
-                    style={{ background: 'none', border: '1px solid var(--hh-copper)', color: 'var(--text-accent)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
+                    style={{ background: 'none', border: '1px solid var(--ck-accent)', color: 'var(--ck-accent)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
                     ✉ Create newsletter from this
                   </button>
                 </div>
                 {family === 'journal' && (
                   <>
-                    <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '12px 0 6px' }}>Instagram · from this article</div>
+                    <div style={{ fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '12px 0 6px' }}>Instagram · from this article</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {([['portrait', 'Single post'], ['carousel', 'Carousel'], ['story', 'Story']] as const).map(([f, label]) => (
                         <button key={f} className="hh-btn" onClick={() => toInstagram(f)} disabled={busy || !title.trim() || !blocks.length}
-                          style={{ background: 'none', border: '1px solid var(--hh-line)', color: 'var(--text-strong)', borderRadius: 999, padding: '9px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
+                          style={{ background: 'none', border: '1px solid var(--ck-line)', color: 'var(--ck-ink)', borderRadius: 999, padding: '9px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
                           ◎ {label}
                         </button>
                       ))}
                     </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6, lineHeight: 1.45 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6, lineHeight: 1.45 }}>
                       Opens a draft in the Social Studio: hero as the cover, article images on the slides they belong to, caption and hashtags pointing to the piece. Post to Instagram from there.
                     </div>
                   </>
@@ -494,16 +494,16 @@ export default function CreateEditor() {
                       {REMEDAE_CATEGORIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
                     </select>
                     <button className="hh-btn" onClick={publishRemedae} disabled={busy || !title.trim() || !blocks.length}
-                      style={{ background: 'var(--hh-copper)', border: '1px solid var(--hh-copper)', color: 'var(--hh-on-accent, #10140F)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
+                      style={{ background: 'var(--ck-accent)', border: '1px solid var(--ck-accent)', color: 'var(--hh-on-accent, #10140F)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
                       {pinnedSlug ? '↗ Update the live article' : '↗ Publish to the journal'}
                     </button>
                     {pinnedSlug && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-                        {remedaeUrl && <a href={remedaeUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, color: 'var(--text-accent)' }}>View on remedae.app ↗</a>}
-                        <ConfirmButton onConfirm={unpublishRemedae} style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', cursor: 'pointer' }}>Unpublish</ConfirmButton>
+                        {remedaeUrl && <a href={remedaeUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, color: 'var(--ck-accent)' }}>View on remedae.app ↗</a>}
+                        <ConfirmButton onConfirm={unpublishRemedae} style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: 'var(--ck-muted)', cursor: 'pointer' }}>Unpublish</ConfirmButton>
                       </div>
                     )}
-                    {pinnedSlug && <div style={{ fontSize: 11, color: 'var(--text-faint)', marginTop: 6 }}>Live at /journal/{pinnedSlug}. Edits update this article in place, even if you retitle it.</div>}
+                    {pinnedSlug && <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Live at /journal/{pinnedSlug}. Edits update this article in place, even if you retitle it.</div>}
                   </>
                 )}
 
@@ -512,13 +512,13 @@ export default function CreateEditor() {
                     <div style={rail}>{meta.label} library · {docs.length}</div>
                     <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                       {docs.map((a) => (
-                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--hh-line)' }}>
+                        <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--ck-line)' }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.title || 'Untitled'}</div>
-                            <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{a.status === 'published' ? 'Published' : 'Draft'}</div>
+                            <div style={{ fontSize: 11, color: 'var(--ck-faint)' }}>{a.status === 'published' ? 'Published' : 'Draft'}</div>
                           </div>
-                          <button className="hh-btn" onClick={() => openDoc(a)} style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 12, cursor: 'pointer' }}>Open</button>
-                          <ConfirmButton onConfirm={() => del(a.id)} style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 15, lineHeight: 1, cursor: 'pointer' }}>×</ConfirmButton>
+                          <button className="hh-btn" onClick={() => openDoc(a)} style={{ background: 'none', border: 'none', color: 'var(--ck-accent)', fontSize: 12, cursor: 'pointer' }}>Open</button>
+                          <ConfirmButton onConfirm={() => del(a.id)} style={{ background: 'none', border: 'none', color: 'var(--ck-faint)', fontSize: 15, lineHeight: 1, cursor: 'pointer' }}>×</ConfirmButton>
                         </div>
                       ))}
                     </div>

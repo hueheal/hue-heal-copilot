@@ -19,10 +19,10 @@ import {
 import type { ProposalPhase } from '../lib/database.types'
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8,
-  padding: '10px 12px', fontSize: 14, fontFamily: 'var(--font-sans)', color: 'var(--text-strong)',
+  width: '100%', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8,
+  padding: '10px 12px', fontSize: 14, fontFamily: 'var(--ck-font)', color: 'var(--ck-ink)',
 }
-const labelStyle: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-faint)', marginBottom: 6, display: 'block' }
+const labelStyle: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ck-faint)', marginBottom: 6, display: 'block' }
 
 export default function ProposalEditor() {
   const { current: brandWorld } = useBrand()
@@ -38,7 +38,7 @@ export default function ProposalEditor() {
   }, [id])
 
   if (!p) {
-    return <div style={{ padding: 40, color: 'var(--text-muted)' }}>{status ?? 'Loading proposal…'}</div>
+    return <div style={{ padding: 40, color: 'var(--ck-muted)' }}>{status ?? 'Loading proposal…'}</div>
   }
 
   const set = (patch: Partial<Proposal>) => setP({ ...p, ...patch } as Proposal)
@@ -97,15 +97,15 @@ export default function ProposalEditor() {
   return (
     <div>
       {/* Toolbar (hidden in print) */}
-      <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 40px', borderBottom: '1px solid var(--hh-line)' }}>
-        <button onClick={() => nav(p?.client_id ? `/clients/${p.client_id}` : '/clients')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 13 }}>⟵ {p?.client_name || 'Clients'}</button>
-        <div style={{ fontSize: 13, color: 'var(--text-faint)' }}>{p.client_name} · {p.status}</div>
+      <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '20px 40px', borderBottom: '1px solid var(--ck-line)' }}>
+        <button onClick={() => nav(p?.client_id ? `/clients/${p.client_id}` : '/clients')} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--ck-accent)', fontSize: 13 }}>⟵ {p?.client_name || 'Clients'}</button>
+        <div style={{ fontSize: 13, color: 'var(--ck-faint)' }}>{p.client_name} · {p.status}</div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-          {status && <span style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{status}</span>}
+          {status && <span style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>{status}</span>}
           <ConfirmButton
             onConfirm={async () => { const home = p?.client_id ? `/clients/${p.client_id}` : '/clients'; await deleteProposal(p!.id); nav(home) }}
             confirmLabel="Delete proposal?"
-            style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 999, padding: '11px 18px', fontSize: 13, color: 'var(--text-muted)' }}
+            style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '11px 18px', fontSize: 13, color: 'var(--ck-muted)' }}
           >
             Delete
           </ConfirmButton>
@@ -121,14 +121,14 @@ export default function ProposalEditor() {
       <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: 28, padding: '28px 40px', alignItems: 'start' }}>
         {/* Editor (hidden in print) */}
         <div className="no-print" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div style={{ background: 'var(--hh-anthracite)', color: 'var(--text-on-ink)', borderRadius: 14, padding: 20 }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--hh-ember)', marginBottom: 10 }}>Draft with AI</div>
+          <div style={{ background: 'var(--ck-ink)', color: 'var(--ck-bg)', borderRadius: 14, padding: 20 }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', marginBottom: 10 }}>Draft with AI</div>
             <textarea
               value={brief}
               onChange={(e) => setBrief(e.target.value)}
               placeholder="Describe the scope — e.g. 'Wellness spa concept + interiors for a boutique hotel in the Cotswolds, 8 treatment rooms, opening spring.'"
               rows={4}
-              style={{ ...inputStyle, background: 'rgba(244,240,231,0.08)', border: '1px solid var(--hh-line-ink)', color: 'var(--text-on-ink)', resize: 'vertical' }}
+              style={{ ...inputStyle, background: 'rgba(244,240,231,0.08)', border: '1px solid var(--hh-line-ink)', color: 'var(--ck-bg)', resize: 'vertical' }}
             />
             <div style={{ marginTop: 10 }}>
               <PillButton tone="accent" onClick={draftWithAI}>{busy ? 'Drafting…' : '✦ Draft proposal'}</PillButton>
@@ -150,16 +150,16 @@ export default function ProposalEditor() {
             <label style={labelStyle}>Phases &amp; fees · total {phasesTotal(p.phases) ? `£${phasesTotal(p.phases).toLocaleString('en-GB')}` : '£0'}</label>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {p.phases.map((ph, i) => (
-                <div key={i} style={{ border: '1px solid var(--hh-line)', borderRadius: 10, padding: 10, background: 'var(--hh-bone)' }}>
+                <div key={i} style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: 10, background: 'var(--ck-surface)' }}>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input style={{ ...inputStyle, flex: 1 }} placeholder="Phase" value={ph.name} onChange={(e) => setPhase(i, { name: e.target.value })} />
                     <input style={{ ...inputStyle, width: 96 }} placeholder="£" value={ph.fee || ''} onChange={(e) => setPhase(i, { fee: parseInt(e.target.value.replace(/[^0-9]/g, ''), 10) || 0 })} />
-                    <button onClick={() => removePhase(i)} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 16 }}>×</button>
+                    <button onClick={() => removePhase(i)} className="hh-btn" style={{ background: 'none', border: 'none', color: 'var(--ck-faint)', fontSize: 16 }}>×</button>
                   </div>
                   <input style={{ ...inputStyle, marginTop: 8, fontSize: 13 }} placeholder="What this phase delivers" value={ph.detail ?? ''} onChange={(e) => setPhase(i, { detail: e.target.value })} />
                 </div>
               ))}
-              <button onClick={addPhase} className="hh-btn" style={{ background: 'none', border: '1px dashed var(--hh-line)', borderRadius: 10, padding: '9px', color: 'var(--text-muted)', fontSize: 13 }}>＋ Add phase</button>
+              <button onClick={addPhase} className="hh-btn" style={{ background: 'none', border: '1px dashed var(--hh-line)', borderRadius: 10, padding: '9px', color: 'var(--ck-muted)', fontSize: 13 }}>＋ Add phase</button>
             </div>
           </div>
 

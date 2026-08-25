@@ -35,10 +35,10 @@ import {
    brief, template, sections, send + audience in the rail; the rendered email
    as the canvas. */
 
-const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--font-sans)', boxSizing: 'border-box' }
-const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', margin: '20px 0 10px' }
-const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--text-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
-const chip = (active: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-body)' })
+const inp: React.CSSProperties = { width: '100%', border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--ck-font)', boxSizing: 'border-box' }
+const rail: React.CSSProperties = { fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', margin: '20px 0 10px' }
+const miniBtn: React.CSSProperties = { background: 'none', border: '1px solid var(--ck-line)', borderRadius: 6, width: 26, height: 24, color: 'var(--ck-faint)', fontSize: 12, lineHeight: 1, cursor: 'pointer' }
+const chip = (active: boolean): React.CSSProperties => ({ borderRadius: 999, padding: '8px 15px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', border: active ? '1px solid var(--ck-ink)' : '1px solid var(--ck-line)', background: active ? 'var(--ck-ink)' : 'transparent', color: active ? 'var(--ck-bg)' : 'var(--ck-ink)' })
 
 export default function NewsletterEditor() {
   const auth = useAuth()
@@ -169,7 +169,7 @@ export default function NewsletterEditor() {
           const active = (b.size ?? def) === size
           return (
             <button key={r} className="hh-btn" title={`${size}px`} onClick={() => setBlock(b.id, { size })}
-              style={{ ...miniBtn, width: 'auto', padding: '4px 8px', fontSize: 10.5, border: active ? '1px solid var(--hh-anthracite)' : '1px solid var(--hh-line)', background: active ? 'var(--hh-anthracite)' : 'transparent', color: active ? 'var(--text-on-ink)' : 'var(--text-faint)' }}>
+              style={{ ...miniBtn, width: 'auto', padding: '4px 8px', fontSize: 10.5, border: active ? '1px solid var(--ck-ink)' : '1px solid var(--ck-line)', background: active ? 'var(--ck-ink)' : 'transparent', color: active ? 'var(--ck-bg)' : 'var(--ck-faint)' }}>
               {r}
             </button>
           )
@@ -234,7 +234,7 @@ export default function NewsletterEditor() {
   if (gated) {
     return (
       <EditorShell ctype="Edition" subline="Sign in to compose and send" onDone={() => {}} doneDisabled
-        rail={<p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in (bottom-left) to compose and send.</p>} canvas={<div />} />
+        rail={<p style={{ fontSize: 14, color: 'var(--ck-muted)' }}>Sign in (bottom-left) to compose and send.</p>} canvas={<div />} />
     )
   }
 
@@ -259,12 +259,12 @@ export default function NewsletterEditor() {
       rail={
         <div>
           {/* Brief the copilot */}
-          <div style={{ border: '1px solid var(--hh-line)', borderRadius: 14, padding: 16, background: 'var(--hh-bone)' }}>
-            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
+          <div style={{ border: '1px solid var(--ck-line)', borderRadius: 14, padding: 16, background: 'var(--ck-surface)' }}>
+            <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-accent)', marginBottom: 10 }}>✦ Brief the copilot</div>
             <input style={{ ...inp, marginBottom: 8 }} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder="Topic — e.g. designing for stillness" onKeyDown={(e) => { if (e.key === 'Enter') draftWithAI() }} />
             <textarea style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} rows={2} value={aiNotes} onChange={(e) => setAiNotes(e.target.value)} placeholder="Notes, points to cover, links (optional)" />
             <button className="hh-btn" onClick={draftWithAI} disabled={aiBusy || !aiTopic.trim()}
-              style={{ marginTop: 10, width: '100%', background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy || !aiTopic.trim() ? 'default' : 'pointer', opacity: aiBusy || !aiTopic.trim() ? 0.55 : 1 }}>
+              style={{ marginTop: 10, width: '100%', background: 'var(--ck-accent)', color: '#FFFFFF', border: 'none', borderRadius: 999, padding: '11px 18px', fontSize: 13, fontWeight: 500, cursor: aiBusy || !aiTopic.trim() ? 'default' : 'pointer', opacity: aiBusy || !aiTopic.trim() ? 0.55 : 1 }}>
               {aiBusy ? 'Writing…' : '✦ Generate'}
             </button>
           </div>
@@ -282,10 +282,10 @@ export default function NewsletterEditor() {
           <div style={rail}>Sections</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {blocks.map((b, i) => (
-              <div key={b.id} style={{ border: '1px solid var(--hh-line)', borderRadius: 10, padding: 10, background: 'var(--hh-bone)' }}>
+              <div key={b.id} style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: 10, background: 'var(--ck-surface)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: b.type === 'divider' ? 0 : 6 }}>
-                  <span style={{ color: 'var(--text-faint)', fontSize: 11, cursor: 'default' }}>⋮⋮</span>
-                  <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)', flex: 1 }}>{b.type}</span>
+                  <span style={{ color: 'var(--ck-faint)', fontSize: 11, cursor: 'default' }}>⋮⋮</span>
+                  <span style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ck-faint)', flex: 1 }}>{b.type}</span>
                   <button className="hh-btn" onClick={() => moveBlock(i, -1)} style={miniBtn}>↑</button>
                   <button className="hh-btn" onClick={() => moveBlock(i, 1)} style={miniBtn}>↓</button>
                   <ConfirmButton onConfirm={() => removeBlock(b.id)} style={{ ...miniBtn, border: 'none' }}>×</ConfirmButton>
@@ -295,7 +295,7 @@ export default function NewsletterEditor() {
                 {b.type === 'image' && (
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      {b.url && <img src={b.url} alt="" style={{ height: 40, width: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--hh-line)' }} />}
+                      {b.url && <img src={b.url} alt="" style={{ height: 40, width: 40, objectFit: 'cover', borderRadius: 6, border: '1px solid var(--ck-line)' }} />}
                       <label className="hh-btn" style={{ ...miniBtn, width: 'auto', padding: '9px 12px', cursor: uploadingId === b.id ? 'default' : 'pointer', opacity: uploadingId === b.id ? 0.6 : 1, flex: 1, textAlign: 'center' }}>
                         {uploadingId === b.id ? 'Uploading…' : b.url ? 'Replace image' : '⭱ Upload image'}
                         <input type="file" accept="image/*" style={{ display: 'none' }} disabled={uploadingId === b.id}
@@ -324,7 +324,7 @@ export default function NewsletterEditor() {
           <div style={{ display: 'flex', gap: 6 }}>
             <input style={{ ...inp, flex: 1 }} placeholder="you@studio.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} />
             <button className="hh-btn" onClick={testSend} disabled={sending}
-              style={{ background: 'none', border: '1px solid var(--hh-copper)', color: 'var(--text-accent)', borderRadius: 999, padding: '9px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: sending ? 0.55 : 1, whiteSpace: 'nowrap' }}>
+              style={{ background: 'none', border: '1px solid var(--ck-accent)', color: 'var(--ck-accent)', borderRadius: 999, padding: '9px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: sending ? 0.55 : 1, whiteSpace: 'nowrap' }}>
               {sending ? 'Sending…' : 'Send test'}
             </button>
           </div>
@@ -336,7 +336,7 @@ export default function NewsletterEditor() {
               ))}
             </select>
             <button className="hh-btn" onClick={sendToList} disabled={sending}
-              style={{ background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: '1px solid var(--hh-copper)', borderRadius: 999, padding: '9px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: sending ? 0.55 : 1, whiteSpace: 'nowrap' }}>
+              style={{ background: 'var(--ck-accent)', color: '#FFFFFF', border: '1px solid var(--ck-accent)', borderRadius: 999, padding: '9px 16px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: sending ? 0.55 : 1, whiteSpace: 'nowrap' }}>
               {sending ? 'Sending…' : 'Send to list ⟶'}
             </button>
           </div>
@@ -351,18 +351,18 @@ export default function NewsletterEditor() {
                   {copied ? 'Copied' : 'Copy'}
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-faint)', margin: '4px 0 10px' }}>Share this — people who open it join {brand.name}’s list.</div>
+              <div style={{ fontSize: 11, color: 'var(--ck-faint)', margin: '4px 0 10px' }}>Share this — people who open it join {brand.name}’s list.</div>
             </>
           )}
           <textarea style={{ ...inp, resize: 'vertical' }} rows={2} placeholder="Add emails manually (comma or newline separated)" value={subInput} onChange={(e) => setSubInput(e.target.value)} />
           <button className="hh-btn" onClick={onAddSubs} style={{ ...miniBtn, width: 'auto', padding: '8px 12px', marginTop: 6 }}>＋ Add subscribers</button>
           <div style={{ marginTop: 8, maxHeight: 140, overflowY: 'auto' }}>
             {subs.map((s) => (
-              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: '1px solid var(--hh-line)', fontSize: 12.5 }}>
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', borderTop: '1px solid var(--ck-line)', fontSize: 12.5 }}>
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {s.email}
-                  {s.status === 'unsubscribed' && <span style={{ color: 'var(--hh-ember)', marginLeft: 6, fontSize: 10.5 }}>unsubscribed</span>}
-                  {(s.groups ?? []).length > 0 && <span style={{ color: 'var(--text-faint)', marginLeft: 6, fontSize: 10.5 }}>· {(s.groups ?? []).join(', ')}</span>}
+                  {s.status === 'unsubscribed' && <span style={{ color: 'var(--ck-accent)', marginLeft: 6, fontSize: 10.5 }}>unsubscribed</span>}
+                  {(s.groups ?? []).length > 0 && <span style={{ color: 'var(--ck-faint)', marginLeft: 6, fontSize: 10.5 }}>· {(s.groups ?? []).join(', ')}</span>}
                 </span>
                 <ConfirmButton onConfirm={async () => { await deleteSubscriber(s.id); await reload() }} style={{ ...miniBtn, border: 'none' }}>×</ConfirmButton>
               </div>
@@ -374,13 +374,13 @@ export default function NewsletterEditor() {
               <div style={rail}>Editions · {newsletters.length}</div>
               <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                 {newsletters.map((n) => (
-                  <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--hh-line)' }}>
+                  <div key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderTop: '1px solid var(--ck-line)' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.subject || 'Untitled'}</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-faint)' }}>{n.status === 'sent' && n.sent_at ? `Sent · ${new Date(n.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${n.recipients_count}` : 'Draft'}</div>
+                      <div style={{ fontSize: 11, color: 'var(--ck-faint)' }}>{n.status === 'sent' && n.sent_at ? `Sent · ${new Date(n.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} · ${n.recipients_count}` : 'Draft'}</div>
                     </div>
-                    <button className="hh-btn" onClick={() => openNl(n)} style={{ background: 'none', border: 'none', color: 'var(--hh-copper)', fontSize: 12, cursor: 'pointer' }}>Open</button>
-                    <ConfirmButton onConfirm={() => delNl(n.id)} style={{ background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 15, lineHeight: 1, cursor: 'pointer' }}>×</ConfirmButton>
+                    <button className="hh-btn" onClick={() => openNl(n)} style={{ background: 'none', border: 'none', color: 'var(--ck-accent)', fontSize: 12, cursor: 'pointer' }}>Open</button>
+                    <ConfirmButton onConfirm={() => delNl(n.id)} style={{ background: 'none', border: 'none', color: 'var(--ck-faint)', fontSize: 15, lineHeight: 1, cursor: 'pointer' }}>×</ConfirmButton>
                   </div>
                 ))}
               </div>
@@ -388,7 +388,7 @@ export default function NewsletterEditor() {
           )}
         </div>
       }
-      canvas={<iframe title="preview" srcDoc={html} style={{ width: '100%', height: isMobile ? 560 : 680, border: '1px solid var(--hh-line-card)', borderRadius: 12, background: '#fff' }} />}
+      canvas={<iframe title="preview" srcDoc={html} style={{ width: '100%', height: isMobile ? 560 : 680, border: '1px solid var(--ck-line-strong)', borderRadius: 12, background: '#fff' }} />}
     />
   )
 }

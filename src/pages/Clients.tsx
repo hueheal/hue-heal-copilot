@@ -106,7 +106,7 @@ export default function Clients() {
 
       <div style={{ padding: isMobile ? '18px 16px' : '30px 40px' }}>
         {gated && (
-          <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>Sign in to load your clients.</p>
+          <p style={{ fontSize: 14, color: 'var(--ck-muted)' }}>Sign in to load your clients.</p>
         )}
 
         {err && (
@@ -116,7 +116,7 @@ export default function Clients() {
         )}
 
         {adding && (
-          <div style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 20, marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ background: 'var(--ck-surface)', border: '1px solid var(--ck-line-strong)', borderRadius: 14, padding: 20, marginBottom: 20, display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
             {([
               ['name', 'Name', 'e.g. Wild Botanic'],
               ['sector', 'Sector', 'e.g. Hospitality'],
@@ -124,12 +124,12 @@ export default function Clients() {
               ['note', 'Note', 'Intro call Thursday'],
             ] as const).map(([key, label, ph]) => (
               <label key={key} style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: key === 'note' ? '2 1 200px' : '1 1 120px' }}>
-                <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-faint)' }}>{label}</span>
+                <span style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ck-faint)' }}>{label}</span>
                 <input
                   value={form[key]}
                   onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                   placeholder={ph}
-                  style={{ border: '1px solid var(--hh-line)', background: 'var(--hh-lotus)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--font-sans)' }}
+                  style={{ border: '1px solid var(--ck-line)', background: 'var(--ck-surface)', borderRadius: 8, padding: '10px 12px', fontSize: 14, fontFamily: 'var(--ck-font)' }}
                 />
               </label>
             ))}
@@ -143,32 +143,32 @@ export default function Clients() {
             if (isMobile && list.length === 0) return null // stacked view: skip empty stages
             return (
               <div key={col.key}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-faint)', padding: '0 4px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ck-faint)', padding: '0 4px 14px' }}>
                   {col.label}
                   <span style={{ fontWeight: 500 }}>· {list.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {list.map((c) => (
                     <div key={c.id} className="hh-card-hover" onClick={() => nav(`/clients/${c.id}`)}
-                      style={{ background: 'var(--hh-bone)', border: '1px solid var(--hh-line-card)', borderRadius: 14, padding: 16, cursor: 'pointer' }}>
+                      style={{ background: 'var(--ck-surface)', border: '1px solid var(--ck-line-strong)', borderRadius: 14, padding: 16, cursor: 'pointer' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <span style={{ width: 34, height: 34, flexShrink: 0, borderRadius: '50%', background: 'var(--hh-mushroom)', color: '#2A211A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>
                           {initials(c.name)}
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 14.5, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                          {c.sector && <div style={{ fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--text-faint)', marginTop: 2 }}>{c.sector}</div>}
+                          {c.sector && <div style={{ fontSize: 11, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ck-faint)', marginTop: 2 }}>{c.sector}</div>}
                         </div>
-                        <div className="hh-serif" style={{ fontSize: 16, color: 'var(--hh-copper)', flexShrink: 0 }}>{gbpCompact(c.value_gbp)}</div>
+                        <div className="hh-serif" style={{ fontSize: 16, color: 'var(--ck-accent)', flexShrink: 0 }}>{gbpCompact(c.value_gbp)}</div>
                       </div>
-                      {c.note && <div style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 10, lineHeight: 1.5 }}>{c.note}</div>}
+                      {c.note && <div style={{ fontSize: 12.5, color: 'var(--ck-muted)', marginTop: 10, lineHeight: 1.5 }}>{c.note}</div>}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, opacity: 0.9 }}>
                         <button className="hh-btn" onClick={(e) => { e.stopPropagation(); move(c, -1) }} disabled={colIdx === 0} title="Move back"
-                          style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 24, height: 22, color: colIdx === 0 ? 'var(--hh-line)' : 'var(--text-faint)' }}>◀</button>
+                          style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 6, width: 24, height: 22, color: colIdx === 0 ? 'var(--ck-line)' : 'var(--ck-faint)' }}>◀</button>
                         <button className="hh-btn" onClick={(e) => { e.stopPropagation(); move(c, 1) }} disabled={colIdx === STAGES.length - 1} title="Move forward"
-                          style={{ background: 'none', border: '1px solid var(--hh-line)', borderRadius: 6, width: 24, height: 22, color: colIdx === STAGES.length - 1 ? 'var(--hh-line)' : 'var(--text-faint)' }}>▶</button>
+                          style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 6, width: 24, height: 22, color: colIdx === STAGES.length - 1 ? 'var(--ck-line)' : 'var(--ck-faint)' }}>▶</button>
                         <ConfirmButton onConfirm={() => remove(c.id)} title="Remove client"
-                          style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-faint)', fontSize: 16, lineHeight: 1 }}>×</ConfirmButton>
+                          style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--ck-faint)', fontSize: 16, lineHeight: 1 }}>×</ConfirmButton>
                       </div>
                     </div>
                   ))}

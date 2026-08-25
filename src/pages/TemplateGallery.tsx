@@ -57,9 +57,9 @@ export default function TemplateGallery() {
   })))
   return (
     <div style={{ padding: 32 }}>
-      <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 18 }}>
+      <div style={{ fontSize: 13, color: 'var(--ck-muted)', marginBottom: 18 }}>
         {brandName ?? 'Hue & Heal'} · {spec.label} · {list.length} templates{photo ? ' · with photo' : ''}{long ? ' · long content' : ''}
-        {' · '}<span style={{ color: bleeds.length ? '#b5632f' : 'var(--text-muted)' }}>{bleeds.length ? `${bleeds.length} margin bleeds` : 'margins clean'}</span>
+        {' · '}<span style={{ color: bleeds.length ? '#b5632f' : 'var(--ck-muted)' }}>{bleeds.length ? `${bleeds.length} margin bleeds` : 'margins clean'}</span>
       </div>
       {bleeds.length > 0 && (
         <ul style={{ fontSize: 12, color: '#b5632f', margin: '0 0 18px', paddingLeft: 18 }}>{bleeds.map((b) => <li key={b}>{b}</li>)}</ul>
@@ -68,7 +68,7 @@ export default function TemplateGallery() {
         {designs.map(({ t, d }) => {
           return d.slides.map((s, i) => (
             <div key={`${t.id}-${i}`}>
-              <div style={{ fontSize: 12, color: 'var(--text-faint)', marginBottom: 6 }}>{t.label}{d.slides.length > 1 ? ` · ${i + 1}/${d.slides.length}` : ''}</div>
+              <div style={{ fontSize: 12, color: 'var(--ck-faint)', marginBottom: 6 }}>{t.label}{d.slides.length > 1 ? ` · ${i + 1}/${d.slides.length}` : ''}</div>
               <div style={{ boxShadow: 'var(--shadow-raised)' }}>
                 <SlideCanvas slide={s} spec={spec} displayW={w} fonts={fonts} />
               </div>

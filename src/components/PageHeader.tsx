@@ -14,7 +14,7 @@ export default function PageHeader({ eyebrow, title, subtitle, action }: Props) 
     <header
       style={{
         padding: isMobile ? '20px 16px' : '34px 40px',
-        borderBottom: '1px solid var(--hh-line)',
+        borderBottom: '1px solid var(--ck-line)',
         display: 'flex',
         alignItems: isMobile ? 'stretch' : 'flex-end',
         flexWrap: 'wrap',
@@ -23,16 +23,15 @@ export default function PageHeader({ eyebrow, title, subtitle, action }: Props) 
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-accent)' }}>
+        <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ck-faint)', fontFamily: 'var(--ck-font)', fontWeight: 500 }}>
           {eyebrow}
         </div>
         <h1
-          className="hh-serif"
-          style={{ fontWeight: 400, fontSize: 'clamp(28px, 3.4vw, 44px)', letterSpacing: '-0.01em', margin: '8px 0 0' }}
+          style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: 'clamp(24px, 2.6vw, 32px)', letterSpacing: '-0.02em', margin: '8px 0 0', color: 'var(--ck-ink)' }}
         >
           {title}
         </h1>
-        {subtitle && <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '12px 0 0', maxWidth: '60ch' }}>{subtitle}</p>}
+        {subtitle && <p style={{ fontSize: 15, color: 'var(--ck-muted)', margin: '12px 0 0', maxWidth: '60ch' }}>{subtitle}</p>}
       </div>
       {action && <div style={{ flexShrink: 0 }}>{action}</div>}
     </header>
@@ -52,10 +51,10 @@ export function PillButton({
 }) {
   const styles =
     tone === 'accent'
-      ? { background: 'var(--hh-copper)', color: 'var(--hh-on-accent, #F6EFE4)', border: '1px solid var(--hh-copper)' }
+      ? { background: 'var(--ck-accent)', color: '#FFFFFF', border: '1px solid var(--ck-accent)' }
       : tone === 'ink'
-      ? { background: 'var(--hh-anthracite)', color: 'var(--text-on-ink)', border: '1px solid var(--hh-anthracite)' }
-      : { background: 'transparent', color: 'var(--text-strong)', border: '1px solid var(--hh-line)' }
+      ? { background: 'var(--ck-ink)', color: 'var(--ck-bg)', border: '1px solid var(--ck-ink)' }
+      : { background: 'transparent', color: 'var(--ck-ink)', border: '1px solid var(--ck-line)' }
   return (
     <button
       className="hh-btn"
