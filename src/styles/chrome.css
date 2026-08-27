@@ -321,6 +321,13 @@
   border: 1px solid var(--ck-line); border-radius: 10px;
 }
 .ck-ledger { border: 1px solid var(--ck-line); border-radius: 10px; padding: 11px 13px; margin-top: 8px; background: var(--ck-surface); }
+/* A note from one role to another: same card, marked on the leading edge so a
+   handoff reads as traffic between people rather than another request to you. */
+.ck-handoff {
+  display: block; border: 1px solid var(--ck-line); border-left: 2px solid var(--ck-ink);
+  border-radius: 10px; padding: 10px 13px; margin-top: 8px; background: var(--ck-surface);
+  font-family: var(--ck-font); color: var(--ck-ink);
+}
 .ck-digestbar {
   display: block; width: 100%; text-align: left; margin-bottom: 12px; cursor: pointer;
   background: var(--ck-chip, rgba(181,99,47,0.08)); color: var(--ck-ink);

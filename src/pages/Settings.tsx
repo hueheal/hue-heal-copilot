@@ -18,6 +18,8 @@ import {
   removeBrandMember,
 } from '../lib/brand'
 import { KNOWLEDGE_FIELDS, type Knowledge } from '../lib/knowledge'
+import { getChannel, startPairing, setPush, unlinkChannel, type OrgChannel } from '../lib/channel'
+import { listRoles, type Role } from '../lib/roles'
 import { startInstagramConnect, finishInstagramConnect, refreshInstagramToken } from '../lib/instagramConnect'
 import {
   type AppMember,
@@ -34,7 +36,7 @@ const area: React.CSSProperties = { ...inp, lineHeight: 1.55, resize: 'vertical'
 const hint: React.CSSProperties = { fontSize: 12, color: 'var(--ck-muted)', margin: '4px 0 0', lineHeight: 1.5 }
 
 export default function Settings() {
-  const [tab, setTab] = useState<'brands' | 'knowledge' | 'team'>('brands')
+  const [tab, setTab] = useState<'brands' | 'knowledge' | 'channel' | 'team'>('brands')
 
   return (
     <div>
@@ -44,7 +46,7 @@ export default function Settings() {
         subtitle="Manage your brand worlds (voice + creative direction) and who's allowed into the studio workspace."
       />
       <div style={{ display: 'flex', gap: 4, padding: '14px 40px 0', borderBottom: '1px solid var(--ck-line)' }}>
-        {(['brands', 'knowledge', 'team'] as const).map((t) => (
+        {(['brands', 'knowledge', 'channel', 'team'] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -55,11 +57,11 @@ export default function Settings() {
               borderBottom: tab === t ? '2px solid var(--hh-copper)' : '2px solid transparent', marginBottom: -1,
             }}
           >
-            {t === 'brands' ? 'Brand' : t === 'knowledge' ? 'Knowledge' : 'Team'}
+            {t === 'brands' ? 'Brand' : t === 'knowledge' ? 'Knowledge' : t === 'channel' ? 'Channel' : 'Team'}
           </button>
         ))}
       </div>
-      {tab === 'brands' ? <BrandsPanel /> : tab === 'knowledge' ? <KnowledgePanel /> : <TeamPanel />}
+      {tab === 'brands' ? <BrandsPanel /> : tab === 'knowledge' ? <KnowledgePanel /> : tab === 'channel' ? <ChannelPanel /> : <TeamPanel />}
     </div>
   )
 }
@@ -542,6 +544,106 @@ function KnowledgePanel() {
         <PillButton tone="accent" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save knowledge'}</PillButton>
         {status && <span style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>{status}</span>}
       </div>
+    </div>
+  )
+}
+
+/* ----------------------------------------------------------------- Channel */
+/* Link a Telegram chat to this workspace so the org reaches your phone: the
+   morning deliverables and the Friday digests arrive there, and you can brief
+   a role or approve its requests by replying. The link is per workspace, so a
+   chat only ever sees the roles and material of the brand world it is bound
+   to. Pairing is a one-time code: nothing is shared until the code is used. */
+function ChannelPanel() {
+  const { current } = useBrand()
+  const [channel, setChannel] = useState<OrgChannel | null>(null)
+  const [roles, setRoles] = useState<Role[]>([])
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
+  const bot = (import.meta.env.VITE_TELEGRAM_BOT as string | undefined)?.replace(/^@/, '')
+
+  useEffect(() => {
+    setChannel(null); setStatus(null)
+    getChannel().then(setChannel).catch(() => {})
+    listRoles().then(setRoles).catch(() => {})
+  }, [current?.id])
+
+  async function pair() {
+    setBusy(true); setStatus(null)
+    try { setChannel(await startPairing()) }
+    catch (e) { setStatus(e instanceof Error ? e.message : String(e)) }
+    finally { setBusy(false) }
+  }
+
+  const linked = Boolean(channel?.chat_id)
+  const code = channel?.pair_code
+
+  return (
+    <div style={{ padding: '28px 40px 60px', maxWidth: 720 }}>
+      <span style={label}>Talk to your org</span>
+      <p style={{ ...hint, marginTop: 0 }}>
+        Link a Telegram chat to <strong>{current?.name ?? 'this workspace'}</strong> and your roles reach you where you
+        already are: scheduled deliverables and Friday digests arrive as messages, and you can brief a role or approve
+        its requests by replying. Each workspace links its own chat, so {current?.name ?? 'this workspace'} and your other
+        brand worlds never share a thread.
+      </p>
+
+      {linked ? (
+        <>
+          <div style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: '14px 16px', marginTop: 18, background: 'var(--ck-surface)' }}>
+            <div style={{ fontSize: 13.5, fontWeight: 500 }}>Linked{channel?.chat_label ? ` to ${channel.chat_label}` : ''}</div>
+            <p style={{ ...hint, marginTop: 4 }}>
+              {roles.length ? `${roles.map((r) => r.name).join(', ')} answer in that chat.` : 'Hire a role and it will answer in that chat.'}
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+              <PillButton onClick={() => { if (!channel) return; const next = !channel.push; void setPush(channel.id, next); setChannel({ ...channel, push: next }) }}>
+                {channel?.push ? 'Stop sending reports there' : 'Send reports there'}
+              </PillButton>
+              <ConfirmButton
+                onConfirm={async () => { if (channel) { await unlinkChannel(channel.id); setChannel(null) } }}
+                confirmLabel="Unlink this chat?"
+                style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '6px 14px', fontSize: 13, color: 'var(--ck-muted)', cursor: 'pointer', fontFamily: 'var(--ck-font)' }}
+              >
+                Unlink
+              </ConfirmButton>
+            </div>
+          </div>
+          <span style={label}>In the chat</span>
+          <pre style={{ ...area, whiteSpace: 'pre-wrap', fontFamily: 'ui-monospace, monospace', fontSize: 12.5, lineHeight: 1.7 }}>
+{`@cmo plan september        brief a role by name
+/roles                     the team and their cadence
+/inbox                     what is waiting on your call
+/approve a1b2              approve (or /decline)
+/digest                    the latest weekly digests
+/workspace <name>          point this chat at another workspace`}
+          </pre>
+        </>
+      ) : (
+        <>
+          <span style={label}>Pair a chat</span>
+          {code ? (
+            <div style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: '16px 18px', background: 'var(--ck-surface)' }}>
+              <div style={{ fontSize: 26, letterSpacing: '0.18em', fontWeight: 600, fontFamily: 'ui-monospace, monospace' }}>{code}</div>
+              <p style={{ ...hint, marginTop: 8 }}>
+                Open {bot ? <>the bot <strong>@{bot}</strong></> : 'your studio bot'} in Telegram and send:{' '}
+                <strong>/start {code}</strong>
+              </p>
+              <p style={{ ...hint, marginTop: 6 }}>
+                The code works once and only binds that chat to {current?.name ?? 'this workspace'}. Nothing is sent
+                until it is used.
+              </p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                {bot && <PillButton onClick={() => window.open(`https://t.me/${bot}?start=${code}`, '_blank', 'noopener')}>Open Telegram</PillButton>}
+                <PillButton onClick={() => void pair()} disabled={busy}>New code</PillButton>
+                <PillButton onClick={() => { void getChannel().then(setChannel); setStatus('Checked.') }}>I have sent it</PillButton>
+              </div>
+            </div>
+          ) : (
+            <PillButton onClick={() => void pair()} disabled={busy}>{busy ? 'Generating…' : 'Generate pairing code'}</PillButton>
+          )}
+        </>
+      )}
+      {status && <p style={{ ...hint, marginTop: 12 }}>{status}</p>}
     </div>
   )
 }

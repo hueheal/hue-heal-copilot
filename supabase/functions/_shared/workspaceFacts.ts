@@ -33,7 +33,9 @@ export async function buildFacts(admin: SupabaseClient, owner: string, brandId: 
     grab('journal_articles', 'title, published_at, updated_at, created_at'),
     grab('newsletters', 'subject, sent_at, updated_at, created_at'),
     scope(admin.from('clients').select('name, stage')).limit(10).then((r) => (r.data ?? []) as { name: string; stage: string }[]),
-    admin.from('subscribers').select('id', { count: 'exact', head: true }).eq('owner', owner).then((r) => r.count ?? 0),
+    // Scoped to the brand world like everything else: one workspace's role
+    // must never see another workspace's audience.
+    scope(admin.from('subscribers').select('id', { count: 'exact', head: true })).then((r) => r.count ?? 0),
   ])
   const days = (iso?: string | null) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null)
   const last = (rows: Row[]) => days(rows[0]?.updated_at ?? rows[0]?.created_at)

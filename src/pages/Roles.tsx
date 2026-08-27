@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
-import { listRoles, hireRole, ROLE_PRESETS, type Role } from '../lib/roles'
+import { listRoles, hireRole, listOpenNotes, ownsOf, ROLE_PRESETS, type Role, type RoleNote } from '../lib/roles'
+import { agoLabel } from '../components/chrome/AssetCard'
 
 
 /* ============================================================
@@ -21,7 +22,13 @@ export default function Roles() {
   const [cCharter, setCCharter] = useState('')
   const [note, setNote] = useState<string | null>(null)
 
-  useEffect(() => { setRoles(null); listRoles().then(setRoles) }, [current?.id])
+  const [notes, setNotes] = useState<RoleNote[]>([])
+
+  useEffect(() => {
+    setRoles(null); setNotes([])
+    listRoles().then(setRoles)
+    listOpenNotes().then(setNotes).catch(() => {})
+  }, [current?.id])
 
   const hiredKeys = new Set((roles ?? []).map((r) => r.key))
   const openPresets = ROLE_PRESETS.filter((p) => !hiredKeys.has(p.key))
@@ -69,14 +76,44 @@ export default function Roles() {
                     <span className="ck-tile-label" style={{ fontSize: 15 }}>{r.name}</span>
                     <span className="ck-tile-sub" style={{ marginTop: 0 }}>{r.title}</span>
                   </span>
-                  <span className="ck-tile-sub" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal' }}>{r.charter}</span>
-                  <span style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+                  <span className="ck-tile-sub" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'normal' }}>Owns {ownsOf(r)}.</span>
+                  <span style={{ display: 'flex', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
                     <span className="ck-pill" style={{ pointerEvents: 'none' }}>{cadenceLabel(r)}</span>
                     {!r.enabled && <span className="ck-pill" style={{ pointerEvents: 'none' }}>Paused</span>}
+                    {notes.filter((n) => n.to_role_id === r.id).length > 0 && (
+                      <span className="ck-pill" data-on="1" style={{ pointerEvents: 'none' }}>
+                        {notes.filter((n) => n.to_role_id === r.id).length} to read
+                      </span>
+                    )}
                   </span>
                 </button>
               ))}
             </div>
+            {notes.length > 0 && (
+              <>
+                <h2 className="ck-h2" style={{ marginTop: 26 }}>Between roles</h2>
+                <div style={{ fontSize: 12.5, color: 'var(--ck-faint)', margin: '-6px 0 10px', maxWidth: '64ch' }}>
+                  Handoffs in flight. A role that needs something outside its remit writes to the role that owns it
+                  instead of deciding over them; the note is read into that role's next run.
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {notes.slice(0, 8).map((n) => {
+                    const from = roles.find((r) => r.id === n.from_role_id)
+                    const to = roles.find((r) => r.id === n.to_role_id)
+                    return (
+                      <button key={n.id} className="ck-handoff" style={{ textAlign: 'left', cursor: to ? 'pointer' : 'default', width: '100%' }}
+                        onClick={() => to && nav(`/roles/${to.id}`)}>
+                        <div style={{ fontSize: 11.5, color: 'var(--ck-faint)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          {from?.name ?? 'A role'} → {to?.name ?? (n.to_name || 'unfilled seat')} · {agoLabel(n.created_at)}
+                        </div>
+                        <div style={{ fontSize: 13.5, fontWeight: 500, margin: '3px 0' }}>{n.subject}</div>
+                        <div style={{ fontSize: 12.5, color: 'var(--ck-muted)', lineHeight: 1.5 }}>{n.body}</div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
             <div className="ck-sectiongap" />
           </>
         )}

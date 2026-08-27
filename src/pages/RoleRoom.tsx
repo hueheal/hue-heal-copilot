@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
 import {
   listRoles, updateRole, retireRole, presetFor, runRole, listRuns, listItems, setItemStatus,
-  type Role, type RoleRun, type RoleItem, type RoleAction, type RoleSchedule,
+  listNotes, ackNote, ownsOf, defersOf,
+  type Role, type RoleRun, type RoleItem, type RoleAction, type RoleSchedule, type RoleNote,
 } from '../lib/roles'
 import { listAssets } from '../lib/assets'
 import { savePost } from '../lib/socialCopilot'
@@ -22,6 +23,8 @@ export default function RoleRoom() {
   const nav = useNavigate()
   const { current: brand } = useBrand()
   const [role, setRole] = useState<Role | null>(null)
+  const [roster, setRoster] = useState<Role[]>([])
+  const [inbox, setInbox] = useState<RoleNote[]>([])
   const [runs, setRuns] = useState<RoleRun[]>([])
   const [items, setItems] = useState<RoleItem[]>([])
   const [kpis, setKpis] = useState<{ label: string; value: string }[]>([])
@@ -34,10 +37,10 @@ export default function RoleRoom() {
   async function reload() {
     const all = await listRoles()
     const r = all.find((x) => x.id === id) ?? null
-    setRole(r)
+    setRole(r); setRoster(all)
     if (r) {
-      const [rs, its] = await Promise.all([listRuns(r.id), listItems(r.id)])
-      setRuns(rs); setItems(its)
+      const [rs, its, notes] = await Promise.all([listRuns(r.id), listItems(r.id), listNotes(r.id, 'in')])
+      setRuns(rs); setItems(its); setInbox(notes.filter((n) => n.status === 'open'))
       setViewRun((v) => v ?? rs[0] ?? null)
     }
   }
@@ -110,6 +113,12 @@ export default function RoleRoom() {
             <div className="ck-eyebrow"><button className="ck-pill" style={{ border: 'none', padding: '0 6px 0 0' }} onClick={() => nav('/roles')}>← Roles</button> {brand?.name}</div>
             <h1 className="ck-h1" style={{ marginBottom: 6 }}>{role.name}</h1>
             <div style={{ color: 'var(--ck-muted)', fontSize: 13.5, maxWidth: '64ch', lineHeight: 1.55 }}>{role.charter}</div>
+            {roster.length > 1 && (
+              <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ck-faint)', maxWidth: '64ch', lineHeight: 1.55 }}>
+                <span style={{ color: 'var(--ck-muted)' }}>Owns</span> {ownsOf(role)}.
+                {defersOf(role) && <> <span style={{ color: 'var(--ck-muted)' }}>Hands over</span> {defersOf(role)}.</>}
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -172,6 +181,26 @@ export default function RoleRoom() {
                     ))}
                   </section>
                 ))}
+                {(viewRun.output.handoffs ?? []).length > 0 && (
+                  <>
+                    <h3 style={{ fontSize: 13, fontWeight: 600, margin: '20px 0 8px' }}>Handed to colleagues</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {(viewRun.output.handoffs ?? []).map((h, i) => {
+                        const to = roster.find((r) => r.name.toLowerCase() === (h.to ?? '').toLowerCase())
+                        return (
+                          <div key={i} className="ck-handoff">
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                              <span className="ck-pill" style={{ pointerEvents: 'none', flexShrink: 0 }}>→ {h.to}</span>
+                              <span style={{ fontSize: 13.5, fontWeight: 500 }}>{h.subject}</span>
+                            </div>
+                            <div style={{ fontSize: 12.5, color: 'var(--ck-muted)', lineHeight: 1.55, marginTop: 4 }}>{h.body}</div>
+                            {to && <button className="ck-pill" style={{ marginTop: 8 }} onClick={() => nav(`/roles/${to.id}`)}>Open {to.name}</button>}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
                 {(viewRun.output.actions ?? []).length > 0 && (
                   <>
                     <h3 style={{ fontSize: 13, fontWeight: 600, margin: '20px 0 8px' }}>Proposed pieces</h3>
@@ -202,6 +231,32 @@ export default function RoleRoom() {
 
           {/* Rail: ledger + desk + admin */}
           <aside style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+            {inbox.length > 0 && (
+              <div>
+                <h3 className="ck-h2">From colleagues</h3>
+                <div style={{ fontSize: 12, color: 'var(--ck-faint)', margin: '-4px 0 8px' }}>
+                  {role.name} reads these on its next run and answers them in the deliverable.
+                </div>
+                {inbox.map((n) => {
+                  const from = roster.find((r) => r.id === n.from_role_id)
+                  return (
+                    <div key={n.id} className="ck-handoff">
+                      <div style={{ fontSize: 11.5, color: 'var(--ck-faint)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {from?.name ?? 'A colleague'} · {agoLabel(n.created_at)}
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 500, margin: '3px 0' }}>{n.subject}</div>
+                      <div style={{ fontSize: 12.5, color: 'var(--ck-muted)', lineHeight: 1.5 }}>{n.body}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                        <button className="ck-pill" disabled={busy} onClick={() => void run(`Answer this handoff from your ${from?.name ?? 'colleague'} — "${n.subject}": ${n.body}\n\nRespond within your own remit, say what you will change, and hand anything back that is theirs to decide.`)}>
+                          Answer now
+                        </button>
+                        <button className="ck-pill" onClick={() => { void ackNote(n.id); setInbox((l) => l.filter((x) => x.id !== n.id)) }}>Dismiss</button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
             <div>
               <h3 className="ck-h2">Requests</h3>
               {open('need').length === 0 && <div className="ck-note" style={{ marginTop: 4 }}>Nothing requested.</div>}

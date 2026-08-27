@@ -6,9 +6,9 @@
 // Deploy:  npx supabase functions deploy role-agent --project-ref <ref>
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
-import { runPersona, type RoleDef, type BrandDef } from '../_shared/roleCore.ts'
+import { runPersona, type RoleDef, type BrandDef, type OrgDef } from '../_shared/roleCore.ts'
 
-interface Body { role: RoleDef; task: string; facts: string; brand?: BrandDef }
+interface Body { role: RoleDef; task: string; facts: string; brand?: BrandDef; org?: OrgDef }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
   try { body = await req.json() } catch { return json({ error: 'Invalid JSON body' }, 400) }
   if (!body.role?.name || !body.task?.trim()) return json({ error: 'role and task are required' }, 400)
   try {
-    const deliverable = await runPersona(body.role, body.brand ?? {}, body.facts ?? '', body.task)
+    const deliverable = await runPersona(body.role, body.brand ?? {}, body.facts ?? '', body.task, body.org ?? {})
     return json({ deliverable })
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 502)
