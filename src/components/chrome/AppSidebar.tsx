@@ -8,7 +8,7 @@ import { useTheme, type ThemeMode } from '../../lib/theme'
 import { useAuth } from '../../lib/auth'
 import {
   IcHome, IcCreate, IcClients, IcCalendar, IcChart, IcSettings,
-  IcSearch, IcSun, IcMoon, IcMonitor, IcPanel, IcChevronsUpDown, IcLayers,
+  IcSearch, IcSun, IcMoon, IcMonitor, IcPanel, IcChevronsUpDown, IcLayers, IcRole,
 } from './icons'
 
 /* ============================================================
@@ -25,6 +25,7 @@ const NAV: { key: string; label: string; path: string; icon: () => ReactNode; en
   { key: 'dashboard', label: 'Home', path: '/', icon: IcHome, end: true },
   { key: 'create', label: 'Create', path: '/create', icon: IcCreate },
   { key: 'library', label: 'Library', path: '/library', icon: IcLayers },
+  { key: 'roles', label: 'Roles', path: '/roles', icon: IcRole },
   { key: 'clients', label: 'Clients', path: '/clients', icon: IcClients },
   { key: 'calendar', label: 'Calendar', path: '/calendar', icon: IcCalendar },
   { key: 'reports', label: 'Analytics', path: '/reports', icon: IcChart },

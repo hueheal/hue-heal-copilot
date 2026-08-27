@@ -27,3 +27,4 @@ export const IcMail = () => <I d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0
 export const IcImage = () => <I d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2|M8.5 11a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5|M21 15l-5-5L5 21" />
 export const IcLayers = () => <I d="M12 2 2 7l10 5 10-5-10-5|M2 17l10 5 10-5|M2 12l10 5 10-5" />
 export const IcInvoice = () => <I d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z|M14 2v6h6|M9 14l2 2 4-4" />
+export const IcRole = () => <I d="M9 7a3 3 0 1 0 6 0 3 3 0 0 0-6 0|M5 21v-1a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v1|M17 4.5c1.2.5 2 1.7 2 3|M7 4.5c-1.2.5-2 1.7-2 3" />

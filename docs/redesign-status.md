@@ -21,3 +21,17 @@ Deliberately deferred (future passes):
 - Canvas-first interaction rework (floating composer inside editors)
 - Project detail page (projects work via Library filters + assignment)
 - LLM intent parsing in the composer (local keyword detection today)
+
+## Roles (added 25 Aug 2026)
+Persona agents per workspace, each running a division:
+- `roles` / `role_runs` / `role_items` tables (0025, 0026 — applied).
+- Presets: CMO, Editor-in-chief, Social strategist, Brand guardian; custom seats.
+- Each role: charter + standing instructions, layered over brand voice +
+  Knowledge, grounded in a live workspace snapshot (cadence, recent pieces,
+  pipeline, subscribers). Never invents metrics; missing data becomes a "need".
+- Dashboard per role (/roles/:id): KPI strip, composer + playbook plays,
+  structured deliverables whose proposed pieces spawn drafts one-click,
+  ledger of tool requests + experiment proposals with approve/decline,
+  desk history, cadence control (on demand / daily / weekdays / weekly).
+- role-agent (on demand) + role-scheduler (chained off the 7am daily-posts
+  cron via CRON_SECRET; standing task on cadence days, weekly digest Fridays).

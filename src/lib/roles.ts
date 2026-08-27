@@ -1,0 +1,236 @@
+import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
+import { filterByBrand, withBrandInsert } from './brandScope'
+import { listAssets } from './assets'
+import { listClients } from './studioOps'
+import { listSubscribers } from './newsletter'
+import { knowledgeDigest } from './knowledge'
+import type { BrandProfile } from './brand'
+
+/* ============================================================
+   Roles: persona agents a workspace employs. Each role is a
+   charter layered over the brand's voice and Knowledge; it works
+   from a live snapshot of the workspace and returns a structured
+   deliverable whose actions can be spawned straight into the
+   studios. Deliverables are kept per role (its desk).
+   ============================================================ */
+
+export interface RoleSchedule { cadence?: 'off' | 'daily' | 'weekdays' | 'weekly'; task?: string }
+export interface Role {
+  id: string
+  key: string
+  name: string
+  title: string
+  charter: string
+  instructions: string
+  enabled: boolean
+  schedule: RoleSchedule | null
+  brand_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface RolePreset {
+  key: string
+  name: string
+  title: string
+  charter: string
+  /** One-click tasks that define the job. */
+  playbook: { label: string; task: string }[]
+}
+
+export const ROLE_PRESETS: RolePreset[] = [
+  {
+    key: 'cmo',
+    name: 'CMO',
+    title: 'Chief Marketing Officer',
+    charter:
+      'Owns the marketing calendar and the growth narrative. Thinks in campaigns and cadence, not one-off posts: what should this brand say this month, in what order, on which channel, and why. Ruthless about focus: fewer, better pieces that compound. Judges every idea against positioning and the audience it is meant to move.',
+    playbook: [
+      { label: 'Monthly content plan', task: 'Plan the next month of content for this workspace. Work from the real cadence and recent pieces in the snapshot: keep what is working, cut what is not, and fill the gaps. Give a week-by-week plan, and propose the specific pieces as actions.' },
+      { label: 'Content audit', task: 'Audit the recent content in the snapshot as a CMO would: what themes repeat, what is missing against the positioning, where the cadence has slipped, and the three changes that would most improve results. Be specific about individual pieces by title.' },
+      { label: 'Campaign concept', task: 'Propose one campaign concept for this brand: a single idea that can carry a journal article, a carousel series and a newsletter over two to three weeks. Give the narrative arc and propose each piece as an action.' },
+    ],
+  },
+  {
+    key: 'editor',
+    name: 'Editor-in-chief',
+    title: 'Editorial quality bar',
+    charter:
+      'Guards the standard of everything written. Cares about openings that earn the second sentence, specificity over abstraction, and the house style. Kind to the writer, merciless to the draft. Never rewrites into blandness: sharpens what is already there.',
+    playbook: [
+      { label: 'Review the latest piece', task: 'Review the most recent piece in the snapshot as editor-in-chief: what works, what fails, and the specific line-level fixes that would lift it. Quote the piece where you critique it.' },
+      { label: 'Headline clinic', task: 'Take the recent titles in the snapshot and rework the weak ones: for each, say why the current headline underperforms and give two stronger alternatives in the house voice.' },
+      { label: 'Next three stories', task: 'From the themes in the snapshot and the knowledge base, pitch the next three stories this brand should tell: for each, the angle, why now, and the opening line you would want. Propose each as an action.' },
+    ],
+  },
+  {
+    key: 'social',
+    name: 'Social strategist',
+    title: 'Instagram growth',
+    charter:
+      'Owns Instagram. Thinks in saves, shares and swipe-through, not likes. Knows the template families and picks the hook shape to fit the idea: question, number, reframe, save. Plans in series so the grid tells a story, and always ends a carousel with a reason to keep it.',
+    playbook: [
+      { label: 'Week of posts', task: 'Plan seven days of Instagram for this workspace: a mix of formats mapped to what each is meant to earn (saves, comments, swipes). For each day give the hook and format, and propose each post as an action.' },
+      { label: 'Carousel concept', task: 'Design one strong carousel: the hook, the slide-by-slide arc, and the closing cue. Propose it as an action.' },
+      { label: 'Grid review', task: 'Review the recent social pieces in the snapshot: which hooks repeat, which formats are missing, what the grid says as a whole, and the three changes to make next week.' },
+    ],
+  },
+  {
+    key: 'guardian',
+    name: 'Brand guardian',
+    title: 'Voice & consistency',
+    charter:
+      'Protects the voice. Knows the writing guidelines by heart, including the banned words and the signature phrases, and checks that every piece sounds unmistakably like this brand and no one else. Flags drift early, and explains the difference between on-voice and off-voice with examples.',
+    playbook: [
+      { label: 'Voice check', task: 'Check the recent pieces in the snapshot against the tone of voice and writing guidelines: quote anything off-voice, explain why it drifts, and rewrite each quoted line the way this brand would say it.' },
+      { label: 'Guideline gaps', task: 'From what the recent content actually does, identify where the writing guidelines are silent or unclear, and propose the two or three rules worth adding: with example sentences for each.' },
+    ],
+  },
+]
+
+/* ---- Workspace snapshot: the facts a role reasons from ---- */
+export interface WorkspaceFacts {
+  summary: string
+}
+
+export async function workspaceFacts(): Promise<WorkspaceFacts> {
+  const [assetsR, clientsR, subsR] = await Promise.allSettled([listAssets(), listClients(), listSubscribers()])
+  const assets = assetsR.status === 'fulfilled' ? assetsR.value : []
+  const clients = clientsR.status === 'fulfilled' ? clientsR.value : []
+  const subs = subsR.status === 'fulfilled' ? subsR.value.length : 0
+  const days = (iso?: string) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) : null)
+  const byKind = (k: string) => assets.filter((a) => a.kind === k)
+  const lastOf = (k: string) => days(byKind(k)[0]?.when)
+  const lines: string[] = []
+  lines.push(`Counts: ${byKind('social').length} social posts, ${byKind('journal').length} journal articles, ${byKind('newsletter').length} newsletters, ${byKind('proposal').length} proposals.`)
+  const cad = [
+    lastOf('social') !== null ? `last social ${lastOf('social')}d ago` : 'no social yet',
+    lastOf('journal') !== null ? `last article ${lastOf('journal')}d ago` : 'no articles yet',
+    lastOf('newsletter') !== null ? `last newsletter ${lastOf('newsletter')}d ago` : 'no newsletters yet',
+  ]
+  lines.push(`Cadence: ${cad.join('; ')}. Subscribers: ${subs}.`)
+  if (clients.length) lines.push(`Client pipeline: ${clients.slice(0, 8).map((c) => `${c.name} (${c.stage})`).join(', ')}.`)
+  const recent = assets.slice(0, 12).map((a) => `- [${a.kind}${a.status !== 'draft' ? ` · ${a.status}` : ' · draft'}] ${a.title} (${days(a.when)}d ago)`)
+  if (recent.length) { lines.push('Recent pieces, newest first:'); lines.push(...recent) }
+  return { summary: lines.join('\n') }
+}
+
+/* ---- CRUD ---- */
+export async function listRoles(): Promise<Role[]> {
+  if (!supabase) return []
+  const q = supabase.from('roles').select('*').order('created_at', { ascending: true })
+  const { data, error } = await filterByBrand(q)
+  if (error) return []
+  return (data ?? []) as Role[]
+}
+
+export async function hireRole(preset: RolePreset | { key: 'custom'; name: string; title: string; charter: string }): Promise<Role> {
+  if (!supabase) throw new Error('Not connected')
+  const { data, error } = await supabase.from('roles')
+    .insert(withBrandInsert({ key: preset.key, name: preset.name, title: preset.title, charter: preset.charter }) as never)
+    .select('*').single()
+  if (error) throw error
+  return data as Role
+}
+
+export async function updateRole(id: string, patch: Partial<Pick<Role, 'name' | 'title' | 'charter' | 'instructions' | 'enabled' | 'schedule'>>): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('roles').update({ ...patch, updated_at: new Date().toISOString() } as never).eq('id', id)
+  if (error) throw error
+}
+
+export async function retireRole(id: string): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.from('roles').delete().eq('id', id)
+  if (error) throw error
+}
+
+/* ---- Runs ---- */
+export interface RoleAction {
+  kind: 'carousel' | 'portrait' | 'story' | 'journal' | 'newsletter'
+  topic: string
+  note?: string
+}
+export interface RoleLedgerDraft { title: string; detail: string }
+export interface RoleDeliverable {
+  title: string
+  summary: string
+  sections: { heading: string; body: string }[]
+  actions: RoleAction[]
+  needs?: RoleLedgerDraft[]
+  experiments?: RoleLedgerDraft[]
+}
+export interface RoleRun { id: string; task: string; kind?: string; output: RoleDeliverable; created_at: string }
+
+export async function listRuns(roleId: string): Promise<RoleRun[]> {
+  if (!supabase) return []
+  const { data } = await supabase.from('role_runs').select('id, task, kind, output, created_at')
+    .eq('role_id', roleId).order('created_at', { ascending: false }).limit(20)
+  return (data ?? []) as RoleRun[]
+}
+
+export async function runRole(role: Role, task: string, brand: BrandProfile | null | undefined): Promise<{ run?: RoleRun; error?: string }> {
+  if (!(isSupabaseConfigured && supabase && functionsBase)) return { error: 'Roles need the connected studio (not available in local mode).' }
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) return { error: 'Sign in first' }
+  const facts = await workspaceFacts()
+  try {
+    const res = await fetch(`${functionsBase}/role-agent`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        role: { name: role.name, title: role.title, charter: role.charter, instructions: role.instructions },
+        task,
+        facts: facts.summary,
+        brand: brand ? {
+          name: brand.name, tagline: brand.tagline ?? undefined,
+          voice: brand.tone_of_voice ?? undefined, guidelines: brand.writing_guidelines ?? undefined,
+          knowledge: knowledgeDigest(brand.knowledge) || undefined,
+        } : undefined,
+      }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { error: data?.error ? String(data.error) : `Role ${res.status}` }
+    const output = data.deliverable as RoleDeliverable
+    const { data: saved, error } = await supabase.from('role_runs')
+      .insert({ role_id: role.id, task, output } as never).select('id, task, output, created_at').single()
+    if (error) return { run: { id: 'unsaved', task, output, created_at: new Date().toISOString() } }
+    await fileLedger(role.id, (saved as RoleRun).id, output).catch(() => {})
+    return { run: saved as RoleRun }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) }
+  }
+}
+
+/* ---- Ledger (needs + experiments the role raises) ---- */
+export interface RoleItem { id: string; kind: 'need' | 'experiment'; title: string; detail: string; status: 'open' | 'approved' | 'declined' | 'done'; created_at: string }
+
+export async function listItems(roleId: string): Promise<RoleItem[]> {
+  if (!supabase) return []
+  const { data } = await supabase.from('role_items').select('id, kind, title, detail, status, created_at')
+    .eq('role_id', roleId).order('created_at', { ascending: false }).limit(40)
+  return (data ?? []) as RoleItem[]
+}
+
+export async function setItemStatus(id: string, status: RoleItem['status']): Promise<void> {
+  if (!supabase) return
+  await supabase.from('role_items').update({ status, updated_at: new Date().toISOString() } as never).eq('id', id)
+}
+
+async function fileLedger(roleId: string, runId: string | null, deliverable: RoleDeliverable): Promise<void> {
+  if (!supabase) return
+  const groups: { kind: 'need' | 'experiment'; items?: RoleLedgerDraft[] }[] = [
+    { kind: 'need', items: deliverable.needs }, { kind: 'experiment', items: deliverable.experiments },
+  ]
+  for (const g of groups) for (const item of (g.items ?? []).slice(0, 3)) {
+    const { data: existing } = await supabase.from('role_items').select('id')
+      .eq('role_id', roleId).eq('kind', g.kind).eq('title', item.title).limit(1)
+    if (!existing?.length) await supabase.from('role_items')
+      .insert({ role_id: roleId, run_id: runId, kind: g.kind, title: item.title, detail: item.detail } as never)
+  }
+}
+
+export function presetFor(role: Role): RolePreset | undefined {
+  return ROLE_PRESETS.find((p) => p.key === role.key)
+}

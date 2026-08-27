@@ -323,6 +323,16 @@ function renderEmail(brand: Brand, items: Item[], dateLabel: string): string {
 /* The full pipeline: research, draft, save drafts, email the digest. Returns a
    summary (or, in preview, the generated posts without saving or emailing). */
 async function runBatch(preview: boolean): Promise<Record<string, unknown>> {
+  // Chain the role scheduler off the same daily cron (it validates the same
+  // CRON_SECRET), so roles run their cadence without a second cron job.
+  try {
+    void fetch(`${Deno.env.get('SUPABASE_URL') ?? ''}/functions/v1/role-scheduler`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-cron-secret': Deno.env.get('CRON_SECRET') ?? '' },
+      body: '{}',
+    }).catch(() => {})
+  } catch { /* roles must never block the daily posts */ }
+
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE)
 
   // Resolve the Hue & Heal brand (by name, then default, then first available).

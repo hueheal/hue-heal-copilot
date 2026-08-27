@@ -301,3 +301,29 @@
   padding: 3px 10px; font-size: 11.5px; cursor: pointer; font-family: var(--ck-font);
 }
 .ck-idea-actions button:hover { color: var(--ck-ink); border-color: var(--ck-line-strong); }
+
+/* ---- Roles ---- */
+.ck-kpis { display: flex; gap: 10px; flex-wrap: wrap; margin: 26px 0 18px; }
+.ck-kpi {
+  flex: 1; min-width: 130px; background: var(--ck-surface); border: 1px solid var(--ck-line);
+  border-radius: var(--ck-radius-lg); padding: 14px 16px;
+}
+.ck-kpi-v { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.ck-kpi-l { font-size: 11.5px; color: var(--ck-faint); margin-top: 2px; }
+.ck-rolegrid { display: grid; grid-template-columns: 1fr 300px; gap: 32px; margin-top: 26px; }
+@media (max-width: 900px) { .ck-rolegrid { grid-template-columns: 1fr; } }
+.ck-deliverable {
+  background: var(--ck-surface); border: 1px solid var(--ck-line); border-radius: 14px;
+  padding: 22px 26px 26px;
+}
+.ck-actionrow {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  border: 1px solid var(--ck-line); border-radius: 10px;
+}
+.ck-ledger { border: 1px solid var(--ck-line); border-radius: 10px; padding: 11px 13px; margin-top: 8px; background: var(--ck-surface); }
+.ck-digestbar {
+  display: block; width: 100%; text-align: left; margin-bottom: 12px; cursor: pointer;
+  background: var(--ck-chip, rgba(181,99,47,0.08)); color: var(--ck-ink);
+  border: 1px solid var(--ck-line); border-radius: 10px; padding: 10px 14px;
+  font-family: var(--ck-font); font-size: 12.5px; font-weight: 500;
+}

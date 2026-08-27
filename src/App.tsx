@@ -2,6 +2,8 @@ import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-do
 import StudioLayout from './components/StudioLayout'
 import Home from './pages/Home'
 import Library from './pages/Library'
+import Roles from './pages/Roles'
+import RoleRoom from './pages/RoleRoom'
 import Calendar from './pages/Calendar'
 import Clients from './pages/Clients'
 import ClientRoom from './pages/ClientRoom'
@@ -51,6 +53,8 @@ export default function App() {
         <Route path="create/:family" element={<CreateEditor />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="library" element={<Library />} />
+        <Route path="roles" element={<Roles />} />
+        <Route path="roles/:id" element={<RoleRoom />} />
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:id" element={<ClientRoom />} />
         <Route path="clients/:id/doc/:docId" element={<ClientDocEditor />} />
