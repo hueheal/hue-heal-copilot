@@ -56,29 +56,18 @@ verification, and pre-approved templates for anything sent outside a 24-hour
 window, and your Meta developer account is currently flagged. Telegram needs a
 bot token and nothing else, sends freely, and costs nothing.
 
-### Setup (about five minutes, all on your side)
+### Setup (about ten minutes, all on your side)
 
-1. **Create the bot.** In Telegram, message `@BotFather`, send `/newbot`, give it
-   a name and a username. BotFather replies with a token.
-
-2. **Give the token to the functions.** In the repo:
+New to Telegram? Full walkthrough in [telegram-setup.md](telegram-setup.md).
+Short version, once you have a bot token from `@BotFather`:
 
 ```bash
-npx supabase secrets set TELEGRAM_BOT_TOKEN=PASTE_TOKEN_HERE TELEGRAM_WEBHOOK_SECRET=$(openssl rand -hex 24) --project-ref dxniwcwoacyrjlyhymoh
+bash scripts/setup-telegram.sh
 ```
 
-3. **Point Telegram at the bridge.** Use the same webhook secret you just set:
-
-```bash
-curl -s "https://api.telegram.org/botPASTE_TOKEN_HERE/setWebhook" -d "url=https://dxniwcwoacyrjlyhymoh.supabase.co/functions/v1/telegram-bridge" -d "secret_token=PASTE_WEBHOOK_SECRET_HERE"
-```
-
-4. **Optional, for the one-tap link:** set `VITE_TELEGRAM_BOT` in Netlify to the
-   bot's username without the `@`, and redeploy.
-
-5. **Pair.** In the copilot: Settings → Channel → Generate pairing code, then send
-   `/start CODE` to the bot. The code works once and binds that chat to the
-   workspace you were in. Repeat inside the other workspace for its own chat.
+It asks for the token in a hidden prompt, stores it on the edge functions,
+mints a webhook secret and registers the webhook. Then pair from Settings →
+Channel with `/start CODE`, once per workspace.
 
 ### In the chat
 
