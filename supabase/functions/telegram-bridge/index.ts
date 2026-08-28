@@ -28,12 +28,14 @@ interface Channel { id: string; owner: string; brand_id: string | null; push: bo
 const short = (id: string) => id.slice(0, 4)
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
 
-/** Background work without holding the webhook open: Telegram retries a slow
-    response, which would run the role twice. */
-function later(p: Promise<unknown>): void {
+/** Long work (a role run) without holding the webhook open. Only safe when the
+    runtime keeps the isolate alive for us: otherwise it is torn down seconds
+    after the response and the reply is never sent, so we wait instead. Quick
+    work is always awaited before responding. */
+async function later(p: Promise<unknown>): Promise<void> {
   const rt = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime
-  if (rt?.waitUntil) rt.waitUntil(p.catch(() => {}))
-  else void p.catch(() => {})
+  if (typeof rt?.waitUntil === 'function') { rt.waitUntil(p.catch(() => {})); return }
+  await p.catch(() => {})
 }
 
 const HELP = [
@@ -170,7 +172,7 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
   if (!brief.trim()) return sendMessage(chatId, plain(`What should ${target.name} work on?`))
 
   await sendMessage(chatId, plain(`${target.name} is on it…`))
-  later((async () => {
+  await later((async () => {
     try {
       const { deliverable } = await executeRole(admin, target!, brief, 'task', { channel: null })
       await sendMessage(chatId, formatDeliverable(target!.name, 'task', deliverable, { full: true }))
@@ -196,16 +198,26 @@ Deno.serve(async (req) => {
   const { data } = await admin.from('org_channels').select('id, owner, brand_id, push')
     .eq('provider', 'telegram').eq('chat_id', chatId).limit(1)
   const ch = (data ?? [])[0] as Channel | undefined
+  const verb = text.split(/\s+/)[0].slice(0, 24) // the command only, never the message
+  console.log(`update chat=${chatId} bound=${Boolean(ch)} verb=${verb}`)
 
-  if (!ch) {
-    // Unknown chat: pair, or say nothing about anyone's studio.
-    const m = text.match(/^\/start\s+(\S+)/i)
-    const label = [msg?.from?.first_name, msg?.from?.username ? `@${msg.from.username}` : ''].filter(Boolean).join(' ')
-    const reply = m ? await pair(admin, chatId, label, m[1]) : plain('This chat is not linked to a studio. Open your copilot, go to Settings, Channel, and send me the code it gives you: /start CODE')
-    later(sendMessage(chatId, reply))
-    return new Response('ok')
+  try {
+    if (!ch) {
+      // Unknown chat: pair, or say nothing about anyone's studio.
+      const m = text.match(/^\/start\s+(\S+)/i)
+      const label = [msg?.from?.first_name, msg?.from?.username ? `@${msg.from.username}` : ''].filter(Boolean).join(' ')
+      const reply = m ? await pair(admin, chatId, label, m[1]) : plain('This chat is not linked to a studio. Open your copilot, go to Settings, Channel, and send me the code it gives you: /start CODE')
+      await sendMessage(chatId, reply)
+    } else {
+      await handle(admin, ch, chatId, text)
+    }
+    console.log(`replied chat=${chatId} verb=${verb}`)
+  } catch (e) {
+    // Tell the sender rather than leaving them staring at silence, and always
+    // answer Telegram 200 so it does not retry the same message every minute.
+    const detail = e instanceof Error ? `${e.message}` : String(e)
+    console.error(`failed chat=${chatId} verb=${verb}: ${detail}`)
+    await sendMessage(chatId, plain(`Something went wrong: ${detail}`)).catch(() => {})
   }
-
-  later(handle(admin, ch, chatId, text).catch((e) => sendMessage(chatId, plain(`Something went wrong: ${e instanceof Error ? e.message : String(e)}`))))
   return new Response('ok')
 })
