@@ -560,7 +560,9 @@ function ChannelPanel() {
   const [roles, setRoles] = useState<Role[]>([])
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
-  const bot = (import.meta.env.VITE_TELEGRAM_BOT as string | undefined)?.replace(/^@/, '')
+  // The studio bot is public, not a secret, so it ships as the default and the
+  // env var stays available if the bot is ever replaced.
+  const bot = (import.meta.env.VITE_TELEGRAM_BOT as string | undefined)?.replace(/^@/, '') || 'hueandheal_studio_bot'
 
   useEffect(() => {
     setChannel(null); setStatus(null)
