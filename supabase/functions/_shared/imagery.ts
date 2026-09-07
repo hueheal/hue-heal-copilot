@@ -105,14 +105,25 @@ export function promptParts(lib: Library, req: ImageRequest): Record<string, str
   const sk = surfaceKey(lib, req.surface)
   const surf = sk ? lib.surfaces[sk] : undefined
   const shot = shotKey(lib, req)
+  // The shot type goes in as the guide's own prefix ("Portrait mid-task:"),
+  // not its full description with example gestures, which the model would
+  // paint in. The surface is composition, never an instruction to leave
+  // parts of the frame empty: that reads as letterboxing.
+  const shotPrefix = shot ? (lib.shotTypes?.[shot] ?? '').split(':')[0].replace(/,.*$/, '').trim() : ''
+  const subject = (req.subject ?? '').trim()
+  const subjectLine = shotPrefix && !new RegExp(`^${shotPrefix.split(' ')[0]}`, 'i').test(subject) ? `${shotPrefix}: ${subject}` : subject
+  const ratio = surf?.ratio ?? ''
+  const [rw, rh] = ratio.split(':').map(Number)
+  const orientation = rw && rh ? (rw > rh ? 'landscape' : rw < rh ? 'portrait' : 'square') : ''
+  const quiet = surf?.quiet && surf.quiet !== 'none' ? ` The subject sits away from the ${surf.quiet}, which stays plain soft background (wall, bedding, sky) so type can be laid over it later.` : ''
   return {
-    subject: req.subject?.trim() ?? '',
+    subject: subjectLine,
     corrections: lib.corrections ?? '',
-    shot: shot ? (lib.shotTypes?.[shot] ?? '') : '',
+    shot: '',
     master: lib.master,
     module: moduleText(lib, req),
-    surface: surf ? `Made for the ${sk} surface${surf.quiet && surf.quiet !== 'none' ? `: keep the ${surf.quiet} of the frame quiet and uncluttered for overlaid type` : ''}.` : '',
-    negatives: lib.negatives ? `Avoid: ${lib.negatives}` : '',
+    surface: surf ? `${orientation ? `${orientation[0].toUpperCase()}${orientation.slice(1)} ${ratio}` : ratio}, the photograph fills the entire frame edge to edge, no borders.${quiet}` : 'The photograph fills the entire frame edge to edge, no borders.',
+    negatives: lib.negatives ? `Avoid: ${lib.negatives}, letterbox, white bands, border, frame within frame, blank margins` : 'Avoid: letterbox, white bands, border, frame within frame, blank margins',
   }
 }
 
