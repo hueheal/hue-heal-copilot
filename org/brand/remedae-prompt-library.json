@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "updated": "2026-09-07",
+  "source": "docs/imagery-styleguide.md",
+  "order": [
+    "master",
+    "module",
+    "subject",
+    "surface",
+    "negatives"
+  ],
+  "master": {
+    "image": "Photorealistic documentary editorial lifestyle photograph for Remedae, a health literacy site that presents the world's healing traditions side by side. A real person in a real room doing a real thing a tradition describes: pouring, steeping, breathing, walking, resting, being examined, chopping. The tradition shows in the object and the gesture, never in costume, ceremony or set dressing; practitioners are everyday professionals in everyday rooms. Full-frame camera, 50mm or 85mm, wide aperture, one clear plane of focus with natural fall-off. One natural directional light source: a window, a doorway or low afternoon sun, with long soft shadows, warm highlights and deep readable shadow. Warm rich believable grade with fine film grain; no HDR, no teal-and-orange, no desaturated grey, no beauty smoothing. Palette anchored in forest green, sage, olive, oak, clay, terracotta, rust, mustard, sand, stone, warm white and deep blue, with at most one saturated accent per frame. Three layers: hero subject, supporting object or action, environment. People carry most of the attention when present, with real skin texture, fine lines, flyaway hair and creased clothing, eyes closed or on the task, never on the camera. A cast that looks like the UK and its diaspora, across ages. When more than one person appears each is doing something different. A quiet lower third or a quiet edge for overlaid type. The image must sit comfortably on a very dark green canvas, so avoid bright white backgrounds.",
+    "video": "Cinematic documentary lifestyle video clip for Remedae, 4 to 8 seconds, loopable, 24 fps. The same world as the stills: a real person in a real room doing a real thing a healing tradition describes. Motion belongs to the subject, not the camera: steam rising, tea pouring, hands stirring, a chest rising and falling, leaves moving in a draught. Camera at most a slow push or a gentle handheld drift. One natural directional light source, warm rich grade, fine film grain, shallow focus. No speech, no music, no text, no transitions, no speed ramps, no added lens flares."
+  },
+  "negatives": "No text, captions, signage, logos, packaging brands, UI or watermarks. No scrubs, stethoscopes, white coats or exam tables. No crystals, incense clouds, mandalas, lotus poses, prayer hands or chakra diagrams. No pills spilling from bottles. No spa towels or orchids. No costume, ceremony, masks, regalia or sacred objects. No perfect symmetry, no matching smiles, no eye contact with the camera, no fashion posing, no plastic skin, no beauty filter, no HDR, no grey desaturated grading, no stock-photo feel, no busy props.",
+  "modules": {
+    "tradition": {
+      "modern": "Modern medicine: a GP's consulting room that looks like a room, a high-street pharmacy counter, a blister pack and a glass of water on a kitchen table, a physiotherapist's hands on a shoulder, a sleep diary on a bedside table. Warmth and eye contact between people. No white coats, corridors or monitors.",
+      "ayurveda": "Ayurveda: a kitchen at morning, warm water with lemon in a steel or copper cup, ghee in a small pan, ashwagandha powder stirred into warm milk, sesame oil warmed in the palms, a spice tin with cumin, coriander and fennel. Indian and non-Indian households alike. No temples, statues or yoga poses.",
+      "tcm": "Traditional Chinese Medicine: a pulse taken at a wrist, a decoction simmering in a clay pot, jujube and goji on a chopping board, a practitioner's hands at an acupuncture point, congee steaming. Everyday clinic rooms and kitchens. No dragons or calligraphy walls.",
+      "kampo": "Kampo: granule sachets torn open into a cup, a Japanese pharmacy counter, ginger and jujube on a wooden board, a small ceramic cup on a lacquer tray. Precise, quiet, domestic. No kimono, no temple.",
+      "unani": "Unani: honey and black seed on a spoon, a glass of rose-water, almonds soaking overnight, a practitioner feeling a pulse, warm oil in a small bottle. Middle-Eastern and South Asian kitchens rendered as homes, not sets.",
+      "siddha": "Siddha: nilavembu decoction in a steel tumbler, fresh herbs on a banana leaf, a mortar and pestle, a Tamil kitchen with morning light. No shrines.",
+      "naturopathy": "Naturopathy: hot and cold water at a basin, a steam bowl under a towel, whole vegetables mid-prep, a morning walk in a coat. The practitioner is in ordinary clothes at an ordinary desk.",
+      "homeopathy": "Homeopathy: a small brown glass vial and pellets on a palm, a pharmacy shelf of small bottles, a practitioner listening. Restrained; the image must not promise more than the page does.",
+      "african": "African traditional medicine: plants, hands and landscape. Rooibos or moringa leaves, a market table of dried herbs, a clay pot on a stove, a grandmother's kitchen. Never ceremony, masks or tribal styling. When in doubt photograph the plant and the pot.",
+      "indigenous": "Indigenous healing: plants, water, land, hands, sweetgrass or eucalyptus on a table. No regalia, no sacred objects, no ceremony. Where no honest everyday image exists, use a brand texture instead.",
+      "functional": "Functional medicine: a kitchen table with a food diary and a fibre-rich breakfast, blood-test paperwork beside a coffee, a consultation over a laptop in a bright room. Systems thinking as ordinary organisation.",
+      "lifestyle": "Lifestyle medicine: morning daylight on a doorstep, a post-meal walk, a cool dark bedroom with the phone outside the door, a shared meal, a bike, a kettle switched off after noon.",
+      "mind-body": "Mind-body medicine: a hand on the chest and one on the belly, eyes closed at a window, a group course in a community hall with mismatched chairs, a pen and a worry list at night. Breath shown as a body, not a pose."
+    },
+    "condition": {
+      "felt": "The felt experience of the condition, honest and gentle, never theatrical: awake at 3 a.m. in blue-grey light, a hand pressed to a stomach after a meal, a tissue and a hot drink on a windowsill, a stiff neck stretched at a desk. No grimacing, no clutching, no red-tinted pain. Children with a parent present and at ease.",
+      "remedy": "The remedy moment: the first thing on the page a reader can do tonight, mid-action, the steam bowl, the warm milk, the walk, the diary."
+    },
+    "lifestyle": {
+      "nutrition": "Real food mid-preparation, hands and knives, a plate that looks eaten from. No smoothie-bowl styling.",
+      "movement": "Walking, stairs, a bike, stretching in ordinary clothes, outdoors where possible. No gym mirrors, no activewear campaign.",
+      "sleep": "Cool, dark, quiet bedrooms; morning light through a curtain; a phone charging in another room.",
+      "stress": "A pause in an ordinary place: a kettle, a doorstep, a bus stop, a window. Breath and stillness, no meditation cushions.",
+      "connection": "Two or more people in the same room doing different things; a shared meal; a phone call on a walk.",
+      "substances": "Caffeine and alcohol as choices: the last coffee at noon, a glass of water where the wine was. Never moralising."
+    },
+    "brand": {
+      "texture": "Abstract ownable frame: steam over a dark cup, sunlight through leaves onto a wall, water poured into a glass, ginger sliced on oak, a linen curtain moving, condensation on a window. Shot close, on the dark end of the palette, so it sits on the canvas without a gradient."
+    },
+    "ingredient": {
+      "study": "The ingredient in the form the reader will buy it (fresh, dried, powder, capsule), straight down or at 45 degrees, on a single neutral surface of oak, slate or unglazed clay, one soft directional light, no props beyond a spoon or a bowl, no packaging, no labels."
+    }
+  },
+  "surfaces": {
+    "hero-card": {
+      "ratio": "3:4",
+      "min": "1200x1600",
+      "quiet": "top and bottom fifths",
+      "note": "search hero floating cards; overlays tradition name and remedy title"
+    },
+    "tile": {
+      "ratio": "4:5",
+      "min": "1200x1500",
+      "quiet": "lower third",
+      "note": "rails and tiles for conditions, journal, shelf"
+    },
+    "page-hero": {
+      "ratio": "3:2",
+      "min": "2400x1600",
+      "quiet": "right third",
+      "note": "condition and tradition page heroes"
+    },
+    "journal-inline": {
+      "ratio": "16:10",
+      "min": "2000 wide",
+      "quiet": "none",
+      "note": "landscape only; prefer the actual thing discussed"
+    },
+    "carousel": {
+      "ratio": "16:9",
+      "min": "2400 wide",
+      "quiet": "lower third",
+      "note": "featured carousel and promo cards"
+    },
+    "social-feed": {
+      "ratio": "4:5",
+      "min": "1080x1350",
+      "quiet": "lower third",
+      "note": "Instagram feed"
+    },
+    "social-story": {
+      "ratio": "9:16",
+      "min": "1080x1920",
+      "quiet": "top 250px and bottom 300px",
+      "note": "stories and reels"
+    },
+    "email": {
+      "ratio": "2:1",
+      "min": "1200x600",
+      "quiet": "lower third",
+      "note": "under 300 KB"
+    },
+    "video-vertical": {
+      "ratio": "9:16",
+      "min": "1080x1920",
+      "fps": 24,
+      "seconds": "4 to 8",
+      "note": "social and app"
+    },
+    "video-wide": {
+      "ratio": "16:9",
+      "min": "1920x1080",
+      "fps": 24,
+      "seconds": "4 to 8",
+      "note": "site and journal"
+    }
+  },
+  "naming": "{category}-{subject}-{variant}.{ext}; category in tradition|condition|lifestyle|brand|ingredient; subject is the site slug; variant two digits; a .json sidecar with prompt, tool, model, seed, date, approver and surface beside every file",
+  "examples": [
+    {
+      "category": "tradition",
+      "module": "kampo",
+      "surface": "hero-card",
+      "subject": "A woman in her forties at a small Tokyo apartment kitchen tears open a Rikkunshito granule sachet into a ceramic cup, morning light from the left, a kettle steaming behind her."
+    },
+    {
+      "category": "condition",
+      "module": "felt",
+      "surface": "page-hero",
+      "subject": "A man in his thirties sits on the edge of a bed at 3 a.m., blue-grey street light through a gap in the curtain, phone face down on the far side of the room, eyes open and calm."
+    },
+    {
+      "category": "lifestyle",
+      "module": "sleep",
+      "surface": "social-story",
+      "subject": "A woman opens a curtain to bright morning light in a plain bedroom, one hand still on the fabric, the light falling across an unmade bed."
+    }
+  ]
+}
