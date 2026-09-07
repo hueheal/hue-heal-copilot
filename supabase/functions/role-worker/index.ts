@@ -12,7 +12,7 @@
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { executeDepartment, retroDepartment, routeBriefing, deskBriefing, chiefOf, queueImages, renderImages, type RoleRow } from '../_shared/roleWork.ts'
+import { executeDepartment, retroDepartment, routeBriefing, deskBriefing, chiefOf, queueImages, renderImages, type RoleRow, type ImagePlan } from '../_shared/roleWork.ts'
 import { costPence } from '../_shared/roleCore.ts'
 import { hasTelegram, sendMessage } from '../_shared/telegram.ts'
 
@@ -70,9 +70,14 @@ async function work(admin: SupabaseClient, job: Job): Promise<string> {
 
     /* Images a deliverable asked for, rendered in their own job. */
     if (job.task.startsWith('IMAGES:')) {
-      const r = await renderImages(admin, role, job as { id: string; plan?: { images?: never[]; runId?: string | null } | null }, { channel })
+      const r = await renderImages(admin, role, job as { id: string; plan?: ImagePlan | null }, { channel })
+      if (!r.done) {
+        // Still rendering: hand the job back to the queue for the next sweep.
+        await admin.from('role_jobs').update({ status: 'queued', plan: r.plan, started_at: null, dept: role.dept ?? null }).eq('id', job.id)
+        return `rendering ${r.plan.pending?.length ?? 0}`
+      }
       await admin.from('role_jobs').update({
-        status: r.made ? 'done' : 'failed', finished_at: new Date().toISOString(), dept: role.dept ?? null,
+        status: r.made ? 'done' : 'failed', finished_at: new Date().toISOString(), dept: role.dept ?? null, plan: r.plan,
         error: r.failed.length ? r.failed.join(' | ').slice(0, 500) : null, reviewed_at: r.made ? new Date().toISOString() : null,
       }).eq('id', job.id)
       return r.made ? `images ${r.made}` : `failed: ${r.failed.join(' | ')}`

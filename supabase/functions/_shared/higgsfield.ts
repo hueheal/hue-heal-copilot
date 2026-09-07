@@ -32,8 +32,8 @@ function keyShape(): string {
   return `credential is ${k.length} characters, ${i > 0 ? `id ${i} characters and secret ${k.length - i - 1} characters` : 'with no colon between id and secret'}${/^["']|["']$/.test(k) ? ', wrapped in quotes' : ''}`
 }
 
-/** Generate one image and return its URL on Higgsfield's CDN plus the request id. */
-export async function generateImage(prompt: string, opts: { aspect?: Aspect; resolution?: '720p' | '1080p'; timeoutMs?: number } = {}): Promise<{ url: string; requestId: string }> {
+/** Submit one image and return the handles to poll with. */
+export async function submitImage(prompt: string, opts: { aspect?: Aspect; resolution?: '720p' | '1080p' } = {}): Promise<{ requestId: string; statusUrl: string }> {
   if (!KEY) throw new Error('HIGGSFIELD_KEY is not set on the function.')
   const res = await fetch(`${BASE}/higgsfield-ai/soul/standard`, {
     method: 'POST', headers: headers(),
@@ -42,24 +42,34 @@ export async function generateImage(prompt: string, opts: { aspect?: Aspect; res
   if (!res.ok) throw new Error(`Higgsfield ${res.status}: ${(await res.text()).slice(0, 300)}${res.status === 401 ? ` (${keyShape()}; it must be the key id and secret from cloud.higgsfield.ai joined by a colon)` : ''}`)
   const sub = await res.json() as Submit
   if (!sub.request_id) throw new Error('Higgsfield returned no request id')
-  const statusUrl = sub.status_url || `${BASE}/requests/${sub.request_id}/status`
+  return { requestId: sub.request_id, statusUrl: sub.status_url || `${BASE}/requests/${sub.request_id}/status` }
+}
 
+/** One look at a submitted image: ready with a URL, still rendering, or failed. */
+export async function checkImage(statusUrl: string): Promise<{ state: 'ready'; url: string } | { state: 'rendering' } | { state: 'failed'; reason: string }> {
+  const s = await fetch(statusUrl, { headers: headers() })
+  if (!s.ok) throw new Error(`Higgsfield status ${s.status}`)
+  const st = await s.json() as Status
+  if (st.status === 'completed') {
+    const url = st.images?.[0]?.url
+    return url ? { state: 'ready', url } : { state: 'failed', reason: 'completed without an image' }
+  }
+  if (st.status === 'failed' || st.status === 'nsfw' || st.status === 'canceled') return { state: 'failed', reason: `${st.status}${st.error || st.detail ? `: ${st.error ?? st.detail}` : ''}` }
+  return { state: 'rendering' }
+}
+
+/** Generate one image and wait for it (for the studio's own image button,
+    where the caller is holding a request open). Bounded. */
+export async function generateImage(prompt: string, opts: { aspect?: Aspect; resolution?: '720p' | '1080p'; timeoutMs?: number } = {}): Promise<{ url: string; requestId: string }> {
+  const { requestId, statusUrl } = await submitImage(prompt, opts)
   const deadline = Date.now() + (opts.timeoutMs ?? 110_000)
   let wait = 2500
   while (Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, wait))
     wait = Math.min(wait + 1000, 6000)
-    const s = await fetch(statusUrl, { headers: headers() })
-    if (!s.ok) throw new Error(`Higgsfield status ${s.status}`)
-    const st = await s.json() as Status
-    if (st.status === 'completed') {
-      const url = st.images?.[0]?.url
-      if (!url) throw new Error('Higgsfield completed without an image')
-      return { url, requestId: sub.request_id }
-    }
-    if (st.status === 'failed' || st.status === 'nsfw' || st.status === 'canceled') {
-      throw new Error(`Higgsfield ${st.status}${st.error || st.detail ? `: ${st.error ?? st.detail}` : ''}`)
-    }
+    const c = await checkImage(statusUrl)
+    if (c.state === 'ready') return { url: c.url, requestId }
+    if (c.state === 'failed') throw new Error(`Higgsfield ${c.reason}`)
   }
   throw new Error('Higgsfield took too long; try again')
 }

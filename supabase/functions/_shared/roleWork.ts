@@ -17,7 +17,7 @@ import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
 import { roleDef, deptOf, toolsLine, ownsOf } from './orgShape.ts'
 import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, destinationFor, type ImageRequest } from './imagery.ts'
-import { hasHiggsfield, generateImage, download, asAspect } from './higgsfield.ts'
+import { hasHiggsfield, submitImage, checkImage, download, asAspect } from './higgsfield.ts'
 
 /* `owner` is the signed-in user who does the work, which is not always the
    brand profile's owner: a brand can be shared with members. Every row a seat
@@ -380,31 +380,62 @@ export async function queueImages(admin: SupabaseClient, role: RoleRow, runId: s
   return specs.length
 }
 
-/** Render the images in a queued IMAGES job, in parallel, into the review pile. */
-export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { id: string; plan?: { images?: ImageRequest[]; runId?: string | null } | null }, opts: { channel?: string | null } = {}): Promise<{ made: number; failed: string[] }> {
-  const specs = job.plan?.images ?? []
+interface Pending { spec: ImageRequest; prompt: string; aspect: string; requestId: string; statusUrl: string }
+export interface ImagePlan { images?: ImageRequest[]; runId?: string | null; pending?: Pending[]; made?: number; failed?: string[]; since?: string }
+
+/** Render the images in an IMAGES job. A render can take minutes, so this
+    runs in phases across sweeps: submit everything, then on each later pass
+    poll what is still rendering and store what is ready. The job goes back
+    to queued between passes and is picked up by the next sweep. Returns
+    whether it is finished. */
+export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { id: string; plan?: ImagePlan | null }, opts: { channel?: string | null } = {}): Promise<{ done: boolean; made: number; failed: string[]; plan: ImagePlan }> {
+  const plan: ImagePlan = { ...(job.plan ?? {}) }
+  plan.failed = plan.failed ?? []
+  plan.made = plan.made ?? 0
   const lib = await loadLibrary(admin, role.brand_id)
   if (!lib) throw new Error('This workspace has no imagery library or master prompt yet.')
-  const results = await Promise.allSettled(specs.map(async (spec, i) => {
-    const prompt = composePrompt(lib, spec)
-    const aspect = asAspect(surfaceRatio(lib, spec.surface), '4:5')
-    const { url, requestId } = await generateImage(prompt, { aspect, resolution: '1080p' })
-    const { bytes, contentType } = await download(url)
-    const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : contentType.includes('webp') ? 'webp' : 'png'
-    const path = `${role.owner}/library/${role.brand_id}/${slug(spec.category ?? 'image')}-${slug(spec.subject ?? spec.purpose ?? '')}-${String(Date.now()).slice(-6)}${i}.${ext}`
-    const { error } = await admin.storage.from('social-assets').upload(path, bytes, { contentType, upsert: true })
-    if (error) throw new Error(`Upload failed: ${error.message}`)
-    const { data: pub } = admin.storage.from('social-assets').getPublicUrl(path)
-    await admin.from('image_assets').insert({
-      owner: role.owner, brand_id: role.brand_id, dept: role.dept ?? null, role_id: role.id, run_id: job.plan?.runId ?? null, job_id: job.id,
-      purpose: spec.purpose ?? '', category: [spec.category, spec.module].filter(Boolean).join('/'), surface: spec.surface ?? '',
-      prompt, parts: promptParts(lib, spec), aspect_ratio: aspect, provider: 'higgsfield', request_id: requestId, storage_path: path, url: pub.publicUrl, status: 'pending',
-      destination: destinationFor(spec.surface),
-    })
-    return pub.publicUrl
-  }))
-  const made = results.filter((r) => r.status === 'fulfilled').length
-  const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected').map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)))
-  if (opts.channel && made) await sendMessage(opts.channel, `<b>${role.name}</b> made ${made} image${made === 1 ? '' : 's'} for your review in the studio.`)
-  return { made, failed }
+
+  /* Phase 1: submit. */
+  if (!plan.pending) {
+    plan.since = new Date().toISOString()
+    plan.pending = []
+    for (const spec of (plan.images ?? []).slice(0, 3)) {
+      try {
+        const prompt = composePrompt(lib, spec)
+        const aspect = asAspect(surfaceRatio(lib, spec.surface), '4:5')
+        const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p' })
+        plan.pending.push({ spec, prompt, aspect, requestId, statusUrl })
+      } catch (e) { plan.failed.push(e instanceof Error ? e.message : String(e)) }
+    }
+  }
+
+  /* Phase 2: poll what is rendering, store what is ready. */
+  const still: Pending[] = []
+  for (const p of plan.pending) {
+    try {
+      const c = await checkImage(p.statusUrl)
+      if (c.state === 'rendering') { still.push(p); continue }
+      if (c.state === 'failed') { plan.failed.push(`Higgsfield ${c.reason}`); continue }
+      const { bytes, contentType } = await download(c.url)
+      const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : contentType.includes('webp') ? 'webp' : 'png'
+      const path = `${role.owner}/library/${role.brand_id}/${slug(p.spec.category ?? 'image')}-${slug(p.spec.subject ?? p.spec.purpose ?? '')}-${p.requestId.slice(0, 6)}.${ext}`
+      const { error } = await admin.storage.from('social-assets').upload(path, bytes, { contentType, upsert: true })
+      if (error) throw new Error(`Upload failed: ${error.message}`)
+      const { data: pub } = admin.storage.from('social-assets').getPublicUrl(path)
+      await admin.from('image_assets').insert({
+        owner: role.owner, brand_id: role.brand_id, dept: role.dept ?? null, role_id: role.id, run_id: plan.runId ?? null, job_id: job.id,
+        purpose: p.spec.purpose ?? '', category: [p.spec.category, p.spec.module].filter(Boolean).join('/'), surface: p.spec.surface ?? '',
+        prompt: p.prompt, parts: promptParts(lib, p.spec), aspect_ratio: p.aspect, provider: 'higgsfield', request_id: p.requestId,
+        storage_path: path, url: pub.publicUrl, status: 'pending', destination: destinationFor(p.spec.surface),
+      })
+      plan.made += 1
+    } catch (e) { plan.failed.push(e instanceof Error ? e.message : String(e)) }
+  }
+  // Give a render fifteen minutes in total.
+  const expired = plan.since ? Date.now() - new Date(plan.since).getTime() > 15 * 60_000 : false
+  if (still.length && expired) plan.failed.push(`${still.length} image${still.length === 1 ? '' : 's'} still rendering after fifteen minutes`)
+  plan.pending = expired ? [] : still
+  const done = plan.pending.length === 0
+  if (done && opts.channel && plan.made) await sendMessage(opts.channel, `<b>${role.name}</b> made ${plan.made} image${plan.made === 1 ? '' : 's'} for your review in the studio.`)
+  return { done, made: plan.made, failed: plan.failed, plan }
 }
