@@ -16,7 +16,7 @@ import { buildOrgBrief, fileHandoffs } from './orgBrief.ts'
 import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
 import { roleDef, deptOf, toolsLine, ownsOf } from './orgShape.ts'
-import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, surfaceKey, destinationFor, type ImageRequest } from './imagery.ts'
+import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, surfaceKey, destinationFor, recentVerdicts, verdictsLine, correctionsLine, type ImageRequest } from './imagery.ts'
 import { hasHiggsfield, submitImage, checkImage, download, asAspect } from './higgsfield.ts'
 
 /* `owner` is the signed-in user who does the work, which is not always the
@@ -93,7 +93,7 @@ export async function executeRole(
   const { brand, facts, state } = await context(admin, role, opts)
   const org = await buildOrgBrief(admin, role, brand.name)
   const canImage = state.tools.includes('higgsfield') && hasHiggsfield()
-  const imagery = canImage ? imageryLine(await loadLibrary(admin, role.brand_id)) : ''
+  const imagery = canImage ? [imageryLine(await loadLibrary(admin, role.brand_id)), verdictsLine(await recentVerdicts(admin, role.owner, role.brand_id))].filter(Boolean).join('\n') : ''
 
   const { output, usage } = await runPersona(
     roleDef(role, brand.name), brand, facts, task,
@@ -395,6 +395,7 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
   if (!plan.pending && !(plan.images ?? []).length) throw new Error('Nothing to render: this job carries no image requests. Brief the department instead.')
   const lib = await loadLibrary(admin, role.brand_id)
   if (!lib) throw new Error('This workspace has no imagery library or master prompt yet.')
+  lib.corrections = correctionsLine(await recentVerdicts(admin, role.owner, role.brand_id))
 
   /* Phase 1: submit. */
   if (!plan.pending) {

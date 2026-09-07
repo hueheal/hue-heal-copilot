@@ -29,7 +29,14 @@ export default function AssetReview({ dept, showApproved = false }: { dept?: str
   if (!pending.length && !(showApproved && approved.length)) return null
 
   async function decide(a: ImageAsset, status: 'approved' | 'declined') {
-    await decideImage(a.id, status)
+    let note: string | undefined
+    if (status === 'declined') {
+      // One line from you becomes a standing correction in the next renders.
+      const why = window.prompt('Why not? One line, in your words. It goes into the next renders as a correction. (Optional)')
+      if (why === null) return
+      note = why.trim() || undefined
+    }
+    await decideImage(a.id, status, note)
     setAssets((l) => (l ?? []).map((x) => (x.id === a.id ? { ...x, status, decided_at: new Date().toISOString() } : x)))
     if (open?.id === a.id) setOpen(null)
     // Site images go to the brand's own library the moment they are approved.

@@ -8,6 +8,8 @@
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 export interface Surface { ratio: string; min?: string; quiet?: string; note?: string }
+export interface ImageRequest { purpose?: string; category?: string; module?: string; subject?: string; surface?: string; shot?: string }
+
 export interface Library {
   master: string
   negatives: string
@@ -22,9 +24,32 @@ export interface Library {
   batch?: number
   /** Public URLs of the calibration frames, when the founder has supplied them. */
   referenceUrls?: string[]
+  /** Standing corrections from the founder's recent declines. */
+  corrections?: string
 }
 
-export interface ImageRequest { purpose?: string; category?: string; module?: string; subject?: string; surface?: string; shot?: string }
+export interface Verdict { status: string; purpose: string; surface: string; note: string | null; decided_at: string }
+
+/** What the founder said about recent images in this workspace, newest first. */
+export async function recentVerdicts(admin: SupabaseClient, owner: string, brandId: string | null, limit = 6): Promise<Verdict[]> {
+  if (!brandId) return []
+  const { data } = await admin.from('image_assets').select('status, purpose, surface, note, decided_at')
+    .eq('owner', owner).eq('brand_id', brandId).in('status', ['approved', 'declined']).order('decided_at', { ascending: false }).limit(limit)
+  return (data ?? []) as Verdict[]
+}
+
+/** The founder's own words on declined images become a standing correction in
+    every prompt until newer verdicts replace them. */
+export function correctionsLine(verdicts: Verdict[]): string {
+  const notes = verdicts.filter((v) => v.status === 'declined' && v.note?.trim()).slice(0, 3).map((v) => v.note!.trim())
+  return notes.length ? `The founder's corrections from recent reviews, which override anything above: ${notes.join('. ')}.` : ''
+}
+
+export function verdictsLine(verdicts: Verdict[]): string {
+  if (!verdicts.length) return ''
+  return 'THE FOUNDER\'S VERDICTS ON RECENT IMAGES (learn from these before you write a subject): ' +
+    verdicts.map((v) => `${v.status} "${v.purpose}" (${v.surface})${v.note ? `: ${v.note}` : ''}`).join('; ') + '.'
+}
 
 const DEFAULT_ORDER = ['master', 'module', 'subject', 'surface', 'negatives']
 /** The guide's default shot per category. */
@@ -82,6 +107,7 @@ export function promptParts(lib: Library, req: ImageRequest): Record<string, str
   const shot = shotKey(lib, req)
   return {
     subject: req.subject?.trim() ?? '',
+    corrections: lib.corrections ?? '',
     shot: shot ? (lib.shotTypes?.[shot] ?? '') : '',
     master: lib.master,
     module: moduleText(lib, req),
@@ -93,8 +119,10 @@ export function promptParts(lib: Library, req: ImageRequest): Record<string, str
 export function composePrompt(lib: Library, req: ImageRequest): string {
   const parts = promptParts(lib, req)
   const order = (lib.order?.length ? lib.order : DEFAULT_ORDER).slice()
-  // The shot type is not in the guide's order list; it belongs right after the subject.
+  // Shot type and the founder's corrections are not in the guide's order
+  // list; they belong right after the subject.
   if (!order.includes('shot')) order.splice(order.indexOf('subject') + 1, 0, 'shot')
+  if (!order.includes('corrections')) order.splice(order.indexOf('shot') + 1, 0, 'corrections')
   return order.map((k) => parts[k]).filter(Boolean).join(' ')
 }
 
