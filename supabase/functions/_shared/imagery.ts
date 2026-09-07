@@ -136,7 +136,10 @@ export function promptParts(lib: Library, req: ImageRequest): Record<string, str
     sidecar but never put into prompt text: the soul endpoint has no
     negative-prompt field, and naming a fault in a positive prompt paints it. */
 export function composePrompt(lib: Library, req: ImageRequest): string {
-  const parts = { ...promptParts(lib, req), negatives: '' }
+  // Review prose (the founder's corrections) shapes the guide and the seat's
+  // subject, never the image prompt itself: it reads as layout notes to the
+  // model and brings borders back. It stays in the parts for the sidecar.
+  const parts = { ...promptParts(lib, req), negatives: '', corrections: '' }
   const order = (lib.order?.length ? lib.order : DEFAULT_ORDER).slice()
   // Shot type and the founder's corrections are not in the guide's order
   // list; they belong right after the subject.
