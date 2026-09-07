@@ -49,13 +49,17 @@ export const ownsOf = (role: { key: string; dept?: string | null; charter: strin
   return seat?.owns || (first.length > 120 ? `${first.slice(0, 119).trimEnd()}…` : first)
 }
 
-/** Render the tools line for a department: what it has, what it could ask for. */
+/** Render the tools line for a department: what is connected and approved,
+    what is approved in principle but not wired, what it could ask for. A seat
+    is never told it "has" a tool that cannot actually be used. */
 export function toolsLine(dept: OrgDept | undefined, granted: string[]): string {
-  const have = ORG.tools.filter((t) => granted.includes(t.key) || t.key === 'anthropic')
-  const could = ORG.tools.filter((t) => (dept?.tools ?? []).includes(t.key) && !have.some((h) => h.key === t.key))
+  const usable = ORG.tools.filter((t) => t.key === 'anthropic' || (granted.includes(t.key) && t.status === 'connected'))
+  const approved = ORG.tools.filter((t) => granted.includes(t.key) && t.status !== 'connected')
+  const could = ORG.tools.filter((t) => (dept?.tools ?? []).includes(t.key) && !granted.includes(t.key) && t.key !== 'anthropic')
   return [
-    `you have ${have.map((t) => `${t.name} (${t.key})`).join(', ')}.`,
-    could.length ? `Not granted yet but relevant to your department: ${could.map((t) => `${t.name} (${t.key}, ${t.status}, ${t.cost})`).join('; ')}.` : '',
-    'In-house first: do the work with what you have. Ask for a tool as a need (with its key and the cost) only when the work genuinely cannot be done without it, and never assume it has been granted.',
+    `you can use ${usable.map((t) => `${t.name} (${t.key})`).join(', ')}.`,
+    approved.length ? `Approved by the founder but not connected yet, so you may plan around them and specify what you would make with them, never assume their output exists: ${approved.map((t) => `${t.name} (${t.key}, ${t.cost})`).join('; ')}.` : '',
+    could.length ? `Not approved, relevant to your department: ${could.map((t) => `${t.name} (${t.key}, ${t.status}, ${t.cost})`).join('; ')}.` : '',
+    'In-house first: do the work with what you can use. Ask for a tool as a need (with its key and the cost) only when the work genuinely cannot be done without it.',
   ].filter(Boolean).join(' ')
 }

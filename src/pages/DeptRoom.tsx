@@ -321,16 +321,25 @@ export default function DeptRoom() {
                   onBlur={(e) => { const v = Math.max(0, Math.round(Number(e.target.value) * 100)); if (v !== budget) void patchState({ budget_pence: v }) }} /></span>
                 <span>this month</span>
               </div>
-              <div style={{ fontSize: 11.5, color: 'var(--ck-faint)', marginTop: 4, marginBottom: 8 }}>Model use is metered per run (an estimate). Outside tools count when granted.</div>
-              <label className="ck-toggle"><span>Claude <span style={{ color: 'var(--ck-faint)' }}>always on</span></span><input type="checkbox" checked readOnly /></label>
+              <div style={{ fontSize: 11.5, color: 'var(--ck-faint)', marginTop: 4, marginBottom: 8, lineHeight: 1.5 }}>
+                Model use is metered per run (an estimate). Approving a tool lets the department plan with it and ask to use it. Connecting is a separate step; nothing here connects anything.
+              </div>
+              <div className="ck-toggle"><span>Claude</span><span className="ck-kbd" style={{ display: 'inline' }}>connected</span></div>
               {wanted.map((k) => {
                 const t = toolOf(k)
                 const on = (state?.tools ?? []).includes(k)
+                const connected = t?.status === 'connected'
                 return (
-                  <label key={k} className="ck-toggle">
-                    <span>{t?.name ?? k} <span style={{ color: 'var(--ck-faint)' }}>{t?.status === 'connected' ? '' : t?.status ?? ''}{t?.cost ? ` · ${t.cost}` : ''}</span></span>
-                    <input type="checkbox" checked={on} onChange={(e) => void patchState({ tools: e.target.checked ? [...(state?.tools ?? []), k] : (state?.tools ?? []).filter((x) => x !== k) })} />
-                  </label>
+                  <div key={k} className="ck-toggle">
+                    <span style={{ minWidth: 0 }}>
+                      {t?.name ?? k}
+                      <span style={{ color: 'var(--ck-faint)', display: 'block', fontSize: 11.5 }}>{connected ? 'Connected' : 'Not connected yet'}{t?.cost ? ` · ${t.cost}` : ''}</span>
+                    </span>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ck-faint)', flexShrink: 0 }}>
+                      {on ? 'Approved' : 'Approve'}
+                      <input type="checkbox" checked={on} onChange={(e) => void patchState({ tools: e.target.checked ? [...(state?.tools ?? []), k] : (state?.tools ?? []).filter((x) => x !== k) })} />
+                    </label>
+                  </div>
                 )
               })}
             </div>
