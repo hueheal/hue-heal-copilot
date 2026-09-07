@@ -25,7 +25,7 @@ const NAV: { key: string; label: string; path: string; icon: () => ReactNode; en
   { key: 'dashboard', label: 'Home', path: '/', icon: IcHome, end: true },
   { key: 'create', label: 'Create', path: '/create', icon: IcCreate },
   { key: 'library', label: 'Library', path: '/library', icon: IcLayers },
-  { key: 'roles', label: 'Roles', path: '/roles', icon: IcRole },
+  { key: 'roles', label: 'Team', path: '/team', icon: IcRole },
   { key: 'clients', label: 'Clients', path: '/clients', icon: IcClients },
   { key: 'calendar', label: 'Calendar', path: '/calendar', icon: IcCalendar },
   { key: 'reports', label: 'Analytics', path: '/reports', icon: IcChart },

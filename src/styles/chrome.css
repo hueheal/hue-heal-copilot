@@ -355,3 +355,47 @@
 .ck-job[data-state='failed'] .ck-job-dot { background: #b4472f; }
 @keyframes ck-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 @media (prefers-reduced-motion: reduce) { .ck-job[data-state='working'] .ck-job-dot { animation: none; } }
+
+/* ---- Departments: each carries its own accent in --ck-dept, set inline
+   from org/departments. It tints chrome only (marks, dots, bands); it never
+   touches the brand canvas. ---- */
+.ck-depts { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 10px; }
+.ck-dept {
+  display: flex; flex-direction: column; gap: 12px; min-height: 148px; text-align: left;
+  padding: 16px; border: 1px solid var(--ck-line); border-radius: var(--ck-radius-lg); background: var(--ck-surface);
+  cursor: pointer; font-family: var(--ck-font); color: var(--ck-ink); position: relative; overflow: hidden;
+  transition: border-color 140ms var(--ck-ease), box-shadow 140ms var(--ck-ease);
+}
+.ck-dept::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--ck-dept, var(--ck-accent)); }
+button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck-shadow-md); }
+.ck-dept:focus-visible { outline: 2px solid var(--ck-dept, var(--ck-accent)); outline-offset: 2px; }
+.ck-dept[data-open='1'] { cursor: default; background: transparent; }
+.ck-dept[data-open='1']::before { opacity: 0.35; }
+.ck-dept-head { display: flex; align-items: center; gap: 12px; }
+.ck-dept-status { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ck-dept-mark {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 38px; height: 38px; border-radius: 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+  color: #fff; background: var(--ck-dept, var(--ck-accent));
+}
+.ck-dept-mark[data-size='s'] { width: 26px; height: 26px; border-radius: 7px; font-size: 10px; }
+.ck-dept-mark[data-size='l'] { width: 52px; height: 52px; border-radius: 14px; font-size: 15px; }
+.ck-pill[data-live='1'] { border-color: var(--ck-dept, var(--ck-accent)); color: var(--ck-dept, var(--ck-accent)); }
+.ck-pill[data-live='1']::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; animation: ck-pulse 1.6s ease-in-out infinite; }
+.ck-job[data-state='approval'] .ck-job-dot, .ck-job[data-state='working'] .ck-job-dot { background: var(--ck-dept, var(--hh-copper, #b5632f)); }
+.ck-job[data-state='approval'] { border-color: color-mix(in srgb, var(--ck-dept, var(--ck-accent)) 45%, var(--ck-line)); }
+.ck-band {
+  display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: var(--ck-radius-lg);
+  background: color-mix(in srgb, var(--ck-dept, var(--ck-accent)) 9%, var(--ck-surface)); border: 1px solid color-mix(in srgb, var(--ck-dept, var(--ck-accent)) 22%, var(--ck-line));
+}
+.ck-seat { display: flex; align-items: center; gap: 8px; padding: 6px 4px; font-size: 12.5px; color: var(--ck-muted); text-align: left; background: none; border: none; font-family: var(--ck-font); cursor: pointer; border-radius: 6px; width: 100%; }
+.ck-seat:hover { background: var(--ck-hover); color: var(--ck-ink); }
+.ck-seat-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ck-dept, var(--ck-accent)); flex-shrink: 0; }
+.ck-seat[data-lead='1'] { color: var(--ck-ink); font-weight: 500; }
+.ck-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; font-size: 12.5px; border-bottom: 1px solid var(--ck-line); }
+.ck-toggle:last-child { border-bottom: none; }
+.ck-toggle input { accent-color: var(--ck-dept, var(--ck-accent)); }
+.ck-board-group { margin-top: 18px; }
+.ck-board-title { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ck-faint); margin: 0 0 6px; display: flex; align-items: baseline; gap: 8px; }
+.ck-board-title b { font-weight: 600; color: var(--ck-ink); letter-spacing: 0; text-transform: none; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .ck-pill[data-live='1']::before { animation: none; } }

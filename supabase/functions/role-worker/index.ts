@@ -3,6 +3,7 @@
 // Runs assigned jobs. Two ways in:
 //   • the studio, right after it files a job: Authorization: Bearer <user jwt>
 //     plus {jobId}. The job is only run if it belongs to that user.
+//   • the studio asking a department to learn now: {retro: <lead role id>}.
 //   • the every-minute sweep: x-cron-secret, no body. Picks up anything the
 //     studio could not kick off (closed laptop, dropped request) and anything
 //     a worker abandoned.
@@ -11,7 +12,8 @@
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { executeRole, type RoleRow } from '../_shared/roleWork.ts'
+import { executeDepartment, retroDepartment, type RoleRow } from '../_shared/roleWork.ts'
+import { costPence } from '../_shared/roleCore.ts'
 import { hasTelegram } from '../_shared/telegram.ts'
 
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
@@ -48,9 +50,14 @@ async function work(admin: SupabaseClient, job: Job): Promise<string> {
     // A long job should find you wherever you are, so the result is pushed to
     // the linked chat as well as landing in the studio.
     const channel = await chatFor(admin, job.owner, job.brand_id)
-    const { runId } = await executeRole(admin, role, job.task, 'task', { channel })
+    // A lead may brief its team; a member answers alone. Either way one
+    // deliverable comes back, and if acting on it would leave the building
+    // it waits for the founder's approval.
+    const { deliverable, runId, usage, plan } = await executeDepartment(admin, role, job.task, 'task', { channel, jobId: job.id })
     await admin.from('role_jobs').update({
       status: 'done', run_id: runId, finished_at: new Date().toISOString(),
+      dept: role.dept ?? null, approval: deliverable.external ? 'pending' : 'none',
+      plan, cost_pence: costPence(usage),
     }).eq('id', job.id)
     return 'done'
   } catch (e) {
@@ -66,7 +73,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405)
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE)
-  const body = await req.json().catch(() => ({})) as { jobId?: string }
+  const body = await req.json().catch(() => ({})) as { jobId?: string; retro?: string }
 
   /* ---- the sweep ---- */
   if (CRON_SECRET && req.headers.get('x-cron-secret') === CRON_SECRET) {
@@ -79,8 +86,8 @@ Deno.serve(async (req) => {
       if (job) results[job.id] = await work(admin, job)
     }
     // A worker that died mid-job would otherwise spin forever: after ten
-    // minutes, call it what it is.
-    const stale = new Date(Date.now() - 600_000).toISOString()
+    // minutes (a team run can take a few), call it what it is.
+    const stale = new Date(Date.now() - 900_000).toISOString()
     await admin.from('role_jobs').update({ status: 'failed', error: 'The run did not finish. Assign it again.', finished_at: new Date().toISOString() })
       .eq('status', 'running').lt('started_at', stale)
     return json({ ok: true, swept: Object.keys(results).length, results })
@@ -88,11 +95,22 @@ Deno.serve(async (req) => {
 
   /* ---- the studio, kicking off its own job ---- */
   const auth = req.headers.get('authorization') ?? ''
-  if (!auth.startsWith('Bearer ') || !body.jobId) return json({ error: 'Unauthorized' }, 401)
+  if (!auth.startsWith('Bearer ') || !(body.jobId || body.retro)) return json({ error: 'Unauthorized' }, 401)
   const asUser = createClient(SUPABASE_URL, ANON, { global: { headers: { authorization: auth } } })
   const { data: userData } = await asUser.auth.getUser()
   const uid = userData.user?.id
   if (!uid) return json({ error: 'Unauthorized' }, 401)
+
+  /* ---- the Friday learning, on demand ---- */
+  if (body.retro) {
+    const { data: leadRow } = await admin.from('roles').select('*').eq('id', body.retro).maybeSingle()
+    const lead = leadRow as RoleRow | null
+    if (!lead || lead.owner !== uid) return json({ error: 'Not your seat' }, 403)
+    try {
+      const r = await retroDepartment(admin, lead, { channel: await chatFor(admin, lead.owner, lead.brand_id) })
+      return json({ ok: true, lessons: r?.lessons ?? [], note: r ? undefined : 'Nothing to learn from yet: the department has not done any work this week.' })
+    } catch (e) { return json({ error: e instanceof Error ? e.message : String(e) }, 500) }
+  }
 
   const { data: owned } = await admin.from('role_jobs').select('id, owner').eq('id', body.jobId).maybeSingle()
   if (!owned || (owned as { owner: string }).owner !== uid) return json({ error: 'Not your job' }, 403)

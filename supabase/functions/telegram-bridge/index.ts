@@ -6,8 +6,9 @@
 // can only ever contain that workspace's material.
 //
 // Pair:      /start <code>            (code generated in Settings -> Channel)
-// Commands:  /roles /inbox /digest /approve <id> /decline <id> /workspace [name]
-//            /ask <role> <brief>  ·  @role <brief>  ·  plain text -> lead role
+// Commands:  /team /inbox /digest /approve <id> /decline <id> /workspace [name]
+//            @growth <brief>  ·  @<lead name> <brief>  ·  plain text -> Head of Growth
+// The founder talks to department leads only; a lead briefs its own team.
 //
 // Security: Telegram's own secret-token header is required, and an unknown
 // chat is told nothing except how to pair. Never echo data before binding.
@@ -17,7 +18,9 @@
 // ============================================================================
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendMessage, b, plain, formatDeliverable } from '../_shared/telegram.ts'
-import { executeRole, type RoleRow } from '../_shared/roleWork.ts'
+import { executeDepartment, type RoleRow } from '../_shared/roleWork.ts'
+import { costPence } from '../_shared/roleCore.ts'
+import { deptOf } from '../_shared/orgShape.ts'
 
 const WEBHOOK_SECRET = Deno.env.get('TELEGRAM_WEBHOOK_SECRET') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
@@ -41,9 +44,9 @@ async function later(p: Promise<unknown>): Promise<void> {
 const HELP = [
   b('Your org, on the phone'),
   '',
-  plain('Just type to brief the lead role, or:'),
-  plain('@cmo plan september   — brief a role by name'),
-  plain('/roles      who is on the team and their cadence'),
+  plain('Just type to brief the Head of Growth, or:'),
+  plain('@growth plan september   — brief a department lead'),
+  plain('/team       your departments and who leads them'),
   plain('/inbox      what is waiting on your call'),
   plain('/approve a1b2   ·  /decline a1b2'),
   plain('/digest     the latest weekly digests'),
@@ -113,15 +116,17 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
     return sendMessage(chatId, plain(`This chat now talks to ${match.name}. Its roles only see ${match.name}'s work.`))
   }
 
-  if (cmd === '/roles') {
-    if (!roles.length) return sendMessage(chatId, plain('No roles hired in this workspace yet.'))
-    const lines = await Promise.all(roles.map(async (r) => {
+  if (cmd === '/roles' || cmd === '/team') {
+    const leads = roles.filter((r) => r.seat !== 'member')
+    if (!leads.length) return sendMessage(chatId, plain('No departments hired in this workspace yet.'))
+    const lines = await Promise.all(leads.map(async (r) => {
       const { count } = await admin.from('role_items').select('id', { count: 'exact', head: true })
         .eq('role_id', r.id).eq('status', 'open')
       const cad = r.schedule?.cadence && r.schedule.cadence !== 'off' ? r.schedule.cadence : 'on demand'
-      return plain(`• ${r.name} (${r.title}) — ${cad}${r.enabled ? '' : ', paused'}${count ? `, ${count} awaiting you` : ''}`)
+      const team = roles.filter((m) => m.seat === 'member' && m.dept === r.dept).length
+      return plain(`• ${deptOf(r.dept)?.name ?? r.dept ?? 'Seat'}: ${r.name}${team ? ` +${team}` : ''} — ${cad}${r.enabled ? '' : ', paused'}${count ? `, ${count} awaiting you` : ''}`)
     }))
-    return sendMessage(chatId, [b(await brandName(admin, ch.brand_id)), ...lines, '', plain('Brief one with @name, e.g. @cmo what should we ship this week?')].join('\n'))
+    return sendMessage(chatId, [b(await brandName(admin, ch.brand_id)), ...lines, '', plain('Brief a department with @key, e.g. @growth what should we ship this week?')].join('\n'))
   }
 
   if (cmd === '/inbox') {
@@ -154,27 +159,29 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
     return sendMessage(chatId, [b('Latest digests'), ...runs.map((r) => `\n${b(byId.get(r.role_id) ?? 'Role')} — ${plain(r.output?.title ?? '')}\n${plain(r.output?.summary ?? '')}`)].join('\n'))
   }
 
-  /* ---- briefing a role ---- */
-  if (!roles.length) return sendMessage(chatId, plain('No roles hired in this workspace yet.'))
+  /* ---- briefing a department lead ---- */
+  const leads = roles.filter((r) => r.seat !== 'member')
+  if (!leads.length) return sendMessage(chatId, plain('No departments hired in this workspace yet.'))
   let target: RoleRow | undefined
   let brief = trimmed
   const addressed = trimmed.match(/^[@/](?:ask\s+)?([a-zA-Z][\w-]*)\s+([\s\S]+)$/)
   if (addressed) {
     const [, who, body] = addressed
-    target = roles.find((r) => norm(r.name) === norm(who) || norm(r.key) === norm(who))
-      ?? roles.find((r) => norm(r.name).startsWith(norm(who)) || norm(r.title).includes(norm(who)))
+    const w = norm(who)
+    target = leads.find((r) => norm(r.dept ?? '') === w || norm(r.key) === w || norm(r.name) === w || norm(deptOf(r.dept)?.name ?? '') === w)
+      ?? leads.find((r) => norm(r.name).startsWith(w) || norm(r.title).includes(w) || norm(deptOf(r.dept)?.name ?? '').startsWith(w))
     if (target) brief = body
   }
   if (!target) {
     if (cmd.startsWith('/')) return sendMessage(chatId, [plain('I do not know that command.'), '', HELP].join('\n'))
-    target = roles.find((r) => r.key === 'cmo' && r.enabled) ?? roles.find((r) => r.enabled) ?? roles[0]
+    target = leads.find((r) => r.dept === 'growth' && r.enabled) ?? leads.find((r) => r.enabled) ?? leads[0]
   }
   if (!brief.trim()) return sendMessage(chatId, plain(`What should ${target.name} work on?`))
 
   // File the work as a job first, so it appears on the role's board in the
   // studio while it runs, wherever it was assigned from.
   const { data: jobRow } = await admin.from('role_jobs').insert({
-    owner: ch.owner, brand_id: ch.brand_id, role_id: target.id, task: brief,
+    owner: ch.owner, brand_id: ch.brand_id, role_id: target.id, dept: target.dept ?? null, task: brief,
     source: 'telegram', status: 'running', started_at: new Date().toISOString(),
   }).select('id').single()
   const jobId = (jobRow as { id?: string } | null)?.id ?? null
@@ -182,9 +189,10 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
   await sendMessage(chatId, plain(`${target.name} is on it…`))
   await later((async () => {
     try {
-      const { deliverable, runId } = await executeRole(admin, target!, brief, 'task', { channel: null })
-      if (jobId) await admin.from('role_jobs').update({ status: 'done', run_id: runId, finished_at: new Date().toISOString() }).eq('id', jobId)
-      await sendMessage(chatId, formatDeliverable(target!.name, 'task', deliverable, { full: true }))
+      const { deliverable, runId, usage, plan } = await executeDepartment(admin, target!, brief, 'task', { channel: null, jobId })
+      if (jobId) await admin.from('role_jobs').update({ status: 'done', run_id: runId, finished_at: new Date().toISOString(), approval: deliverable.external ? 'pending' : 'none', plan, cost_pence: costPence(usage) }).eq('id', jobId)
+      const who = plan?.approach === 'team' ? `${target!.name} with ${plan.assignments.map((a) => a.to).join(', ')}` : target!.name
+      await sendMessage(chatId, formatDeliverable(who, 'task', deliverable, { full: true }) + (deliverable.external ? `\n\n${b('Waiting for your approval in the studio before anything goes out.')}` : ''))
     } catch (e) {
       const detail = e instanceof Error ? e.message : String(e)
       if (jobId) await admin.from('role_jobs').update({ status: 'failed', error: detail.slice(0, 500), finished_at: new Date().toISOString() }).eq('id', jobId)

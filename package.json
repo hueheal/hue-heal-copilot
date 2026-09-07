@@ -6,6 +6,8 @@
   "description": "Hue & Heal — Studio Co-pilot. The studio's operations + social content workspace.",
   "scripts": {
     "dev": "vite",
+    "org": "node scripts/build-org.mjs",
+    "prebuild": "node scripts/build-org.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

@@ -9,30 +9,24 @@
 // influenced by the CMO of another.
 // ============================================================================
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { ownsOf as seatOwns, deptOf } from './orgShape.ts'
 
 export interface Colleague { name: string; title: string; owns?: string }
 
-interface RoleRow { id: string; name: string; title: string; charter: string; enabled: boolean; key: string }
+interface RoleRow { id: string; name: string; title: string; charter: string; enabled: boolean; key: string; dept?: string | null; seat?: string | null }
 
 const ago = (iso?: string | null) => (iso ? `${Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)}d ago` : '')
 const trim = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1).trimEnd()}…` : s)
 
-/** What each preset seat owns, for the org roster. Custom seats fall back to
-    the first sentence of their charter. */
-export const OWNS: Record<string, string> = {
-  cmo: 'the marketing calendar, positioning and campaign priorities',
-  editor: 'editorial quality, headlines and the story slate',
-  social: 'Instagram: formats, hooks, posting plan and the grid',
-  guardian: 'brand voice and consistency across everything published',
-}
-
-export function ownsOf(role: { key: string; charter: string }): string {
-  return OWNS[role.key] ?? trim(role.charter.split('.')[0] ?? '', 120)
+/** What a seat owns, from org/roles; custom seats fall back to their charter. */
+export function ownsOf(role: { key: string; dept?: string | null; charter: string }, brandName?: string | null): string {
+  return seatOwns(role, brandName)
 }
 
 export async function buildOrgBrief(
   admin: SupabaseClient,
-  role: { id: string; owner: string; brand_id: string | null; name: string },
+  role: { id: string; owner: string; brand_id: string | null; name: string; dept?: string | null },
+  brandName?: string | null,
 ): Promise<{ brief: string; colleagues: Colleague[] }> {
   const scope = <T,>(q: T): T => {
     let x = (q as { eq: (a: string, b: unknown) => unknown }).eq('owner', role.owner)
@@ -41,10 +35,11 @@ export async function buildOrgBrief(
     return x as T
   }
 
-  const { data: roleRows } = await scope(admin.from('roles').select('id, name, title, charter, enabled, key'))
+  const { data: roleRows } = await scope(admin.from('roles').select('id, name, title, charter, enabled, key, dept, seat'))
   const all = (roleRows ?? []) as RoleRow[]
   const others = all.filter((r) => r.id !== role.id)
-  const colleagues: Colleague[] = others.map((r) => ({ name: r.name, title: r.title, owns: ownsOf(r) }))
+  const deptLabel = (r: RoleRow) => { const d = deptOf(r.dept); return d ? `${d.name}${r.seat === 'member' ? '' : ', lead'}` : '' }
+  const colleagues: Colleague[] = others.map((r) => ({ name: r.name, title: [r.title, deptLabel(r)].filter(Boolean).join(' · '), owns: ownsOf(r, brandName) }))
   if (!others.length) return { brief: '', colleagues: [] }
 
   const byId = new Map(all.map((r) => [r.id, r]))
@@ -69,6 +64,15 @@ export async function buildOrgBrief(
   if (dec.length) {
     lines.push('', 'CONTROLLER DECISIONS (already settled: work with these, do not reopen them):')
     for (const d of dec) lines.push(`- ${d.status === 'approved' ? 'APPROVED' : 'DECLINED'} ${d.kind} from ${byId.get(d.role_id)?.name ?? 'a colleague'}: ${d.title}. ${trim(d.detail, 200)}`)
+  }
+
+  /* Founder decisions on whole deliverables. */
+  const { data: judged } = await scope(admin.from('role_jobs').select('role_id, task, approval'))
+    .in('approval', ['approved', 'declined']).order('decided_at', { ascending: false }).limit(8)
+  const jj = (judged ?? []) as { role_id: string; task: string; approval: string }[]
+  if (jj.length) {
+    lines.push('', 'DELIVERABLES THE FOUNDER HAS RULED ON (approved means go; declined means do not resurrect it):')
+    for (const j of jj) lines.push(`- ${j.approval.toUpperCase()}, from ${byId.get(j.role_id)?.name ?? 'a colleague'}: ${trim(j.task, 160)}`)
   }
 
   /* Open requests elsewhere, so two roles don't ask for the same thing. */

@@ -595,7 +595,7 @@ function ChannelPanel() {
           <div style={{ border: '1px solid var(--ck-line)', borderRadius: 10, padding: '14px 16px', marginTop: 18, background: 'var(--ck-surface)' }}>
             <div style={{ fontSize: 13.5, fontWeight: 500 }}>Linked{channel?.chat_label ? ` to ${channel.chat_label}` : ''}</div>
             <p style={{ ...hint, marginTop: 4 }}>
-              {roles.length ? `${roles.map((r) => r.name).join(', ')} answer in that chat.` : 'Hire a role and it will answer in that chat.'}
+              {roles.filter((r) => r.seat !== 'member').length ? `${roles.filter((r) => r.seat !== 'member').map((r) => r.name).join(', ')} answer in that chat.` : 'Hire a department and its lead will answer in that chat.'}
             </p>
             <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
               <PillButton onClick={() => { if (!channel) return; const next = !channel.push; void setPush(channel.id, next); setChannel({ ...channel, push: next }) }}>
@@ -612,8 +612,8 @@ function ChannelPanel() {
           </div>
           <span style={label}>In the chat</span>
           <pre style={{ ...area, whiteSpace: 'pre-wrap', fontFamily: 'ui-monospace, monospace', fontSize: 12.5, lineHeight: 1.7 }}>
-{`@cmo plan september        brief a role by name
-/roles                     the team and their cadence
+{`@growth plan september     brief a department lead
+/team                      your departments and their leads
 /inbox                     what is waiting on your call
 /approve a1b2              approve (or /decline)
 /digest                    the latest weekly digests

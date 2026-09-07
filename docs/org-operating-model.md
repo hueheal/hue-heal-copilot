@@ -1,92 +1,57 @@
-# The org: how roles work together, stay separated, and reach your phone
+# The org operating model
 
-Three guarantees, and the machinery behind each.
+The copilot runs a suite of businesses as an org of departments. This is how
+it is put together and the guarantees it keeps.
 
-## 1. Roles build on each other instead of overruling each other
+## Shape
 
-**Remits.** Every seat declares what it owns and what it hands over. The CMO owns
-the calendar and positioning; the Editor-in-chief owns quality, headlines and the
-story slate; the Social strategist owns Instagram; the Brand guardian owns voice.
-A custom seat's remit is taken from the first line of its charter. The remit is in
-the system prompt, and the rule with it is explicit: anything inside a colleague's
-remit is theirs to decide.
+- **Departments**, defined in `org/departments/*.md`, each with a lead and a
+  small team defined in `org/roles/<dept>/*.md`. Growth (sales and
+  marketing), Product (research, design, technology), Partnerships, Founder
+  office, Finance, Counsel (legal and compliance), Experts (subject matter,
+  different per brand: `org/roles/experts/<brand>/`).
+- **The founder talks to leads only.** A lead reads the task, decides whether
+  it needs the team (`planTask`), briefs members in parallel, compiles and
+  signs one deliverable. Members are never briefed by the founder.
+- **Seats are prose.** Each markdown file carries the charter, the principles
+  credited to the people the seat learns from, the lines it never crosses,
+  and one-click plays. `npm run org` compiles them into one generated module
+  used by both the app and the edge functions.
 
-**The org brief.** Before a role decides anything it is given, in its own words:
+## Guarantees
 
-- where every colleague stands (their most recent deliverable, title and summary,
-  marked live and in force),
-- controller decisions already settled (approved and declined items across the
-  org, not to be reopened),
-- what is already on your desk from other roles, so two seats don't ask you for
-  the same tool twice,
-- its inbox, and the handoffs it has already sent.
+1. **Workspace isolation.** Every role, run, job, note and department state
+   row carries `brand_id`; every read is scoped to `(owner, brand_id)`; the
+   system prompt walls the seat inside its workspace.
+2. **Nothing leaves the building unapproved.** A deliverable declares
+   `external: true` when acting on it would publish, send, spend or change a
+   price. Such jobs sit in "Needs your approval" until the founder rules;
+   rulings are read into every later run.
+3. **Colleagues work with, not over, each other.** Remits (owns / defers),
+   an org brief before every decision, handoffs filed to the seat that owns
+   a thing, and department order on the cadence so the day compounds.
 
-The instruction attached to it: never redo, contradict or quietly overwrite a
-colleague's live decision. Disagreement is allowed, but it goes out as a note to
-that role, so you see one argument rather than two conflicting plans.
+## Learning
 
-**Handoffs.** Every deliverable can carry notes addressed to a named colleague.
-They are filed in `role_notes`, shown on the Roles page under **Between roles**,
-appear in the recipient's room under **From colleagues**, and are read into that
-role's next run, which is then told to answer them explicitly. Answering closes
-the note. So the Editor-in-chief's verdict on a piece reaches the Social
-strategist before it plans the week, without either seat deciding for the other.
+Every Friday the scheduler runs `retroDepartment` for each lead whose
+department did any work that week. The lead reads the work, the founder's
+rulings and the requests, and rewrites the department **playbook**
+(`dept_state.playbook`), which is injected into every future run. The founder
+can read and edit it, or trigger it early with **Learn now**.
 
-**Order of play.** Scheduled runs go CMO, then editor, then social, then guardian.
-Each reads the ones before it the same morning, so the day compounds.
+## Tools and budget
 
-## 2. Workspaces cannot influence each other
+`org/tools/*.md` is the registry. A department declares the tools it wants;
+the founder grants them per workspace (`dept_state.tools`) and sets a light
+monthly budget (`dept_state.budget_pence`, £50 by default). Every model call
+is metered (`role_runs.cost_pence`) and shown against the budget. Seats are
+told to work in-house first and to ask for a tool as a request with the cost.
 
-- `roles.brand_id` is `NOT NULL`. A role belongs to exactly one brand world and
-  the app refuses to hire one without a workspace.
-- Every read a role makes is scoped to `(owner, brand_id)`: the workspace
-  snapshot, the colleague roster, the ledger, handoffs, run history. Migration
-  0027 also stamps `brand_id` onto `role_runs` and `role_items`.
-- The subscriber count in the scheduled snapshot was previously scoped by owner
-  only. Fixed: it is scoped by brand like everything else.
-- The system prompt names the workspace and forbids carrying anything over from
-  any other brand: audience, positioning, results, examples or copy.
-- A linked chat is bound to one workspace at a time, so Hue & Heal and Remedae
-  never share a thread.
+## Machinery
 
-## 3. Talking to the org from your phone
-
-Telegram, not WhatsApp. WhatsApp's Cloud API needs a Meta app, business
-verification, and pre-approved templates for anything sent outside a 24-hour
-window, and your Meta developer account is currently flagged. Telegram needs a
-bot token and nothing else, sends freely, and costs nothing.
-
-### Setup (about ten minutes, all on your side)
-
-New to Telegram? Full walkthrough in [telegram-setup.md](telegram-setup.md).
-Short version, once you have a bot token from `@BotFather`:
-
-```bash
-bash scripts/setup-telegram.sh
-```
-
-It asks for the token in a hidden prompt, stores it on the edge functions,
-mints a webhook secret and registers the webhook. Then pair from Settings →
-Channel with `/start CODE`, once per workspace.
-
-### In the chat
-
-```
-@cmo plan september        brief a role by name
-/roles                     the team, their cadence, what is waiting
-/inbox                     requests and experiments awaiting your call
-/approve a1b2              approve (or /decline) by the code from /inbox
-/digest                    the latest weekly digests
-/workspace <name>          point this chat at another workspace
-```
-
-Plain text with no `@name` goes to the lead role (the CMO if hired). Scheduled
-deliverables and Friday digests are pushed to the linked chat automatically;
-turn that off with the toggle in Settings → Channel.
-
-### Security
-
-The bridge only accepts requests carrying Telegram's own secret-token header. An
-unknown chat is told nothing except how to pair. Approvals are only accepted from
-a chat already bound to that workspace, and a decision made from the phone is the
-same decision the roles read in their next run.
+- `role-worker`: runs jobs (atomic claim, minute sweep, 15-minute stale
+  timeout) and the on-demand retro.
+- `role-scheduler`: daily cadence runs through the department path, Friday
+  digests and retros.
+- `telegram-bridge`: `@growth …` briefs a lead from the phone; `/team`,
+  `/inbox`, `/approve`, `/digest`, `/workspace`.
