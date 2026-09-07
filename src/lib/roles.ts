@@ -296,6 +296,14 @@ export async function sendBriefing(text: string, leads: Role[]): Promise<{ brief
   if (error) return { jobs: [], error: error.message }
   const briefing = data as Briefing
   const jobs: RoleJob[] = []
+  // With a chief of staff, the message is routed: only the leads it concerns
+  // hear it, and one desk comes back instead of seven replies.
+  const chief = leads.find((r) => r.key === 'chief' && r.enabled)
+  if (chief) {
+    const { job, error: e } = await assignJob(chief, `ROUTE: ${text.trim()}`, { briefing_id: briefing.id })
+    if (e) return { briefing, jobs: [], error: e }
+    return { briefing, jobs: job ? [job] : [] }
+  }
   for (const lead of leads.filter((r) => r.seat === 'lead' && r.enabled)) {
     const { job } = await assignJob(lead, briefingTask(text, deptNameOf(lead)), { briefing_id: briefing.id })
     if (job) jobs.push(job)

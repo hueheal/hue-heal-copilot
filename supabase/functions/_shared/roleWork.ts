@@ -11,7 +11,7 @@
 // retroDepartment  the Friday learning: the lead rewrites the playbook.
 // ============================================================================
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { runPersona, planTask, runRetro, costPence, addUsage, ZERO, type BrandDef, type Usage } from './roleCore.ts'
+import { runPersona, planTask, runRetro, routeMessage, DESK_TASK, costPence, addUsage, ZERO, type BrandDef, type Usage } from './roleCore.ts'
 import { buildOrgBrief, fileHandoffs } from './orgBrief.ts'
 import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
@@ -69,6 +69,8 @@ async function context(admin: SupabaseClient, role: RoleRow, opts: Partial<Ctx>)
 export interface RunOpts extends Partial<Ctx> {
   channel?: string | null
   jobId?: string | null
+  /** Answer alone even if the department has a team. */
+  solo?: boolean
   /** A member's brief from its lead. */
   briefedBy?: string
   /** A lead's compile pass: the team's work. */
@@ -149,7 +151,7 @@ export async function executeDepartment(
   opts: RunOpts = {},
 ): Promise<{ deliverable: Deliverable; runId: string | null; usage: Usage; plan: Plan | null }> {
   const ctx = await context(admin, lead, opts)
-  const team = lead.seat === 'member' || kind === 'digest' ? [] : await teamOf(admin, lead)
+  const team = lead.seat === 'member' || kind === 'digest' || opts.solo ? [] : await teamOf(admin, lead)
   if (!team.length) {
     const r = await executeRole(admin, lead, task, kind, { ...opts, ...ctx })
     return { ...r, plan: null }
@@ -258,4 +260,93 @@ export async function retroDepartment(admin: SupabaseClient, lead: RoleRow, opts
   })
   if (opts.channel) await sendMessage(opts.channel, `<b>${lead.name}</b> rewrote the ${deptOf(lead.dept)?.name ?? ''} playbook.\n${r.lessons.map((l) => `• ${l}`).join('\n')}`)
   return { lessons: r.lessons, usage: r.usage }
+}
+
+/* ---- The chief of staff ------------------------------------------------ */
+
+/** The founder's single point of contact in a workspace, if hired. */
+export async function chiefOf(admin: SupabaseClient, owner: string, brandId: string | null): Promise<RoleRow | null> {
+  const { data } = await admin.from('roles').select('*')
+    .eq('owner', owner).eq('brand_id', brandId).eq('key', 'chief').eq('enabled', true).limit(1)
+  return ((data ?? [])[0] as RoleRow | undefined) ?? null
+}
+
+export const briefingTask = (text: string, deptName: string) =>
+  `DAILY BRIEFING FROM THE FOUNDER, sent to every department lead at once:\n\n${text.trim()}\n\nYou are the ${deptName} lead. If nothing in this briefing concerns your department, say so in one line and stop: do not manufacture work. Otherwise: name what in it is yours, do it now where it can be done in this deliverable, hand anything that belongs to a colleague to them as a handoff, and say what you need from the founder. Short. Specific. Today.`
+
+/** Route a founder's message through the chief of staff: one small model
+    call decides which leads it concerns, files a queued job for each, records
+    any decisions in the chief's run, and returns the chief's reply. The
+    worker runs the jobs; when the last lands, the desk is written. */
+export async function routeBriefing(
+  admin: SupabaseClient,
+  chief: RoleRow,
+  briefing: { id: string; text: string; source: string },
+  opts: { jobId?: string | null } = {},
+): Promise<{ reply: string; assignments: { to: string; brief: string }[]; decisions: string[]; runId: string | null; jobs: number }> {
+  const brand = await brandFor(admin, chief.brand_id)
+  const org = await buildOrgBrief(admin, chief, brand.name)
+  const { data: leadRows } = await admin.from('roles').select('*')
+    .eq('owner', chief.owner).eq('brand_id', chief.brand_id).eq('seat', 'lead').eq('enabled', true).neq('id', chief.id)
+  const leads = (leadRows ?? []) as RoleRow[]
+  const r = await routeMessage(
+    roleDef(chief, brand.name), brand,
+    leads.map((l) => ({ name: l.name, title: `${deptOf(l.dept)?.name ?? ''} lead`, owns: ownsOf(l, brand.name) })),
+    briefing.text, { brief: org.brief, colleagues: org.colleagues },
+  )
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
+  const filed: { to: string; brief: string }[] = []
+  for (const a of r.assignments) {
+    const lead = leads.find((l) => norm(l.name) === norm(a.to)) ?? leads.find((l) => norm(a.to).includes(norm(l.name)) || norm(l.name).includes(norm(a.to)) || norm(deptOf(l.dept)?.name ?? '') === norm(a.to))
+    if (!lead || filed.some((f) => f.to === lead.name)) continue
+    await admin.from('role_jobs').insert({
+      owner: chief.owner, brand_id: chief.brand_id, role_id: lead.id, dept: lead.dept ?? null, briefing_id: briefing.id,
+      task: `${a.brief}\n\n(Routed to you by the Chief of staff from the founder's message: "${briefing.text.trim().slice(0, 600)}". Do what is yours now, hand over what is not, and say what you need from the founder. Short.)`,
+      source: briefing.source === 'telegram' ? 'telegram' : 'desk', status: 'queued',
+    })
+    filed.push({ to: lead.name, brief: a.brief })
+  }
+  const output = {
+    title: `Routed: ${briefing.text.trim().slice(0, 60)}${briefing.text.trim().length > 60 ? '…' : ''}`,
+    summary: r.reply,
+    sections: [
+      { heading: 'Passed on', body: filed.length ? filed.map((f) => `- ${f.to}: ${f.brief}`).join('\n') : 'Nothing to route: noted for the record.' },
+      ...(r.decisions.length ? [{ heading: 'Decisions recorded', body: r.decisions.map((d) => `- ${d}`).join('\n') }] : []),
+    ],
+    actions: [], needs: [], experiments: [], handoffs: [], external: false,
+  }
+  const { data: run } = await admin.from('role_runs').insert({
+    owner: chief.owner, role_id: chief.id, brand_id: chief.brand_id, task: `ROUTE: ${briefing.text.trim().slice(0, 200)}`, output, kind: 'task',
+    job_id: opts.jobId ?? null, tokens_in: r.usage.input_tokens, tokens_out: r.usage.output_tokens, cost_pence: costPence(r.usage),
+  }).select('id').single()
+  // Decisions the founder just made are settled for everyone: file them as
+  // approved items on the chief's ledger so every org brief carries them.
+  for (const d of r.decisions.slice(0, 5)) {
+    await admin.from('role_items').insert({ owner: chief.owner, role_id: chief.id, brand_id: chief.brand_id, run_id: (run as { id?: string } | null)?.id ?? null, kind: 'decision', title: d.slice(0, 200), detail: `Decided by the founder in a briefing on ${new Date().toISOString().slice(0, 10)}.`, status: 'approved' })
+  }
+  return { reply: r.reply, assignments: filed, decisions: r.decisions, runId: (run as { id?: string } | null)?.id ?? null, jobs: filed.length }
+}
+
+/** When every lead has answered a briefing, the chief compresses the replies
+    into one desk: now, next, parked, decisions. */
+export async function deskBriefing(admin: SupabaseClient, chief: RoleRow, briefingId: string, opts: { jobId?: string | null; channel?: string | null } = {}): Promise<{ deliverable: Deliverable; runId: string | null; usage: Usage }> {
+  const { data: b } = await admin.from('role_briefings').select('text, created_at').eq('id', briefingId).maybeSingle()
+  const briefing = b as { text: string; created_at: string } | null
+  const { data: jobRows } = await admin.from('role_jobs').select('role_id, status, run_id, error').eq('briefing_id', briefingId).neq('role_id', chief.id)
+  const jobs = (jobRows ?? []) as { role_id: string; status: string; run_id: string | null; error: string | null }[]
+  const { data: roleRows } = await admin.from('roles').select('id, name, dept').in('id', jobs.map((j) => j.role_id))
+  const names = new Map(((roleRows ?? []) as { id: string; name: string; dept: string | null }[]).map((r) => [r.id, r]))
+  const runIds = jobs.map((j) => j.run_id).filter(Boolean) as string[]
+  const { data: runRows } = runIds.length ? await admin.from('role_runs').select('id, output').in('id', runIds) : { data: [] }
+  const outputs = new Map(((runRows ?? []) as { id: string; output: Deliverable }[]).map((r) => [r.id, r.output]))
+  const contributions = jobs.map((j) => {
+    const who = names.get(j.role_id)
+    const label = `### ${who?.name ?? 'A lead'} (${deptOf(who?.dept)?.name ?? ''})`
+    if (j.status !== 'done' || !j.run_id) return `${label}\nDid not reply${j.error ? `: ${j.error}` : ''}.`
+    const d = outputs.get(j.run_id)
+    return [label, `${d?.title ?? ''}: ${d?.summary ?? ''}`, ...(d?.sections ?? []).map((s) => `${s.heading}\n${s.body}`), (d?.handoffs ?? []).length ? `Handoffs: ${(d?.handoffs ?? []).map((h) => `${h.to}: ${h.subject}`).join('; ')}` : ''].filter(Boolean).join('\n')
+  }).join('\n\n')
+  const r = await executeRole(admin, chief, `${DESK_TASK}\n\nTHE BRIEFING THEY ANSWERED:\n${briefing?.text ?? ''}`, 'task', { jobId: opts.jobId, solo: true, contributions })
+  if (opts.channel) await sendMessage(opts.channel, formatDeliverable('Your desk', 'task', r.deliverable, { full: true }))
+  return r
 }

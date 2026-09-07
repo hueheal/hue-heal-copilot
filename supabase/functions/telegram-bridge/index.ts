@@ -18,7 +18,7 @@
 // ============================================================================
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendMessage, b, plain, formatDeliverable } from '../_shared/telegram.ts'
-import { executeDepartment, type RoleRow } from '../_shared/roleWork.ts'
+import { executeDepartment, routeBriefing, chiefOf, briefingTask, type RoleRow } from '../_shared/roleWork.ts'
 import { costPence } from '../_shared/roleCore.ts'
 import { deptOf } from '../_shared/orgShape.ts'
 
@@ -29,34 +29,6 @@ const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 interface Channel { id: string; owner: string; brand_id: string | null; push: boolean }
 
 const short = (id: string) => id.slice(0, 4)
-
-/** Same words as the studio uses, so the org is briefed identically. */
-const briefingTask = (text: string, deptName: string) =>
-  `DAILY BRIEFING FROM THE FOUNDER, sent to every department lead at once:\n\n${text.trim()}\n\nYou are the ${deptName} lead. If nothing in this briefing concerns your department, say so in one line and stop: do not manufacture work. Otherwise: name what in it is yours, do it now where it can be done in this deliverable, hand anything that belongs to a colleague to them as a handoff, and say what you need from the founder. Short. Specific. Today.`
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
-
-/** Long work (a role run) without holding the webhook open. Only safe when the
-    runtime keeps the isolate alive for us: otherwise it is torn down seconds
-    after the response and the reply is never sent, so we wait instead. Quick
-    work is always awaited before responding. */
-async function later(p: Promise<unknown>): Promise<void> {
-  const rt = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime
-  if (typeof rt?.waitUntil === 'function') { rt.waitUntil(p.catch(() => {})); return }
-  await p.catch(() => {})
-}
-
-const HELP = [
-  b('Your org, on the phone'),
-  '',
-  plain('Just type to brief the Head of Growth, or:'),
-  plain('@growth plan september   — brief a department lead'),
-  plain('/brief <text>   brief every lead at once; replies land here'),
-  plain('/team       your departments and who leads them'),
-  plain('/inbox      what is waiting on your call'),
-  plain('/approve a1b2   ·  /decline a1b2'),
-  plain('/digest     the latest weekly digests'),
-  plain('/workspace  which workspace this chat talks to'),
-].join('\n')
 
 async function rolesOf(admin: SupabaseClient, ch: Channel): Promise<RoleRow[]> {
   const { data } = await admin.from('roles').select('*')
@@ -121,8 +93,19 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
     return sendMessage(chatId, plain(`This chat now talks to ${match.name}. Its roles only see ${match.name}'s work.`))
   }
 
+  const briefThroughChief = async (text: string): Promise<boolean> => {
+    const chief = await chiefOf(admin, ch.owner, ch.brand_id)
+    if (!chief) return false
+    const { data: br } = await admin.from('role_briefings').insert({ owner: ch.owner, brand_id: ch.brand_id, text, source: 'telegram' }).select('id, text, source').single()
+    if (!br) return false
+    const r = await routeBriefing(admin, chief, br as { id: string; text: string; source: string })
+    await sendMessage(chatId, [b('Chief of staff'), plain(r.reply), r.jobs ? plain(`\nYour desk will follow once ${r.jobs === 1 ? 'the reply lands' : `all ${r.jobs} replies land`}.`) : ''].filter(Boolean).join('\n'))
+    return true
+  }
+
   if (cmd === '/brief' || cmd === '/briefing') {
     if (!arg.trim()) return sendMessage(chatId, plain('What is the briefing? /brief followed by the message.'))
+    if (await briefThroughChief(arg.trim())) return
     const leads = roles.filter((r) => r.seat !== 'member' && r.enabled)
     if (!leads.length) return sendMessage(chatId, plain('No departments hired in this workspace yet.'))
     const { data: br } = await admin.from('role_briefings').insert({ owner: ch.owner, brand_id: ch.brand_id, text: arg.trim(), source: 'telegram' }).select('id').single()
@@ -196,6 +179,8 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
   }
   if (!target) {
     if (cmd.startsWith('/')) return sendMessage(chatId, [plain('I do not know that command.'), '', HELP].join('\n'))
+    // Plain text: the chief of staff routes it. Without one, Growth gets it.
+    if (await briefThroughChief(trimmed)) return
     target = leads.find((r) => r.dept === 'growth' && r.enabled) ?? leads.find((r) => r.enabled) ?? leads[0]
   }
   if (!brief.trim()) return sendMessage(chatId, plain(`What should ${target.name} work on?`))

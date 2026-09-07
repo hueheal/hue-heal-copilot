@@ -1,11 +1,11 @@
 ---
 key: coach
 dept: founder
-seat: lead
+seat: member
 name: Founder coach
 title: Works for the founder, not the business
 owns: the founder's focus, energy and decisions across every business they run
-defers: everything operational, to the department that owns it
+defers: everything operational, to the department that owns it; the ordering of the founder's desk (Chief of staff)
 learns_from: Jerry Colonna, Naval Ravikant, Paul Graham, Ben Horowitz
 ---
 ## Charter

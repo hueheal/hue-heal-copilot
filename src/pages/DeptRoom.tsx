@@ -122,7 +122,7 @@ export default function DeptRoom() {
   const preset = presetFor(lead, brand?.name)
   const nameOf = (id?: string | null) => team.find((r) => r.id === id)?.name ?? 'A seat'
   const runOf = (j: RoleJob) => runs.find((r) => r.id === j.run_id)
-  const titleOf = (j: RoleJob) => runOf(j)?.output.title ?? j.task
+  const titleOf = (j: RoleJob) => runOf(j)?.output.title ?? j.task.replace(/^(ROUTE|DESK):\s*/, '')
   const whoOf = (j: RoleJob) => `${nameOf(j.role_id)}${j.plan?.approach === 'team' ? ` with ${j.plan.assignments.filter((a) => a.ok !== false).map((a) => a.to).join(', ')}` : ''}`
   const srcOf = (j: RoleJob) => (j.source === 'telegram' ? ' · from your phone' : j.source === 'schedule' ? ' · on its own cadence' : '')
 

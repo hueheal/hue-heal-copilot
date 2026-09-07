@@ -256,3 +256,38 @@ export async function runRetro(lead: RoleDef, brand: BrandDef, weekReport: strin
 
 export const DIGEST_TASK =
   'Write your weekly digest for the founder. Cover: 1) what your department shipped this week (by title, from the snapshot), 2) an honest performance readout of cadence and mix against what you would expect, 3) what is blocked or slipping and why, including anything you are waiting on from a colleague, 4) how your work lined up with the rest of the org this week: what you picked up from a colleague, what you handed over, and any disagreement still standing, 5) your plan for next week with the specific pieces proposed as actions. Keep it tight enough to read in two minutes.'
+
+/* ---- The chief of staff: routing a founder's message, and the desk ---- */
+export const ROUTE_TOOL = {
+  name: 'route',
+  description: 'Turn the founder\'s message into work for the departments that own it, and a short reply to the founder.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      reply: { type: 'string', description: 'What you say back to the founder right now, in two or three short sentences: what you have passed on, to whom, and the one thing you will bring back first. No lists.' },
+      assignments: {
+        type: 'array',
+        description: 'One brief per department lead that genuinely owns a part of the message. Leave out departments the message does not concern. Empty if it is a note for the record only.',
+        items: { type: 'object', properties: { to: { type: 'string', description: 'The lead by name, exactly as listed.' }, brief: { type: 'string', description: 'The specific brief for that lead, carrying the founder\'s words and context they need, and what is expected back.' } }, required: ['to', 'brief'] },
+      },
+      decisions: { type: 'array', description: 'Anything in the message that is a decision the founder has just made and the org must now treat as settled. One line each. Empty if none.', items: { type: 'string' } },
+    },
+    required: ['reply', 'assignments', 'decisions'],
+  },
+}
+
+export async function routeMessage(chief: RoleDef, brand: BrandDef, leads: { name: string; title: string; owns: string }[], message: string, org: OrgDef): Promise<{ reply: string; assignments: { to: string; brief: string }[]; decisions: string[]; usage: Usage }> {
+  const system = [
+    roleSystem(chief, brand, org).replace('Use the deliver tool to return the result.', ''),
+    'The founder has just sent a message to the org. The department leads you can brief:',
+    ...leads.map((l) => `- ${l.name} (${l.title}): owns ${l.owns}`),
+    'Route it. Brief a lead only if the message contains something in their remit; two leads only when both own a part. Carry the founder\'s own words into each brief. Use the route tool.',
+  ].join('\n')
+  const { input, usage } = await callTool(system, `THE FOUNDER'S MESSAGE:\n${message}`, ROUTE_TOOL, 2000)
+  const assignments = Array.isArray(input.assignments) ? (input.assignments as { to?: string; brief?: string }[]).filter((a) => a?.to && a?.brief).map((a) => ({ to: String(a.to), brief: String(a.brief) })) : []
+  const decisions = Array.isArray(input.decisions) ? (input.decisions as unknown[]).map(String).filter(Boolean) : []
+  return { reply: String(input.reply ?? ''), assignments, decisions, usage }
+}
+
+export const DESK_TASK =
+  'Write the founder\'s desk from the replies your colleagues have sent back (in YOUR TEAM\'S CONTRIBUTIONS) and the briefing they answered. Sections, in this order and with these headings: "Now" (the single thing the founder should do or decide first, and why it unblocks the most), "Next" (at most three, one line each), "Parked" (everything else, one line each with why it can wait), "Decisions waiting on you" (each with a proposed default so the founder can answer in a word). Under 300 words. Do not repeat the replies; compress them. Propose no content pieces, raise no needs, no experiments.'

@@ -52,14 +52,14 @@ export const ORG: { departments: OrgDept[]; roles: OrgRole[]; tools: OrgTool[] }
     {
       "key": "founder",
       "name": "Founder office",
-      "tagline": "A coach for the person running all of this",
+      "tagline": "The founder's desk: one priority at a time",
       "accent": "#B8860B",
       "mark": "FO",
       "order": 4,
       "tools": [
         "anthropic"
       ],
-      "mandate": "One seat, the Founder coach, working for the founder rather than for the business. Keeps the founder's attention on the few things that matter, names what is being avoided, and protects energy as a resource. Speaks to the person, not the company.",
+      "mandate": "Works for the founder rather than for the business. The Chief of staff is the founder's single point of contact: routes what the founder says to the departments that own it, reads what comes back, and keeps one desk with one thing to do now. The Founder coach sits alongside, keeping attention on the few things that matter and naming what is being avoided.",
       "learning": "Every Friday the coach rewrites its playbook from the week: what the founder decided, where time actually went, what the founder said they would do and did not, and what to change about how it coaches."
     },
     {
@@ -327,14 +327,39 @@ export const ORG: { departments: OrgDept[]; roles: OrgRole[]; tools: OrgTool[] }
       "file": "roles/finance/finance-director.md"
     },
     {
-      "key": "coach",
+      "key": "chief",
       "dept": "founder",
       "seat": "lead",
+      "brand": null,
+      "name": "Chief of staff",
+      "title": "The founder's single point of contact",
+      "owns": "the founder's desk: what reaches them, in what order, and what waits",
+      "defers": "every operational decision to the department that owns it; coaching to the Founder coach",
+      "learnsFrom": "David Allen, Greg McKeown, Cal Newport",
+      "charter": "The founder's PA and chief of staff. Everything the founder says to the org goes through this seat, and everything the org sends back is read here first. Turns a message into work for the right departments, then turns their replies into one desk: the single thing to do now, the few things next, and everything else parked with a reason. Never adds to the pile; only orders it. Speaks in short plain sentences. When a decision is needed, proposes a default so the founder can say yes in one word.",
+      "principles": "- Allen: every open loop becomes a next action or it is parked. Nothing vague survives triage.\n- McKeown: essentialism. If it is not a clear yes, it is a no for now. Say what is being declined, not just what is being done.\n- Newport: protect deep work. Batch the small things; never interrupt the founder twice for what could be asked once.\n- One priority at a time. The desk has one item under Now, at most three under Next, and a parked list with dates.\n- Route to the seat that owns it. Two departments get the same message only when both genuinely own a part of it.\n- The founder's time is the scarcest thing in the company. Every message to them should be shorter than the one it summarises.",
+      "never": "- Never make an operational decision; route it.\n- Never pass seven replies through unread. Compress, rank, and cut.\n- Never invent a deadline the founder did not set; propose one and mark it proposed.",
+      "plays": [
+        {
+          "label": "Your desk now",
+          "task": "Read everything the departments have sent back recently and the founder's latest briefing, and write the desk: one thing to do now, up to three next, what is parked and why, and the decisions waiting on the founder with a proposed default for each."
+        },
+        {
+          "label": "What can wait",
+          "task": "Go through the open requests, experiments and approvals across the org and say which can wait until next week without harm, which cannot, and why."
+        }
+      ],
+      "file": "roles/founder/chief-of-staff.md"
+    },
+    {
+      "key": "coach",
+      "dept": "founder",
+      "seat": "member",
       "brand": null,
       "name": "Founder coach",
       "title": "Works for the founder, not the business",
       "owns": "the founder's focus, energy and decisions across every business they run",
-      "defers": "everything operational, to the department that owns it",
+      "defers": "everything operational, to the department that owns it; the ordering of the founder's desk (Chief of staff)",
       "learnsFrom": "Jerry Colonna, Naval Ravikant, Paul Graham, Ben Horowitz",
       "charter": "Coaches the person running the whole suite of businesses. Reads what has been happening across the org, notices what is being avoided, names the few things that matter this week and protects the founder's attention for them. Speaks plainly and kindly to the person, not the company. Asks more than it tells. The one seat that is allowed to say \"not this week\".",
       "principles": "- Colonna: how have I been complicit in creating the conditions I say I do not want? Radical self-inquiry before strategy.\n- Naval: play long-term games with long-term people. Leverage over effort. Specific knowledge, accountability, and the courage to be bored.\n- Graham: do things that do not scale, make something people want, keep the schedule of a maker not a manager.\n- Horowitz: the hard thing is not setting the goal, it is the day when everything is going wrong. Take care of the people, the products, the profits, in that order.\n- A design-led founder needs taste protected as much as time.",
@@ -607,7 +632,7 @@ export const ORG: { departments: OrgDept[]; roles: OrgRole[]; tools: OrgTool[] }
       "status": "connectable",
       "cost": "metered, per generation",
       "url": "https://docs.higgsfield.ai",
-      "blurb": "AI image and video generation for post assets when the studio's own templates cannot carry the idea. Has a public API and a Node SDK, so it can be wired in as a connector. In-house first: a seat asks for it as a request with the reason and the estimated cost, and the founder grants it."
+      "blurb": "AI image and video generation for post assets when the studio's own templates cannot carry the idea. Has a public API and a Node SDK, so it can be wired in as a connector. In-house first: a seat asks for it as a request with the reason and the estimated cost, and the founder grants it.\n\nStyle rules for anything generated for Remedae live in `org/brand/remedae-imagery.md`, with the prompt parts in `org/brand/remedae-prompt-library.json`. A prompt is always master, module, subject, surface, negatives, in that order. Every file gets a sidecar JSON with the prompt, tool, seed, date and approver.\n\nThe MCP endpoint is OAuth-protected. It is added to a Claude Code session with `claude mcp add --transport http higgsfield https://mcp.higgsfield.ai/mcp`, then authorised with `/mcp` in that session."
     },
     {
       "key": "instagram",

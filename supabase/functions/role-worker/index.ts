@@ -12,9 +12,9 @@
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { executeDepartment, retroDepartment, type RoleRow } from '../_shared/roleWork.ts'
+import { executeDepartment, retroDepartment, routeBriefing, deskBriefing, chiefOf, type RoleRow } from '../_shared/roleWork.ts'
 import { costPence } from '../_shared/roleCore.ts'
-import { hasTelegram } from '../_shared/telegram.ts'
+import { hasTelegram, sendMessage } from '../_shared/telegram.ts'
 
 const CRON_SECRET = Deno.env.get('CRON_SECRET') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
@@ -23,7 +23,7 @@ const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 interface Job {
   id: string; owner: string; brand_id: string | null; role_id: string
-  task: string; source: string; status: string
+  task: string; source: string; status: string; briefing_id: string | null
 }
 
 /** Claim a job: only one caller can move it out of queued. */
@@ -31,7 +31,7 @@ async function claim(admin: SupabaseClient, jobId: string): Promise<Job | null> 
   const { data } = await admin.from('role_jobs')
     .update({ status: 'running', started_at: new Date().toISOString() })
     .eq('id', jobId).eq('status', 'queued')
-    .select('id, owner, brand_id, role_id, task, source, status').maybeSingle()
+    .select('id, owner, brand_id, role_id, task, source, status, briefing_id').maybeSingle()
   return (data as Job) ?? null
 }
 
@@ -50,23 +50,58 @@ async function work(admin: SupabaseClient, job: Job): Promise<string> {
     // A long job should find you wherever you are, so the result is pushed to
     // the linked chat as well as landing in the studio.
     const channel = await chatFor(admin, job.owner, job.brand_id)
+
+    /* The chief of staff's two jobs: route a briefing, and write the desk. */
+    if (role.key === 'chief' && job.briefing_id && job.task.startsWith('ROUTE:')) {
+      const { data: b } = await admin.from('role_briefings').select('id, text, source').eq('id', job.briefing_id).maybeSingle()
+      if (!b) throw new Error('That briefing no longer exists')
+      const r = await routeBriefing(admin, role, b as { id: string; text: string; source: string }, { jobId: job.id })
+      await admin.from('role_jobs').update({ status: 'done', run_id: r.runId, finished_at: new Date().toISOString(), dept: role.dept ?? null }).eq('id', job.id)
+      if (channel && (b as { source: string }).source !== 'telegram') await sendMessage(channel, `<b>Chief of staff</b>\n${r.reply}`)
+      // Nothing to wait for: the desk is just the reply.
+      if (r.jobs === 0) await admin.from('role_jobs').update({ reviewed_at: new Date().toISOString() }).eq('id', job.id)
+      return 'routed'
+    }
+    if (role.key === 'chief' && job.briefing_id && job.task.startsWith('DESK:')) {
+      const { runId, usage } = await deskBriefing(admin, role, job.briefing_id, { jobId: job.id, channel })
+      await admin.from('role_jobs').update({ status: 'done', run_id: runId, finished_at: new Date().toISOString(), dept: role.dept ?? null, cost_pence: costPence(usage) }).eq('id', job.id)
+      return 'desk'
+    }
+
     // A lead may brief its team; a member answers alone. Either way one
     // deliverable comes back, and if acting on it would leave the building
     // it waits for the founder's approval.
-    const { deliverable, runId, usage, plan } = await executeDepartment(admin, role, job.task, 'task', { channel, jobId: job.id })
+    const { deliverable, runId, usage, plan } = await executeDepartment(admin, role, job.task, 'task', { channel: job.briefing_id ? null : channel, jobId: job.id })
     await admin.from('role_jobs').update({
       status: 'done', run_id: runId, finished_at: new Date().toISOString(),
       dept: role.dept ?? null, approval: deliverable.external ? 'pending' : 'none',
       plan, cost_pence: costPence(usage),
     }).eq('id', job.id)
+    await maybeQueueDesk(admin, job)
     return 'done'
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e)
     await admin.from('role_jobs').update({
       status: 'failed', error: detail.slice(0, 500), finished_at: new Date().toISOString(),
     }).eq('id', job.id)
+    await maybeQueueDesk(admin, job).catch(() => {})
     return `failed: ${detail}`
   }
+}
+
+/** Once the last lead has answered a briefing, the chief writes the desk. */
+async function maybeQueueDesk(admin: SupabaseClient, job: Job): Promise<void> {
+  if (!job.briefing_id) return
+  const chief = await chiefOf(admin, job.owner, job.brand_id)
+  if (!chief) return
+  const { data: open } = await admin.from('role_jobs').select('id').eq('briefing_id', job.briefing_id).in('status', ['queued', 'running']).limit(1)
+  if (open?.length) return
+  const { data: desk } = await admin.from('role_jobs').select('id').eq('briefing_id', job.briefing_id).eq('role_id', chief.id).like('task', 'DESK:%').limit(1)
+  if (desk?.length) return
+  await admin.from('role_jobs').insert({
+    owner: job.owner, brand_id: job.brand_id, role_id: chief.id, dept: chief.dept ?? null, briefing_id: job.briefing_id,
+    task: 'DESK: one thing to do now, from the replies to your briefing.', source: 'desk', status: 'queued',
+  })
 }
 
 Deno.serve(async (req) => {
@@ -81,7 +116,7 @@ Deno.serve(async (req) => {
     // takes them; jobs queued from the phone are swept straight away.
     const cutoff = new Date(Date.now() - 45_000).toISOString()
     const { data } = await admin.from('role_jobs').select('id')
-      .eq('status', 'queued').or(`created_at.lt.${cutoff},source.eq.telegram`).order('created_at').limit(4)
+      .eq('status', 'queued').or(`created_at.lt.${cutoff},source.in.(telegram,desk)`).order('created_at').limit(4)
     const results: Record<string, string> = {}
     for (const row of (data ?? []) as { id: string }[]) {
       const job = await claim(admin, row.id)

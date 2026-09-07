@@ -59,7 +59,9 @@ const plays = (s) => (s ?? '').split('\n').map((l) => l.match(/^-\s+\*\*(.+?)\*\
 const departments = [], roles = [], tools = []
 for (const file of walk(orgDir)) {
   const rel = relative(orgDir, file)
-  if (rel === 'README.md') continue
+  // Only the three folders below are seats. Anything else under org/ (brand
+  // guidelines, notes) is the founder's and is left alone.
+  if (!/^(departments|roles|tools)\//.test(rel)) continue
   const { meta, sections } = parse(file)
   if (rel.startsWith('departments/')) {
     departments.push({ key: meta.key, name: meta.name, tagline: meta.tagline ?? '', accent: meta.accent ?? '#888888', mark: meta.mark ?? meta.name.slice(0, 2).toUpperCase(), order: meta.order ?? 99, tools: meta.tools ?? [], mandate: prose(sections.mandate), learning: prose(sections['weekly learning']) })
