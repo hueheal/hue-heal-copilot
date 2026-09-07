@@ -51,9 +51,9 @@ export default function Briefing({ compact = false }: { compact?: boolean }) {
 
   const today = current && Date.now() - new Date(current.created_at).getTime() < 36 * 3600000
   const chief = leads.find((r) => r.key === 'chief')
-  const routeJob = chief ? jobs.find((j) => j.role_id === chief.id && j.task.startsWith('ROUTE:')) : undefined
-  const deskJob = chief ? jobs.find((j) => j.role_id === chief.id && j.task.startsWith('DESK:')) : undefined
-  const replies = jobs.filter((j) => j.id !== routeJob?.id && j.id !== deskJob?.id)
+  const routeJob = chief ? [...jobs].reverse().find((j) => j.role_id === chief.id && j.task.startsWith('ROUTE:')) : undefined
+  const deskJob = chief ? [...jobs].reverse().find((j) => j.role_id === chief.id && j.task.startsWith('DESK:')) : undefined
+  const replies = jobs.filter((j) => j.role_id !== chief?.id)
   const [showReplies, setShowReplies] = useState(false)
   const stateOf = (j: RoleJob) => (j.status === 'done' ? (j.approval === 'pending' ? 'approval' : 'done') : j.status === 'failed' ? 'failed' : 'working')
 

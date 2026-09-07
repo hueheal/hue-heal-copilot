@@ -281,7 +281,7 @@ export async function routeMessage(chief: RoleDef, brand: BrandDef, leads: { nam
     roleSystem(chief, brand, org).replace('Use the deliver tool to return the result.', ''),
     'The founder has just sent a message to the org. The department leads you can brief:',
     ...leads.map((l) => `- ${l.name} (${l.title}): owns ${l.owns}`),
-    'Route it. Brief a lead only if the message contains something in their remit; two leads only when both own a part. Carry the founder\'s own words into each brief. Use the route tool.',
+    'Route it. Brief every lead whose remit the message touches: a priority stated for their area, work asked of them, a decision that changes their plan, or context they must work from. When the founder assigns work or sets priorities, assignments must not be empty: the leads must hear it in their own brief even if they cannot finish it yet, and it is their job, not yours, to say what they still need. Two leads get the same part only when both genuinely own it. Never withhold a brief because the org brief says a lead is waiting on the founder; pass the founder\'s words on and let the lead reply. Carry the founder\'s own words into each brief. Use the route tool.',
   ].join('\n')
   const { input, usage } = await callTool(system, `THE FOUNDER'S MESSAGE:\n${message}`, ROUTE_TOOL, 2000)
   const assignments = Array.isArray(input.assignments) ? (input.assignments as { to?: string; brief?: string }[]).filter((a) => a?.to && a?.brief).map((a) => ({ to: String(a.to), brief: String(a.brief) })) : []
