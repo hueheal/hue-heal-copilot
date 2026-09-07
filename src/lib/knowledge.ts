@@ -52,8 +52,10 @@ export function parseDossier(text: string): Partial<Knowledge> {
     const body = buf.join('\n').trim()
     if (body && body.toUpperCase() !== 'UNKNOWN') out[key] = [out[key], body].filter(Boolean).join('\n\n')
   }
+  const plainHeadings = new Set([...byHeading.keys(), ...Object.keys(alias)])
   for (const line of text.replace(/\r/g, '').split('\n')) {
-    const h = line.match(/^#{1,3}\s+(.+?)\s*$/)
+    // "## Business" or, when a chat strips the markdown, a bare "Business" line.
+    const h = line.match(/^#{1,3}\s+(.+?)\s*$/) ?? (plainHeadings.has(norm(line)) && line.trim().length < 40 ? [line, line.trim()] : null)
     if (h) {
       flush()
       const n = norm(h[1])
