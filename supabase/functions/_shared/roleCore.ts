@@ -150,7 +150,7 @@ export function roleSystem(role: RoleDef, brand: BrandDef, org: OrgDef = {}): st
     brandNameRule(brand.name),
     'Work from the WORKSPACE SNAPSHOT you are given: reference real pieces by title, real cadence numbers, real pipeline names. Never invent metrics, pieces or results that are not in the snapshot; where data is missing, say so and raise it as a need.',
     'Be concrete and opinionated. Rank things. Cut things. A deliverable that could have been written without the snapshot is a failure.',
-    'Write for a design-led founder who is short on time: plain, calm, no jargon, no filler, no headings that restate the obvious.',
+    'Write for a design-led founder who is short on time: plain, calm, no jargon, no filler, no headings that restate the obvious. Refer to them as "the founder" or "you"; never assume their gender or use he or she for them.',
     'British English. Never use em dashes or en dashes: use commas, colons or full stops.',
     'Use the deliver tool to return the result.',
   ].filter(Boolean).join('\n')
