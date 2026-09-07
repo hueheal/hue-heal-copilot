@@ -8,21 +8,26 @@ Tool of choice for generation is Higgsfield (image and video) through its MCP at
 
 ## 1. The one idea
 
-**The world's healing knowledge, lived.** Every image shows a real person, in a real room, doing a real thing that one of the thirteen traditions describes: pouring, steeping, breathing, walking, resting, being examined, chopping ginger. The tradition is visible in the object and the gesture, never in costume, ceremony or set dressing. Modern medicine is photographed with the same warmth as everything else: a blister pack on a kitchen table, a pharmacist across a counter, never a white coat in a white corridor.
+**Traditional medicine through a modern lens.** Every image shows everyday people using the world's healing traditions inside the lives they already live: a modern kitchen, a real living room, a bright street, a park at lunchtime. The shift is away from anything that looks old, distant or reserved for someone else, towards things a reader recognises from their own week and can picture themselves doing tonight. The tradition is visible in the object and the gesture (pouring, steeping, breathing, walking, being examined, chopping ginger), never in costume, ceremony or set dressing. Modern medicine is photographed with the same warmth as everything else: a blister pack on a kitchen table, a pharmacist across a counter, never a white coat in a white corridor.
+
+What "modern lens" means in practice:
+
+- **Homes look like real homes.** Lived-in flats and houses of today: a kitchen with a kettle and a fridge, a sofa with a throw on it, a bedroom with a phone charger, a hallway with shoes. Not heritage interiors, not showrooms, not sets.
+- **Families of every shape.** Varied sizes, ages and races: a single parent and a toddler, flatmates, three generations at one table, a couple in their sixties, a teenager and a grandparent. No tradition is illustrated by one ethnicity as a costume, and no family type is the default.
+- **Outdoors is bright and current.** A city park at lunch, a doorstep in morning sun, a canal path, a garden, a bus stop, a school run. Today's clothes, today's streets. Nothing that reads as rural nostalgia, period or "olden".
+- **Bright, vibrant, warm.** Every image is a warm lifestyle photograph with professional light and grade, consistent across the whole set. No moody low-key frames, no dark or desaturated looks, no filters.
 
 Three tests before an image is used:
 
-1. Could this be a still from someone's actual Tuesday? If it reads as a campaign, it fails.
+1. Could this be a still from someone's actual Tuesday, this year? If it reads as a campaign, a set, or another era, it fails.
 2. Is the remedy or practice identifiable without a caption? If the tradition is only in the mood, it fails.
-3. Does it hold on the dark canvas? Site images sit on #050a07 with a gradient that ends at 80% opacity, so an image with a bright white background or a busy lower third fails.
-
----
+3. Is it bright, warm and consistent with the rest of the set? If it needs a grade to match, it fails.
 
 ## 2. Where the look comes from
 
-**The moodboard** (Figma, Remedae file, node 361-2) and the strongest assets already live agree on one register: documentary editorial lifestyle photography with warm, directional, natural light, real skin and real objects, generous shadow, fine grain, and a palette of botanical greens, warm neutrals and one saturated accent per frame.
+**The moodboard** (Figma, Remedae file, node 361-2) sets the register: warm, bright lifestyle photography of everyday people in real modern homes and current outdoor settings, professional and consistent from frame to frame. The strongest assets already live sit inside it.
 
-**Assets on the site today, audited on 7 September 2026.** Twelve files in `public/assets`. Keep: the green juice by the window (lifestyle-3), the pulse being taken in wool sleeves (texture-tcm), the tea poured onto oak (lifestyle-2), the family on the yellow bean bag (lifestyle-5), the man breathing at the window (lifestyle-6), the woman breathing between plants (rituals-hero), the family chopping at the island (lifestyle-4). Replace as a priority: the "health coach" consultation (texture-modern-medicine), which is a generated image with garbled whiteboard text and a fictional badge, exactly what this guide forbids; and the kitchen shake shot (lifestyle-7), which carries a third-party product brand. Retire when replacements land: the cropped salad shot (lifestyle-1), which reads as stock, and the palm-garden yoga pose (texture-ayurveda), which is a yoga cliché standing in for Ayurveda. Note also that two files are reused for seven different traditions in `content/traditions.ts`; the tradition set in section 5 exists to end that.
+**Assets on the site today, audited on 7 September 2026.** Twelve files in `public/assets`. Keep: the family on the yellow bean bag (lifestyle-5), the family chopping at the island (lifestyle-4), the man breathing at the window (lifestyle-6), the woman breathing between plants (rituals-hero), the green juice by the window (lifestyle-3). Borderline on brightness, keep for now and replace as the set grows: the pulse being taken in wool sleeves (texture-tcm) and the tea poured onto oak (lifestyle-2), both darker and moodier than the moodboard. Replace as a priority: the "health coach" consultation (texture-modern-medicine), which is a generated image with garbled whiteboard text and a fictional badge, exactly what this guide forbids; and the kitchen shake shot (lifestyle-7), which carries a third-party product brand. Retire when replacements land: the cropped salad shot (lifestyle-1), which reads as stock, and the palm-garden yoga pose (texture-ayurveda), which is a yoga cliché standing in for Ayurveda. Note also that two files are reused for seven different traditions in `content/traditions.ts`; the tradition set in section 5 exists to end that.
 
 ---
 
@@ -32,17 +37,17 @@ These go into every prompt and every brief. They do not change by category.
 
 **Camera.** Full-frame, 50mm or 85mm, wide aperture, one clear plane of focus, shallow and natural fall-off. Eye level or slightly above for people; 45 degrees or straight down for objects on a surface.
 
-**Light.** One source, natural, directional: a window, a doorway, low afternoon sun. Long soft shadows are welcome. Highlights warm, shadows deep but readable. Never flat, never fill-lit, never clinical, never blown.
+**Light.** Bright, natural and warm: a big window, an open door, morning or afternoon sun, or open shade outdoors. The room or street feels flooded with light. Soft shadows with detail in them. Never low-key, never moody, never clinical, never blown.
 
-**Grade.** Warm, rich, believable. Fine film grain. No HDR, no teal-and-orange, no desaturated grey, no beauty smoothing. Colour lives in objects and clothing, not in a filter.
+**Grade.** One grade for the whole set: bright, warm, vibrant, believable, the look of a professional lifestyle shoot. Fine grain at most. No HDR, no teal-and-orange, no desaturated or grey looks, no dark moody frames, no beauty smoothing, no filters. Colour lives in objects, clothing and daylight, not in a wash.
 
-**Palette anchors.** Forest green, sage, olive, oak, clay, terracotta, rust, mustard, sand, stone, warm white, deep blue. One saturated accent per frame at most. Mint (#a6d893) appears only as a natural green in the scene, never as a wash. Yellow (#fff236) is reserved for Remedae+ surfaces and never appears in editorial imagery except where a real yellow object earns it.
+**Colour.** Naturally vibrant: botanical greens, warm timber, terracotta, mustard, blues, sand, warm white, the colours of real clothes and real rooms. No colour tone is applied to a category of image. Brand colour (mint, and yellow for Remedae+) is added at the UI level, in chips, borders and type, never in the photograph. An image made for a Remedae+ surface looks exactly like every other image.
 
 **Composition.** Three layers: hero subject, supporting object or action, environment. People carry 70 to 80 percent of attention when present. A quiet lower third or a quiet edge for overlaid type. Nothing centred by default.
 
-**People.** Real bodies, real skin texture, fine lines, flyaway hair, clothing creases. Faces relaxed and unposed; eyes closed, mid-task or looking at the thing, never at the camera. Ages from children to elders. A cast that looks like the UK and its diaspora, across every tradition, so no tradition is illustrated by one ethnicity as a costume. When two or more people appear, each is doing something different.
+**People.** Everyday people in today's clothes, real skin texture, fine lines, flyaway hair, clothing creases. Relaxed and unposed; mid-task, looking at the thing, or at each other, never at the camera. Children to elders, all body types, families of every size and shape. A cast that looks like the UK and its diaspora across every tradition, so no tradition is illustrated by one ethnicity as a costume. When two or more people appear, each is doing something different.
 
-**Never in frame.** Text, captions, signage, logos, packaging brands, UI, watermarks. Scrubs, stethoscopes, white coats, exam tables. Crystals, incense clouds, mandalas, lotus poses, prayer hands, chakra diagrams. Pills spilling from bottles. Spa towels and orchids. Perfect symmetry. Matching smiles.
+**Never in frame.** Text, captions, signage, logos, packaging brands, UI, watermarks. Scrubs, stethoscopes, white coats, exam tables. Crystals, incense clouds, mandalas, lotus poses, prayer hands, chakra diagrams. Pills spilling from bottles. Spa towels and orchids. Period or heritage interiors, rustic farmhouse styling, anything that reads as another era. Perfect symmetry. Matching smiles.
 
 ---
 
@@ -112,7 +117,7 @@ One module per ACLM pillar, used by the lifestyle band and by Today on Home.
 
 ### 5.4 Brand textures
 
-Abstract, ownable frames for heroes, cards and video loops: steam over a dark cup, sunlight through leaves onto a wall, water poured into a glass, ginger sliced on oak, a linen curtain moving, condensation on a window. Shot close, on the dark end of the palette so they sit on the canvas without a gradient. These are the safe substitutes wherever a tradition cannot be shown honestly.
+Abstract, ownable frames for heroes, cards and video loops: steam over a dark cup, sunlight through leaves onto a wall, water poured into a glass, ginger sliced on oak, a linen curtain moving, condensation on a window. Shot close and bright, same grade as everything else; the site's gradient overlay handles the canvas. These are the safe substitutes wherever a tradition cannot be shown honestly.
 
 ### 5.5 Ingredients
 
@@ -194,4 +199,4 @@ Then run `/mcp` in that session and complete the Higgsfield login. Once connecte
 
 **Handover to the copilot.** Three changes in `~/Claude/hue-heal-copilot`: replace the Remedae `image_master_prompt` and `image_negatives` seeds in `src/lib/brand.ts` (and the seeded row in `brand_profiles`) with `master.image` and `negatives` from the prompt library; add the category modules and surface specs so a seat picks a category and a surface rather than a preset; and update `org/tools/higgsfield.md` from "connectable" to the connected state with the request rule (a seat asks, the founder grants). A copy of this guide for the org folder is at `org/brand/remedae-imagery.md` once the handover is made.
 
-**Still to decide.** Which storage bucket is the master library. Whether the Remedae+ world gets its own texture set on yellow. Whether ingredient photography is generated or shot, given the layer needs several hundred consistent frames.
+**Still to decide.** Which storage bucket is the master library. Whether ingredient photography is generated or shot, given the layer needs several hundred consistent frames.
