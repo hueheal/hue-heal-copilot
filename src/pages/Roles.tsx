@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
-import { listRoles, hireRole, listOpenNotes, ownsOf, ROLE_PRESETS, type Role, type RoleNote } from '../lib/roles'
+import { listRoles, hireRole, listOpenNotes, listActiveJobs, ownsOf, ROLE_PRESETS, type Role, type RoleNote, type RoleJob } from '../lib/roles'
 import { agoLabel } from '../components/chrome/AssetCard'
 
 
@@ -23,11 +23,17 @@ export default function Roles() {
   const [note, setNote] = useState<string | null>(null)
 
   const [notes, setNotes] = useState<RoleNote[]>([])
+  const [working, setWorking] = useState<RoleJob[]>([])
 
   useEffect(() => {
-    setRoles(null); setNotes([])
+    setRoles(null); setNotes([]); setWorking([])
     listRoles().then(setRoles)
     listOpenNotes().then(setNotes).catch(() => {})
+    // Keep the org page honest about what is running right now.
+    const pull = () => listActiveJobs().then(setWorking).catch(() => {})
+    pull()
+    const t = setInterval(pull, 8000)
+    return () => clearInterval(t)
   }, [current?.id])
 
   const hiredKeys = new Set((roles ?? []).map((r) => r.key))
@@ -80,6 +86,11 @@ export default function Roles() {
                   <span style={{ display: 'flex', gap: 6, marginTop: 2, flexWrap: 'wrap' }}>
                     <span className="ck-pill" style={{ pointerEvents: 'none' }}>{cadenceLabel(r)}</span>
                     {!r.enabled && <span className="ck-pill" style={{ pointerEvents: 'none' }}>Paused</span>}
+                    {working.filter((j) => j.role_id === r.id).length > 0 && (
+                      <span className="ck-pill" data-on="1" style={{ pointerEvents: 'none' }}>
+                        Working on {working.filter((j) => j.role_id === r.id).length}
+                      </span>
+                    )}
                     {notes.filter((n) => n.to_role_id === r.id).length > 0 && (
                       <span className="ck-pill" data-on="1" style={{ pointerEvents: 'none' }}>
                         {notes.filter((n) => n.to_role_id === r.id).length} to read

@@ -337,6 +337,70 @@ export async function runRole(role: Role, task: string, brand: BrandProfile | nu
   }
 }
 
+/* ---- Jobs: work handed to a role ----
+   Assigning returns as soon as the job is filed. The run happens on the
+   server, so it survives a reload, a closed tab or a walk to the kettle; the
+   room watches the row and the deliverable appears when it lands. */
+
+export interface RoleJob {
+  id: string
+  role_id: string
+  task: string
+  source: 'studio' | 'telegram' | 'schedule'
+  status: 'queued' | 'running' | 'done' | 'failed'
+  run_id: string | null
+  error: string | null
+  reviewed_at: string | null
+  created_at: string
+  finished_at: string | null
+}
+
+const JOB_COLS = 'id, role_id, task, source, status, run_id, error, reviewed_at, created_at, finished_at'
+
+export async function listJobs(roleId: string): Promise<RoleJob[]> {
+  if (!supabase) return []
+  const { data } = await supabase.from('role_jobs').select(JOB_COLS)
+    .eq('role_id', roleId).order('created_at', { ascending: false }).limit(20)
+  return (data ?? []) as RoleJob[]
+}
+
+/** Jobs in flight across the workspace, for the org page. */
+export async function listActiveJobs(): Promise<RoleJob[]> {
+  if (!supabase) return []
+  const { data } = await filterByBrand(supabase.from('role_jobs').select(JOB_COLS))
+    .in('status', ['queued', 'running']).order('created_at', { ascending: false }).limit(40)
+  return (data ?? []) as RoleJob[]
+}
+
+export async function assignJob(role: Role, task: string): Promise<{ job?: RoleJob; error?: string }> {
+  if (!(isSupabaseConfigured && supabase && functionsBase)) return { error: 'Roles need the connected studio (not available in local mode).' }
+  const { data, error } = await supabase.from('role_jobs')
+    .insert(withBrandInsert({ role_id: role.id, task: task.trim(), source: 'studio' }) as never)
+    .select(JOB_COLS).single()
+  if (error) return { error: error.message }
+  const job = data as RoleJob
+
+  // Kick the worker off now rather than waiting for the minute sweep. We do
+  // not await the run: the job row is the receipt, and the sweep is the
+  // backstop if this request never lands.
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (token) {
+    void fetch(`${functionsBase}/role-worker`, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ jobId: job.id }),
+      keepalive: true,
+    }).catch(() => {})
+  }
+  return { job }
+}
+
+export async function markReviewed(jobId: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('role_jobs').update({ reviewed_at: new Date().toISOString() } as never).eq('id', jobId)
+}
+
 /* ---- Ledger (needs + experiments the role raises) ---- */
 export interface RoleItem { id: string; kind: 'need' | 'experiment'; title: string; detail: string; status: 'open' | 'approved' | 'declined' | 'done'; created_at: string }
 

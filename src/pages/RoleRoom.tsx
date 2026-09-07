@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
 import {
-  listRoles, updateRole, retireRole, presetFor, runRole, listRuns, listItems, setItemStatus,
-  listNotes, ackNote, ownsOf, defersOf,
-  type Role, type RoleRun, type RoleItem, type RoleAction, type RoleSchedule, type RoleNote,
+  listRoles, updateRole, retireRole, presetFor, listRuns, listItems, setItemStatus,
+  listNotes, ackNote, ownsOf, defersOf, assignJob, listJobs, markReviewed,
+  type Role, type RoleRun, type RoleItem, type RoleAction, type RoleSchedule, type RoleNote, type RoleJob,
 } from '../lib/roles'
 import { listAssets } from '../lib/assets'
 import { savePost } from '../lib/socialCopilot'
@@ -26,6 +26,7 @@ export default function RoleRoom() {
   const [roster, setRoster] = useState<Role[]>([])
   const [inbox, setInbox] = useState<RoleNote[]>([])
   const [runs, setRuns] = useState<RoleRun[]>([])
+  const [jobs, setJobs] = useState<RoleJob[]>([])
   const [items, setItems] = useState<RoleItem[]>([])
   const [kpis, setKpis] = useState<{ label: string; value: string }[]>([])
   const [task, setTask] = useState('')
@@ -39,8 +40,8 @@ export default function RoleRoom() {
     const r = all.find((x) => x.id === id) ?? null
     setRole(r); setRoster(all)
     if (r) {
-      const [rs, its, notes] = await Promise.all([listRuns(r.id), listItems(r.id), listNotes(r.id, 'in')])
-      setRuns(rs); setItems(its); setInbox(notes.filter((n) => n.status === 'open'))
+      const [rs, its, notes, js] = await Promise.all([listRuns(r.id), listItems(r.id), listNotes(r.id, 'in'), listJobs(r.id)])
+      setRuns(rs); setItems(its); setInbox(notes.filter((n) => n.status === 'open')); setJobs(js)
       setViewRun((v) => v ?? rs[0] ?? null)
     }
   }
@@ -61,17 +62,42 @@ export default function RoleRoom() {
     }).catch(() => {})
   }, [brand?.id])
 
+  // Watch the queue while anything is in flight, and pull the finished
+  // deliverable in as soon as it lands.
+  const active = jobs.filter((j) => j.status === 'queued' || j.status === 'running')
+  useEffect(() => {
+    if (!role || active.length === 0) return
+    const id = setInterval(async () => {
+      const fresh = await listJobs(role.id)
+      setJobs(fresh)
+      const landed = fresh.some((j) => active.some((a) => a.id === j.id) && j.status !== 'queued' && j.status !== 'running')
+      if (landed) {
+        const rs = await listRuns(role.id)
+        setRuns(rs)
+        const newest = fresh.find((j) => j.status === 'done' && j.run_id)
+        const target = rs.find((r) => r.id === newest?.run_id)
+        if (target) setViewRun(target)
+        listItems(role.id).then(setItems).catch(() => {})
+        listNotes(role.id, 'in').then((n) => setInbox(n.filter((x) => x.status === 'open'))).catch(() => {})
+      }
+    }, 4000)
+    return () => clearInterval(id)
+    /* eslint-disable-next-line */
+  }, [role?.id, active.length])
+
   const preset = role ? presetFor(role) : undefined
   const digest = useMemo(() => runs.find((r) => r.kind === 'digest'), [runs])
 
+  /* Assigning files the job and returns. The work runs on the server, so it
+     survives a reload or a closed tab; the room watches the job row. */
   async function run(taskText: string) {
     if (!role || busy || !taskText.trim()) return
-    setBusy(true); setNote(`${role.name} is working…`)
-    const { run: r, error } = await runRole(role, taskText.trim(), brand)
+    setBusy(true); setNote(null)
+    const { job, error } = await assignJob(role, taskText.trim())
     setBusy(false)
     if (error) { setNote(error); return }
-    setNote(null); setTask('')
-    if (r) { setViewRun(r); reload() }
+    setTask('')
+    if (job) setJobs((list) => [job, ...list])
   }
 
   async function saveSchedule(patch: Partial<RoleSchedule>) {
@@ -100,6 +126,8 @@ export default function RoleRoom() {
     return <div className="ck-page"><div className="ck-page-inner"><div className="ck-skeleton" style={{ height: 120 }} /></div></div>
   }
 
+  const toReview = jobs.filter((j) => j.status === 'done' && !j.reviewed_at)
+  const failed = jobs.filter((j) => j.status === 'failed' && !j.reviewed_at)
   const open = (k: 'need' | 'experiment') => items.filter((i) => i.kind === k && i.status === 'open')
   const judged = (k: 'need' | 'experiment') => items.filter((i) => i.kind === k && i.status !== 'open').slice(0, 4)
   const kindBadge = (k?: string) => (k === 'digest' ? 'Weekly digest' : k === 'scheduled' ? 'Scheduled' : 'Task')
@@ -144,21 +172,74 @@ export default function RoleRoom() {
             <div key={k.label} className="ck-kpi"><div className="ck-kpi-v">{k.value}</div><div className="ck-kpi-l">{k.label}</div></div>
           ))}
           <div className="ck-kpi"><div className="ck-kpi-v">{open('need').length + open('experiment').length}</div><div className="ck-kpi-l">Awaiting your call</div></div>
+          {(active.length > 0 || toReview.length > 0) && (
+            <div className="ck-kpi"><div className="ck-kpi-v">{active.length || toReview.length}</div><div className="ck-kpi-l">{active.length ? 'In progress' : 'To review'}</div></div>
+          )}
         </div>
 
         {/* Composer + playbook */}
         <div className="ck-composer" style={{ marginTop: 8 }}>
           <textarea value={task} onChange={(e) => setTask(e.target.value)} rows={2}
-            placeholder={`Brief your ${role.name} — or run a play below`}
+            placeholder={`Assign your ${role.name} a task — or run a play below`}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void run(task) } }} />
           <div className="ck-composer-row">
             {(preset?.playbook ?? []).map((p) => (
               <button key={p.label} className="ck-pill" disabled={busy} onClick={() => void run(p.task)}>{p.label}</button>
             ))}
-            <button className="ck-go" disabled={busy || !task.trim()} onClick={() => void run(task)}>{busy ? 'Working…' : 'Run'}</button>
+            <button className="ck-go" disabled={busy || !task.trim()} onClick={() => void run(task)}>{busy ? 'Assigning…' : 'Assign'}</button>
           </div>
         </div>
         {note && <div className="ck-note" role="status">{note}</div>}
+
+        {/* The job board: what this role is working on, and what it has
+            finished that you have not read yet. */}
+        {(active.length > 0 || toReview.length > 0 || failed.length > 0) && (
+          <div className="ck-jobs">
+            {active.map((j) => (
+              <div key={j.id} className="ck-job" data-state="working">
+                <span className="ck-job-dot" aria-hidden="true" />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className="ck-job-task">{j.task}</span>
+                  <span className="ck-job-meta">
+                    {role.name} is working on this · assigned {agoLabel(j.created_at)}
+                    {j.source === 'telegram' ? ' · from Telegram' : j.source === 'schedule' ? ' · scheduled' : ''}
+                  </span>
+                </span>
+              </div>
+            ))}
+            {toReview.map((j) => {
+              const target = runs.find((r) => r.id === j.run_id)
+              return (
+                <div key={j.id} className="ck-job" data-state="done">
+                  <span className="ck-job-dot" aria-hidden="true" />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span className="ck-job-task">{target?.output.title ?? j.task}</span>
+                    <span className="ck-job-meta">Ready to review · finished {agoLabel(j.finished_at ?? j.created_at)}</span>
+                  </span>
+                  <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    {target && <button className="ck-pill" onClick={() => setViewRun(target)}>Read</button>}
+                    <button className="ck-pill" onClick={() => { void markReviewed(j.id); setJobs((l) => l.map((x) => (x.id === j.id ? { ...x, reviewed_at: new Date().toISOString() } : x))) }}>
+                      Mark reviewed
+                    </button>
+                  </span>
+                </div>
+              )
+            })}
+            {failed.map((j) => (
+              <div key={j.id} className="ck-job" data-state="failed">
+                <span className="ck-job-dot" aria-hidden="true" />
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className="ck-job-task">{j.task}</span>
+                  <span className="ck-job-meta">Did not finish{j.error ? `: ${j.error}` : ''}</span>
+                </span>
+                <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <button className="ck-pill" disabled={busy} onClick={() => void run(j.task)}>Try again</button>
+                  <button className="ck-pill" onClick={() => { void markReviewed(j.id); setJobs((l) => l.filter((x) => x.id !== j.id)) }}>Dismiss</button>
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="ck-rolegrid">
           {/* Deliverable */}

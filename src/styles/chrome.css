@@ -334,3 +334,24 @@
   border: 1px solid var(--ck-line); border-radius: 10px; padding: 10px 14px;
   font-family: var(--ck-font); font-size: 12.5px; font-weight: 500;
 }
+
+/* ---- Job board -----------------------------------------------------------
+   What a role is working on, and what it has finished that you have not read.
+   A job is a receipt, not a progress bar: calm row, one dot carrying state. */
+.ck-jobs { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 4px; }
+.ck-job {
+  display: flex; align-items: center; gap: 11px; padding: 11px 14px;
+  border: 1px solid var(--ck-line); border-radius: 10px; background: var(--ck-surface);
+  font-family: var(--ck-font);
+}
+.ck-job-task {
+  display: block; font-size: 13.5px; font-weight: 500; color: var(--ck-ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ck-job-meta { display: block; font-size: 12px; color: var(--ck-faint); margin-top: 2px; }
+.ck-job-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--ck-faint); }
+.ck-job[data-state='working'] .ck-job-dot { background: var(--hh-copper, #b5632f); animation: ck-pulse 1.6s ease-in-out infinite; }
+.ck-job[data-state='done'] .ck-job-dot { background: #3f9142; }
+.ck-job[data-state='failed'] .ck-job-dot { background: #b4472f; }
+@keyframes ck-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .ck-job[data-state='working'] .ck-job-dot { animation: none; } }

@@ -171,13 +171,24 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
   }
   if (!brief.trim()) return sendMessage(chatId, plain(`What should ${target.name} work on?`))
 
+  // File the work as a job first, so it appears on the role's board in the
+  // studio while it runs, wherever it was assigned from.
+  const { data: jobRow } = await admin.from('role_jobs').insert({
+    owner: ch.owner, brand_id: ch.brand_id, role_id: target.id, task: brief,
+    source: 'telegram', status: 'running', started_at: new Date().toISOString(),
+  }).select('id').single()
+  const jobId = (jobRow as { id?: string } | null)?.id ?? null
+
   await sendMessage(chatId, plain(`${target.name} is on it…`))
   await later((async () => {
     try {
-      const { deliverable } = await executeRole(admin, target!, brief, 'task', { channel: null })
+      const { deliverable, runId } = await executeRole(admin, target!, brief, 'task', { channel: null })
+      if (jobId) await admin.from('role_jobs').update({ status: 'done', run_id: runId, finished_at: new Date().toISOString() }).eq('id', jobId)
       await sendMessage(chatId, formatDeliverable(target!.name, 'task', deliverable, { full: true }))
     } catch (e) {
-      await sendMessage(chatId, plain(`${target!.name} could not finish: ${e instanceof Error ? e.message : String(e)}`))
+      const detail = e instanceof Error ? e.message : String(e)
+      if (jobId) await admin.from('role_jobs').update({ status: 'failed', error: detail.slice(0, 500), finished_at: new Date().toISOString() }).eq('id', jobId)
+      await sendMessage(chatId, plain(`${target!.name} could not finish: ${detail}`))
     }
   })())
 }
