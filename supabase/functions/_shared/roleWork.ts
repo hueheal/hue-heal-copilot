@@ -380,7 +380,7 @@ export async function queueImages(admin: SupabaseClient, role: RoleRow, runId: s
   return specs.length
 }
 
-interface Pending { spec: ImageRequest; prompt: string; aspect: string; requestId: string; statusUrl: string }
+interface Pending { spec: ImageRequest; prompt: string; aspect: string; requestId: string; statusUrl: string; n?: number; of?: number }
 export interface ImagePlan { images?: ImageRequest[]; runId?: string | null; pending?: Pending[]; made?: number; failed?: string[]; since?: string }
 
 /** Render the images in an IMAGES job. A render can take minutes, so this
@@ -404,8 +404,14 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
       try {
         const prompt = composePrompt(lib, spec)
         const aspect = asAspect(surfaceRatio(lib, spec.surface), '3:4')
-        const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p', count: lib.batch ?? 1, referenceUrl: lib.referenceUrls?.[0] })
-        plan.pending.push({ spec: { ...spec, surface: surfaceKey(lib, spec.surface) ?? spec.surface }, prompt, aspect, requestId, statusUrl })
+        // The guide says generate several and keep one. The live standard
+        // endpoint returns one image per request whatever num_images says,
+        // so a batch is that many separate requests.
+        const batch = Math.min(4, Math.max(1, lib.batch ?? 1))
+        for (let k = 0; k < batch; k++) {
+          const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p', count: 1, referenceUrl: lib.referenceUrls?.[0] })
+          plan.pending.push({ spec: { ...spec, surface: surfaceKey(lib, spec.surface) ?? spec.surface }, prompt, aspect, requestId, statusUrl, n: k + 1, of: batch })
+        }
       } catch (e) { plan.failed.push(e instanceof Error ? e.message : String(e)) }
     }
   }
@@ -427,7 +433,7 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
         const { data: pub } = admin.storage.from('social-assets').getPublicUrl(path)
         await admin.from('image_assets').insert({
           owner: role.owner, brand_id: role.brand_id, dept: role.dept ?? null, role_id: role.id, run_id: plan.runId ?? null, job_id: job.id,
-          purpose: c.urls.length > 1 ? `${p.spec.purpose ?? ''} (${n + 1} of ${c.urls.length})` : p.spec.purpose ?? '',
+          purpose: (p.of ?? 1) > 1 ? `${p.spec.purpose ?? ''} (${p.n} of ${p.of})` : c.urls.length > 1 ? `${p.spec.purpose ?? ''} (${n + 1} of ${c.urls.length})` : p.spec.purpose ?? '',
           category: [p.spec.category, p.spec.module].filter(Boolean).join('/'), surface: p.spec.surface ?? '',
           prompt: p.prompt, parts: promptParts(lib, p.spec), aspect_ratio: p.aspect, provider: 'higgsfield', request_id: p.requestId,
           storage_path: path, url: pub.publicUrl, status: 'pending', destination: destinationFor(p.spec.surface),
