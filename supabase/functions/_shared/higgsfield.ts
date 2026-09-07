@@ -16,7 +16,21 @@ export const asAspect = (s?: string | null, fallback: Aspect = '4:5'): Aspect =>
 interface Submit { request_id: string; status_url: string; status: string }
 interface Status { status: string; images?: { url: string }[]; error?: string; detail?: string }
 
-const headers = () => ({ Authorization: `Key ${KEY}`, 'content-type': 'application/json' })
+/** Both header styles Higgsfield accepts. The key is KEY_ID:KEY_SECRET. */
+function headers(): Record<string, string> {
+  const k = KEY.trim().replace(/^["']|["']$/g, '')
+  const h: Record<string, string> = { Authorization: `Key ${k}`, 'content-type': 'application/json' }
+  const i = k.indexOf(':')
+  if (i > 0) { h['hf-api-key'] = k.slice(0, i); h['hf-secret'] = k.slice(i + 1) }
+  return h
+}
+
+/** Describes the credential's shape for an error message. Never its value. */
+function keyShape(): string {
+  const k = KEY.trim()
+  const i = k.indexOf(':')
+  return `credential is ${k.length} characters, ${i > 0 ? `id ${i} characters and secret ${k.length - i - 1} characters` : 'with no colon between id and secret'}${/^["']|["']$/.test(k) ? ', wrapped in quotes' : ''}`
+}
 
 /** Generate one image and return its URL on Higgsfield's CDN plus the request id. */
 export async function generateImage(prompt: string, opts: { aspect?: Aspect; resolution?: '2K' | '4K'; timeoutMs?: number } = {}): Promise<{ url: string; requestId: string }> {
@@ -25,7 +39,7 @@ export async function generateImage(prompt: string, opts: { aspect?: Aspect; res
     method: 'POST', headers: headers(),
     body: JSON.stringify({ prompt, num_images: 1, resolution: opts.resolution ?? '2K', aspect_ratio: opts.aspect ?? '4:5' }),
   })
-  if (!res.ok) throw new Error(`Higgsfield ${res.status}: ${(await res.text()).slice(0, 300)}`)
+  if (!res.ok) throw new Error(`Higgsfield ${res.status}: ${(await res.text()).slice(0, 300)}${res.status === 401 ? ` (${keyShape()}; it must be the key id and secret from cloud.higgsfield.ai joined by a colon)` : ''}`)
   const sub = await res.json() as Submit
   if (!sub.request_id) throw new Error('Higgsfield returned no request id')
   const statusUrl = sub.status_url || `${BASE}/requests/${sub.request_id}/status`

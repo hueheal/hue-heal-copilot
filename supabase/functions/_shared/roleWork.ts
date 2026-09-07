@@ -16,7 +16,7 @@ import { buildOrgBrief, fileHandoffs } from './orgBrief.ts'
 import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
 import { roleDef, deptOf, toolsLine, ownsOf } from './orgShape.ts'
-import { loadLibrary, composePrompt, imageryLine, surfaceRatio, type ImageRequest } from './imagery.ts'
+import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, destinationFor, type ImageRequest } from './imagery.ts'
 import { hasHiggsfield, generateImage, download, asAspect } from './higgsfield.ts'
 
 /* `owner` is the signed-in user who does the work, which is not always the
@@ -398,7 +398,8 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
     await admin.from('image_assets').insert({
       owner: role.owner, brand_id: role.brand_id, dept: role.dept ?? null, role_id: role.id, run_id: job.plan?.runId ?? null, job_id: job.id,
       purpose: spec.purpose ?? '', category: [spec.category, spec.module].filter(Boolean).join('/'), surface: spec.surface ?? '',
-      prompt, aspect_ratio: aspect, provider: 'higgsfield', request_id: requestId, storage_path: path, url: pub.publicUrl, status: 'pending',
+      prompt, parts: promptParts(lib, spec), aspect_ratio: aspect, provider: 'higgsfield', request_id: requestId, storage_path: path, url: pub.publicUrl, status: 'pending',
+      destination: destinationFor(spec.surface),
     })
     return pub.publicUrl
   }))

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { listImageAssets, decideImage, type ImageAsset } from '../lib/imageAssets'
+import { listImageAssets, decideImage, fileToLibrary, type ImageAsset } from '../lib/imageAssets'
 import { deptOf } from '../lib/org'
 import { agoLabel } from './chrome/AssetCard'
 
@@ -12,6 +12,8 @@ export default function AssetReview({ dept, showApproved = false }: { dept?: str
   const [assets, setAssets] = useState<ImageAsset[] | null>(null)
   const [open, setOpen] = useState<ImageAsset | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  const [filing, setFiling] = useState<string | null>(null)
+  const [note, setNote] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
@@ -30,6 +32,14 @@ export default function AssetReview({ dept, showApproved = false }: { dept?: str
     await decideImage(a.id, status)
     setAssets((l) => (l ?? []).map((x) => (x.id === a.id ? { ...x, status, decided_at: new Date().toISOString() } : x)))
     if (open?.id === a.id) setOpen(null)
+    // Site images go to the brand's own library the moment they are approved.
+    if (status === 'approved' && a.destination === 'remedae') {
+      setFiling(a.id); setNote(null)
+      const r = await fileToLibrary(a.id)
+      setFiling(null)
+      if (r.error) setNote(`Approved, but could not file it into the Remedae library: ${r.error}`)
+      else setAssets((l) => (l ?? []).map((x) => (x.id === a.id ? { ...x, library_url: r.url ?? null, library_path: r.path ?? null } : x)))
+    }
   }
   async function copy(url: string) {
     try { await navigator.clipboard.writeText(url); setCopied(url); setTimeout(() => setCopied(null), 1500) } catch { /* ignore */ }
@@ -45,6 +55,9 @@ export default function AssetReview({ dept, showApproved = false }: { dept?: str
         <div className="ck-asset-meta">
           <div style={{ fontSize: 12.5, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.purpose || a.category}</div>
           <div style={{ fontSize: 11.5, color: 'var(--ck-faint)' }}>{[a.category, a.surface].filter(Boolean).join(' · ')} · {agoLabel(a.created_at)}</div>
+          <div style={{ fontSize: 11.5, color: 'var(--ck-faint)', marginTop: 2 }}>
+            {a.destination === 'remedae' ? (a.library_path ? `In the Remedae library · ${a.library_path}` : filing === a.id ? 'Filing into the Remedae library…' : 'For remedae.app · files into its library on approval') : 'For the studio'}
+          </div>
           {a.status === 'pending' ? (
             <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
               <button className="ck-pill" data-on="1" onClick={() => void decide(a, 'approved')}>Approve</button>
@@ -52,7 +65,8 @@ export default function AssetReview({ dept, showApproved = false }: { dept?: str
             </div>
           ) : (
             <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-              <button className="ck-pill" onClick={() => void copy(a.url)}>{copied === a.url ? 'Copied' : 'Copy URL'}</button>
+              <button className="ck-pill" onClick={() => void copy(a.library_url ?? a.url)}>{copied === (a.library_url ?? a.url) ? 'Copied' : 'Copy URL'}</button>
+              {a.destination === 'remedae' && !a.library_path && filing !== a.id && <button className="ck-pill" onClick={() => { setFiling(a.id); void fileToLibrary(a.id).then((r) => { setFiling(null); if (r.error) setNote(r.error); else setAssets((l) => (l ?? []).map((x) => (x.id === a.id ? { ...x, library_url: r.url ?? null, library_path: r.path ?? null } : x))) }) }}>File to library</button>}
             </div>
           )}
         </div>
@@ -62,6 +76,7 @@ export default function AssetReview({ dept, showApproved = false }: { dept?: str
 
   return (
     <div style={{ marginTop: 18 }}>
+      {note && <div className="ck-note" role="status">{note}</div>}
       {pending.length > 0 && (
         <>
           <div className="ck-board-title"><b>Images to review</b> {pending.length}</div>

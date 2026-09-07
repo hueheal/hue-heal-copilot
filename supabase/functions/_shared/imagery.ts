@@ -56,3 +56,19 @@ export function imageryLine(lib: Library | null): string {
     'Images land in the founder\'s review pile; nothing goes on the site or a post until approved.',
   ].join(' ')
 }
+
+/** The five parts, kept separately for the sidecar beside a library file. */
+export function promptParts(lib: Library, req: ImageRequest): Record<string, string> {
+  const cat = lib.modules[req.category ?? '']
+  const moduleText = typeof cat === 'string' ? cat : cat && req.module ? cat[req.module] ?? '' : ''
+  const surf = req.surface ? lib.surfaces[req.surface] : undefined
+  return { master: lib.master, module: moduleText, subject: req.subject ?? '', surface: surf ? `${req.surface}: ${surf.ratio}${surf.quiet ? `, quiet ${surf.quiet}` : ''}` : '', negatives: lib.negatives }
+}
+
+/** Where an approved image lives. Site surfaces go to the brand's own
+    library; post and email surfaces stay in the studio. */
+export function destinationFor(surface?: string): 'studio' | 'remedae' {
+  const s = (surface ?? '').toLowerCase()
+  if (!s || /^(social|email|story|reel|post)/.test(s)) return 'studio'
+  return 'remedae'
+}
