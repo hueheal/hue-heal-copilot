@@ -11,6 +11,7 @@ import { INSTAGRAM_FORMATS } from '../lib/social/formats'
 import { SlideCanvas } from './SocialStudio'
 import Composer from '../components/chrome/Composer'
 import Briefing from '../components/Briefing'
+import AssetReview from '../components/AssetReview'
 import { listRoles, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
 import { DEPARTMENTS, deptOf } from '../lib/org'
 import type { PostFormat } from '../lib/database.types'
@@ -152,6 +153,8 @@ export default function Home() {
                 </div>
               </>
             )}
+
+            <AssetReview />
 
             <div className="ck-sectiongap" />
             <div className="ck-board-title"><b>Departments</b> {working.length ? `${working.length} working` : ''}{unread.length ? ` · ${unread.length} to read` : ''}</div>

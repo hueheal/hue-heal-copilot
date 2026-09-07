@@ -16,6 +16,8 @@ import { buildOrgBrief, fileHandoffs } from './orgBrief.ts'
 import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
 import { roleDef, deptOf, toolsLine, ownsOf } from './orgShape.ts'
+import { loadLibrary, composePrompt, imageryLine, surfaceRatio, type ImageRequest } from './imagery.ts'
+import { hasHiggsfield, generateImage, download, asAspect } from './higgsfield.ts'
 
 /* `owner` is the signed-in user who does the work, which is not always the
    brand profile's owner: a brand can be shared with members. Every row a seat
@@ -34,6 +36,7 @@ export interface Deliverable {
   needs?: { title: string; detail: string; tool?: string; cost?: string }[]
   experiments?: { title: string; detail: string }[]
   handoffs?: { to?: string; subject?: string; body?: string }[]
+  images?: ImageRequest[]
   external?: boolean
 }
 
@@ -89,15 +92,18 @@ export async function executeRole(
 ): Promise<{ deliverable: Deliverable; runId: string | null; usage: Usage }> {
   const { brand, facts, state } = await context(admin, role, opts)
   const org = await buildOrgBrief(admin, role, brand.name)
+  const canImage = state.tools.includes('higgsfield') && hasHiggsfield()
+  const imagery = canImage ? imageryLine(await loadLibrary(admin, role.brand_id)) : ''
 
   const { output, usage } = await runPersona(
     roleDef(role, brand.name), brand, facts, task,
     {
       brief: org.brief, colleagues: org.colleagues,
-      playbook: state.playbook, tools: toolsLine(deptOf(role.dept), state.tools),
+      playbook: state.playbook, tools: toolsLine(deptOf(role.dept), state.tools), imagery,
       briefedBy: opts.briefedBy, contributions: opts.contributions,
     },
   )
+  if (!canImage) delete (output as Deliverable).images
   const deliverable = output as Deliverable
 
   const { data: run } = await admin.from('role_runs')
@@ -353,4 +359,51 @@ export async function deskBriefing(admin: SupabaseClient, chief: RoleRow, briefi
   const r = await executeRole(admin, chief, `${DESK_TASK}\n\nTHE BRIEFING THEY ANSWERED:\n${briefing?.text ?? ''}`, 'task', { jobId: opts.jobId, solo: true, contributions })
   if (opts.channel) await sendMessage(opts.channel, formatDeliverable('Your desk', 'task', r.deliverable, { full: true }))
   return r
+}
+
+/* ---- Images ------------------------------------------------------------ */
+
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'image'
+
+/** Queue the images a deliverable asked for as their own job, so a long
+    render never holds the seat's run open. */
+export async function queueImages(admin: SupabaseClient, role: RoleRow, runId: string | null, images: ImageRequest[] | undefined, briefingId: string | null): Promise<number> {
+  const specs = (images ?? []).filter((i) => i?.subject && i?.surface).slice(0, 3)
+  if (!specs.length) return 0
+  const state = await deptStateFor(admin, role.owner, role.brand_id, role.dept)
+  if (!state.tools.includes('higgsfield') || !hasHiggsfield()) return 0
+  await admin.from('role_jobs').insert({
+    owner: role.owner, brand_id: role.brand_id, role_id: role.id, dept: role.dept ?? null, briefing_id: null,
+    task: `IMAGES: ${specs.map((i) => i.purpose || i.subject).join('; ').slice(0, 220)}`,
+    source: 'desk', status: 'queued', plan: { images: specs, runId, briefingId },
+  })
+  return specs.length
+}
+
+/** Render the images in a queued IMAGES job, in parallel, into the review pile. */
+export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { id: string; plan?: { images?: ImageRequest[]; runId?: string | null } | null }, opts: { channel?: string | null } = {}): Promise<{ made: number; failed: string[] }> {
+  const specs = job.plan?.images ?? []
+  const lib = await loadLibrary(admin, role.brand_id)
+  if (!lib) throw new Error('This workspace has no imagery library or master prompt yet.')
+  const results = await Promise.allSettled(specs.map(async (spec, i) => {
+    const prompt = composePrompt(lib, spec)
+    const aspect = asAspect(surfaceRatio(lib, spec.surface), '4:5')
+    const { url, requestId } = await generateImage(prompt, { aspect, resolution: '2K' })
+    const { bytes, contentType } = await download(url)
+    const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : contentType.includes('webp') ? 'webp' : 'png'
+    const path = `${role.owner}/library/${role.brand_id}/${slug(spec.category ?? 'image')}-${slug(spec.subject ?? spec.purpose ?? '')}-${String(Date.now()).slice(-6)}${i}.${ext}`
+    const { error } = await admin.storage.from('social-assets').upload(path, bytes, { contentType, upsert: true })
+    if (error) throw new Error(`Upload failed: ${error.message}`)
+    const { data: pub } = admin.storage.from('social-assets').getPublicUrl(path)
+    await admin.from('image_assets').insert({
+      owner: role.owner, brand_id: role.brand_id, dept: role.dept ?? null, role_id: role.id, run_id: job.plan?.runId ?? null, job_id: job.id,
+      purpose: spec.purpose ?? '', category: [spec.category, spec.module].filter(Boolean).join('/'), surface: spec.surface ?? '',
+      prompt, aspect_ratio: aspect, provider: 'higgsfield', request_id: requestId, storage_path: path, url: pub.publicUrl, status: 'pending',
+    })
+    return pub.publicUrl
+  }))
+  const made = results.filter((r) => r.status === 'fulfilled').length
+  const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected').map((r) => (r.reason instanceof Error ? r.reason.message : String(r.reason)))
+  if (opts.channel && made) await sendMessage(opts.channel, `<b>${role.name}</b> made ${made} image${made === 1 ? '' : 's'} for your review in the studio.`)
+  return { made, failed }
 }

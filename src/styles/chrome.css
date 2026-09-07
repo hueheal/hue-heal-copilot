@@ -401,3 +401,13 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 @media (prefers-reduced-motion: reduce) { .ck-pill[data-live='1']::before { animation: none; } }
 .ck-brief { margin-top: 4px; }
 .ck-brief .ck-composer textarea { min-height: 54px; }
+
+/* ---- Image review ---- */
+.ck-assets { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 8px; }
+.ck-asset { border: 1px solid var(--ck-line); border-radius: var(--ck-radius-lg); overflow: hidden; background: var(--ck-surface); border-top: 3px solid var(--ck-dept, var(--ck-accent)); }
+.ck-asset-img { display: block; width: 100%; padding: 0; border: none; background: var(--ck-surface-2); cursor: zoom-in; }
+.ck-asset-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ck-asset-meta { padding: 8px 10px 10px; }
+.ck-lightbox { position: fixed; inset: 0; background: var(--ck-scrim); display: flex; align-items: center; justify-content: center; z-index: 60; padding: 24px; }
+.ck-lightbox-inner { background: var(--ck-surface); border-radius: var(--ck-radius-lg); box-shadow: var(--ck-shadow-lg); max-width: min(920px, 100%); max-height: 100%; overflow: auto; }
+.ck-lightbox-inner img { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; }

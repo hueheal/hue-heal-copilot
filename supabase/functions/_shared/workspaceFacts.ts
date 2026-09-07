@@ -3,11 +3,11 @@
 // to the role's owner + brand world.
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const KN_ORDER = ['business', 'audience', 'offerings', 'state', 'strategy', 'decisions', 'clients', 'team', 'market', 'technical', 'compliance', 'links', 'faqs']
+const KN_ORDER = ['business', 'audience', 'offerings', 'state', 'strategy', 'decisions', 'clients', 'team', 'market', 'technical', 'compliance', 'imagery', 'links', 'faqs']
 const KN_LABELS: Record<string, string> = {
   business: 'BUSINESS', audience: 'AUDIENCE', offerings: 'OFFERS & PRICING', state: 'CURRENT STATE OF PLAY',
   strategy: 'STRATEGY & NEXT 90 DAYS', decisions: 'DECISIONS ALREADY MADE (do not reopen)', clients: 'CLIENTS & PROOF',
-  team: 'TEAM & PARTNERS', market: 'MARKET', technical: 'TECHNICAL', compliance: 'COMPLIANCE & RISKS', links: 'LINKS', faqs: 'FAQS, TERMINOLOGY & OPEN QUESTIONS',
+  team: 'TEAM & PARTNERS', market: 'MARKET', technical: 'TECHNICAL', compliance: 'COMPLIANCE & RISKS', imagery: 'IMAGERY', links: 'LINKS', faqs: 'FAQS, TERMINOLOGY & OPEN QUESTIONS',
 }
 
 /** The knowledge base as a seat reads it. Seats get far more of it than the
@@ -15,7 +15,9 @@ const KN_LABELS: Record<string, string> = {
     org that does not know the business cannot run it. */
 export function knowledge(k: Record<string, string> | null | undefined, cap = 2500): string | undefined {
   if (!k) return undefined
-  const keys = [...KN_ORDER.filter((x) => x in k), ...Object.keys(k).filter((x) => !KN_ORDER.includes(x))]
+  // Keys starting with an underscore are machine data (the imagery library),
+  // read by the tools that need them, never dumped into a prompt.
+  const keys = [...KN_ORDER.filter((x) => x in k), ...Object.keys(k).filter((x) => !KN_ORDER.includes(x) && !x.startsWith('_'))]
   const parts = keys
     .filter((key) => (k[key] ?? '').trim())
     .map((key) => `${KN_LABELS[key] ?? key.toUpperCase()}: ${String(k[key]).slice(0, cap)}`)

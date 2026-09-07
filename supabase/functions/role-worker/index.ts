@@ -12,7 +12,7 @@
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { executeDepartment, retroDepartment, routeBriefing, deskBriefing, chiefOf, type RoleRow } from '../_shared/roleWork.ts'
+import { executeDepartment, retroDepartment, routeBriefing, deskBriefing, chiefOf, queueImages, renderImages, type RoleRow } from '../_shared/roleWork.ts'
 import { costPence } from '../_shared/roleCore.ts'
 import { hasTelegram, sendMessage } from '../_shared/telegram.ts'
 
@@ -23,7 +23,7 @@ const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 interface Job {
   id: string; owner: string; brand_id: string | null; role_id: string
-  task: string; source: string; status: string; briefing_id: string | null
+  task: string; source: string; status: string; briefing_id: string | null; plan?: Record<string, unknown> | null
 }
 
 /** Claim a job: only one caller can move it out of queued. */
@@ -31,7 +31,7 @@ async function claim(admin: SupabaseClient, jobId: string): Promise<Job | null> 
   const { data } = await admin.from('role_jobs')
     .update({ status: 'running', started_at: new Date().toISOString() })
     .eq('id', jobId).eq('status', 'queued')
-    .select('id, owner, brand_id, role_id, task, source, status, briefing_id').maybeSingle()
+    .select('id, owner, brand_id, role_id, task, source, status, briefing_id, plan').maybeSingle()
   return (data as Job) ?? null
 }
 
@@ -68,6 +68,16 @@ async function work(admin: SupabaseClient, job: Job): Promise<string> {
       return 'desk'
     }
 
+    /* Images a deliverable asked for, rendered in their own job. */
+    if (job.task.startsWith('IMAGES:')) {
+      const r = await renderImages(admin, role, job as { id: string; plan?: { images?: never[]; runId?: string | null } | null }, { channel })
+      await admin.from('role_jobs').update({
+        status: r.made ? 'done' : 'failed', finished_at: new Date().toISOString(), dept: role.dept ?? null,
+        error: r.failed.length ? r.failed.join(' | ').slice(0, 500) : null, reviewed_at: r.made ? new Date().toISOString() : null,
+      }).eq('id', job.id)
+      return r.made ? `images ${r.made}` : `failed: ${r.failed.join(' | ')}`
+    }
+
     // A lead may brief its team; a member answers alone. Either way one
     // deliverable comes back, and if acting on it would leave the building
     // it waits for the founder's approval.
@@ -77,6 +87,7 @@ async function work(admin: SupabaseClient, job: Job): Promise<string> {
       dept: role.dept ?? null, approval: deliverable.external ? 'pending' : 'none',
       plan, cost_pence: costPence(usage),
     }).eq('id', job.id)
+    await queueImages(admin, role, runId, deliverable.images, job.briefing_id).catch(() => 0)
     await maybeQueueDesk(admin, job)
     return 'done'
   } catch (e) {

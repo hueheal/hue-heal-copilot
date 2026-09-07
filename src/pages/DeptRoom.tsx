@@ -9,6 +9,7 @@ import {
 import { deptOf, seatFor, toolOf, pounds } from '../lib/org'
 import { agoLabel } from '../components/chrome/AssetCard'
 import DeliverableView from '../components/DeliverableView'
+import AssetReview from '../components/AssetReview'
 import ConfirmButton from '../components/ConfirmButton'
 
 /* ============================================================
@@ -122,7 +123,7 @@ export default function DeptRoom() {
   const preset = presetFor(lead, brand?.name)
   const nameOf = (id?: string | null) => team.find((r) => r.id === id)?.name ?? 'A seat'
   const runOf = (j: RoleJob) => runs.find((r) => r.id === j.run_id)
-  const titleOf = (j: RoleJob) => runOf(j)?.output.title ?? j.task.replace(/^(ROUTE|DESK):\s*/, '')
+  const titleOf = (j: RoleJob) => runOf(j)?.output.title ?? j.task.replace(/^(ROUTE|DESK|IMAGES):\s*/, '')
   const whoOf = (j: RoleJob) => `${nameOf(j.role_id)}${j.plan?.approach === 'team' ? ` with ${j.plan.assignments.filter((a) => a.ok !== false).map((a) => a.to).join(', ')}` : ''}`
   const srcOf = (j: RoleJob) => (j.source === 'telegram' ? ' · from your phone' : j.source === 'schedule' ? ' · on its own cadence' : '')
 
@@ -259,6 +260,7 @@ export default function DeptRoom() {
                     </div>
                   </div>
                 )}
+                <AssetReview dept={dept.key} showApproved />
                 <div className="ck-board-group">
                   <div className="ck-board-title"><b>Done</b> {unread.length ? `${unread.length} to read` : done.length ? 'all read' : ''}</div>
                   {done.length === 0 && active.length === 0 && (

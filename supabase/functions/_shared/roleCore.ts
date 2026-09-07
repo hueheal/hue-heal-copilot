@@ -40,6 +40,8 @@ export interface OrgDef {
   playbook?: string
   /** Tools the department has been granted, plus the in-house rule. */
   tools?: string
+  /** What images the seat may request, from the brand's prompt library. */
+  imagery?: string
   /** For a lead compiling: the team's contributions to this task. */
   contributions?: string
   /** For a member: who briefed them and why. */
@@ -104,6 +106,21 @@ export const DELIVERABLE_TOOL = {
           required: ['to', 'subject', 'body'],
         },
       },
+      images: {
+        type: 'array',
+        description: 'Production images to generate, only if the deliverable needs them and IMAGES says you may. At most 3. Empty otherwise.',
+        items: {
+          type: 'object',
+          properties: {
+            purpose: { type: 'string', description: 'What the image is for, e.g. "hero for the reflux condition page" or "day 3 feed post".' },
+            category: { type: 'string', description: 'A category from IMAGES.' },
+            module: { type: 'string', description: 'The module within the category, when the category has them (e.g. a tradition).' },
+            subject: { type: 'string', description: 'The specific scene: who, where, the object and the gesture. No style words.' },
+            surface: { type: 'string', description: 'A surface from IMAGES.' },
+          },
+          required: ['purpose', 'category', 'subject', 'surface'],
+        },
+      },
       external: {
         type: 'boolean',
         description: 'True if acting on this deliverable would put something in front of the public or a third party, or commit money: publishing, posting, sending, outreach, a price or offer change, spend. Such deliverables wait for the founder\'s approval. Internal plans, research and drafts are false.',
@@ -128,6 +145,7 @@ export function roleSystem(role: RoleDef, brand: BrandDef, org: OrgDef = {}): st
     role.instructions?.trim() ? `STANDING INSTRUCTIONS FROM THE FOUNDER: ${role.instructions}` : '',
     org.playbook?.trim() ? `DEPARTMENT PLAYBOOK (what your department has learned so far; it is rewritten every Friday from real results, so treat it as the current best practice and build on it):\n${org.playbook.trim()}` : '',
     org.tools?.trim() ? `TOOLS: ${org.tools.trim()}` : '',
+    org.imagery?.trim() ? org.imagery.trim() : '',
     /* The workspace wall. Seats are hired per brand world and must never
        reason across them, even when the same founder runs both. */
     `WORKSPACE: you work for ${ws} and only ${ws}. Every fact you are given belongs to ${ws}. Never carry over audience, positioning, plans, results, examples or copy from any other company or brand, including any you may have worked on before. If you cannot answer from ${ws}'s own material, say so.`,

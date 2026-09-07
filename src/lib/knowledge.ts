@@ -17,6 +17,7 @@ export interface Knowledge {
   market?: string     // market, competitors, relevant trends
   technical?: string  // stack, repos, integrations, publishing contracts
   compliance?: string // legal, regulatory, claims constraints, risks
+  imagery?: string    // the look: how images are made and judged
   links?: string      // website, channels, repos, documents
   faqs?: string       // recurring questions and their answers, terminology
 }
@@ -33,6 +34,7 @@ export const KNOWLEDGE_FIELDS: { key: keyof Knowledge; label: string; hint: stri
   { key: 'market', label: 'Market', hint: 'Market, alternatives, named competitors, trends.', dossier: 'Market' },
   { key: 'technical', label: 'Technical', hint: 'Stack, repos, hosting, integrations, how things get published.', dossier: 'Technical' },
   { key: 'compliance', label: 'Compliance & risks', hint: 'What may and may not be said, data handling, contracts, known risks.', dossier: 'Compliance and risks' },
+  { key: 'imagery', label: 'Imagery', hint: 'How images are made and judged: the look, categories, surfaces. The full prompt library sits behind this and is used by the image tools.', dossier: 'Imagery' },
   { key: 'links', label: 'Links', hint: 'Website, channels, repos, documents. One per line.', dossier: 'Links' },
   { key: 'faqs', label: 'FAQs, terminology & open questions', hint: 'Standard answers, words the company does or does not use, and what is still unknown.', dossier: 'Open questions' },
 ]

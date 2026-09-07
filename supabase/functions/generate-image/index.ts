@@ -9,6 +9,7 @@
 // ============================================================================
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { hasHiggsfield, generateImage, download, asAspect } from '../_shared/higgsfield.ts'
 
 const IMAGE_PROVIDER = Deno.env.get('IMAGE_PROVIDER') ?? 'openai'
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? ''
@@ -28,6 +29,10 @@ interface Body {
   /** Selected brand's creative direction — overrides the built-in defaults when present. */
   masterPrompt?: string
   negatives?: string
+  /** Aspect for providers that support it (Higgsfield). Defaults to portrait. */
+  aspect?: string
+  /** Force a provider: 'higgsfield' | 'openai'. Defaults to Higgsfield when its key is set. */
+  provider?: string
 }
 
 /* ---- Brand style guardrail (always applied) ---- */
@@ -62,9 +67,15 @@ function composePrompt(b: Body): string {
   return `${style} ${preset} ${subject}${insp} ${negatives}`
 }
 
-/** Returns raw PNG bytes for the composed prompt. */
-async function generatePng(b: Body): Promise<Uint8Array> {
-  if (IMAGE_PROVIDER === 'openai') {
+/** Returns raw image bytes for the composed prompt. Higgsfield when its key
+    is set (the studio's production tool), OpenAI otherwise. */
+async function generatePng(b: Body): Promise<{ bytes: Uint8Array; contentType: string }> {
+  const provider = b.provider ?? (hasHiggsfield() ? 'higgsfield' : IMAGE_PROVIDER)
+  if (provider === 'higgsfield') {
+    const { url } = await generateImage(composePrompt(b), { aspect: asAspect(b.aspect, '4:5'), resolution: '2K' })
+    return await download(url)
+  }
+  if (provider === 'openai') {
     if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not set on the function.')
     // gpt-image-1 always returns b64 and rejects response_format; DALL·E needs it.
     const isDalle = OPENAI_IMAGE_MODEL.includes('dall-e')
@@ -84,9 +95,9 @@ async function generatePng(b: Body): Promise<Uint8Array> {
     const data = await resp.json()
     const b64 = data?.data?.[0]?.b64_json
     if (!b64) throw new Error('No image returned from provider')
-    return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
+    return { bytes: Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)), contentType: 'image/png' }
   }
-  throw new Error(`Unsupported IMAGE_PROVIDER "${IMAGE_PROVIDER}"`)
+  throw new Error(`Unsupported image provider "${provider}"`)
 }
 
 Deno.serve(async (req) => {
@@ -112,7 +123,7 @@ Deno.serve(async (req) => {
   if (userErr || !userData.user) return json({ error: 'Not authenticated' }, 401)
   const userId = userData.user.id
 
-  let png: Uint8Array
+  let png: { bytes: Uint8Array; contentType: string }
   try {
     png = await generatePng(body)
   } catch (e) {
@@ -121,10 +132,11 @@ Deno.serve(async (req) => {
 
   // Store with a service-role client under the owner's folder.
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE)
-  const path = `${userId}/${body.postId}/bg-${Date.now()}.png`
+  const ext = png.contentType.includes('jpeg') || png.contentType.includes('jpg') ? 'jpg' : png.contentType.includes('webp') ? 'webp' : 'png'
+  const path = `${userId}/${body.postId}/bg-${Date.now()}.${ext}`
   const { error: upErr } = await admin.storage
     .from('social-assets')
-    .upload(path, png, { contentType: 'image/png', upsert: true })
+    .upload(path, png.bytes, { contentType: png.contentType, upsert: true })
   if (upErr) return json({ error: `Upload failed: ${upErr.message}` }, 502)
 
   const { data: pub } = admin.storage.from('social-assets').getPublicUrl(path)

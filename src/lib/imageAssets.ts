@@ -1,0 +1,28 @@
+import { supabase } from './supabase'
+import { filterByBrand } from './brandScope'
+
+/* ============================================================
+   Images a seat generated through a connected tool. Each waits
+   for the founder's review; approved ones are the library.
+   ============================================================ */
+
+export interface ImageAsset {
+  id: string; dept: string | null; role_id: string | null; run_id: string | null
+  purpose: string; category: string; surface: string; prompt: string; aspect_ratio: string
+  url: string; status: 'pending' | 'approved' | 'declined'; created_at: string; decided_at: string | null
+}
+const COLS = 'id, dept, role_id, run_id, purpose, category, surface, prompt, aspect_ratio, url, status, created_at, decided_at'
+
+export async function listImageAssets(opts: { dept?: string; status?: ImageAsset['status']; limit?: number } = {}): Promise<ImageAsset[]> {
+  if (!supabase) return []
+  let q = filterByBrand(supabase.from('image_assets').select(COLS))
+  if (opts.dept) q = q.eq('dept', opts.dept)
+  if (opts.status) q = q.eq('status', opts.status)
+  const { data } = await q.order('created_at', { ascending: false }).limit(opts.limit ?? 60)
+  return (data ?? []) as ImageAsset[]
+}
+
+export async function decideImage(id: string, status: 'approved' | 'declined', note?: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('image_assets').update({ status, note: note ?? null, decided_at: new Date().toISOString() } as never).eq('id', id)
+}
