@@ -41,7 +41,7 @@ export async function recentVerdicts(admin: SupabaseClient, owner: string, brand
 /** The founder's own words on declined images become a standing correction in
     every prompt until newer verdicts replace them. */
 export function correctionsLine(verdicts: Verdict[]): string {
-  const notes = verdicts.filter((v) => v.status === 'declined' && v.note?.trim()).slice(0, 3).map((v) => v.note!.trim())
+  const notes = [...new Set(verdicts.filter((v) => v.status === 'declined' && v.note?.trim()).map((v) => v.note!.trim()))].slice(0, 3)
   return notes.length ? `The founder's corrections from recent reviews, which override anything above: ${notes.join('. ')}.` : ''
 }
 
@@ -115,20 +115,25 @@ export function promptParts(lib: Library, req: ImageRequest): Record<string, str
   const ratio = surf?.ratio ?? ''
   const [rw, rh] = ratio.split(':').map(Number)
   const orientation = rw && rh ? (rw > rh ? 'landscape' : rw < rh ? 'portrait' : 'square') : ''
-  const quiet = surf?.quiet && surf.quiet !== 'none' ? ` The subject sits away from the ${surf.quiet}, which stays plain soft background (wall, bedding, sky) so type can be laid over it later.` : ''
+  // The quiet area is recorded for the sidecar and the reviewer, never
+  // described to the model: any talk of space for type produces margins.
+  const quiet = ''
   return {
     subject: subjectLine,
     corrections: lib.corrections ?? '',
     shot: '',
     master: lib.master,
     module: moduleText(lib, req),
-    surface: surf ? `${orientation ? `${orientation[0].toUpperCase()}${orientation.slice(1)} ${ratio}` : ratio}, the photograph fills the entire frame edge to edge, no borders.${quiet}` : 'The photograph fills the entire frame edge to edge, no borders.',
-    negatives: lib.negatives ? `Avoid: ${lib.negatives}, letterbox, white bands, border, frame within frame, blank margins` : 'Avoid: letterbox, white bands, border, frame within frame, blank margins',
+    surface: surf ? `${orientation ? `${orientation[0].toUpperCase()}${orientation.slice(1)} ${ratio}` : ratio}${orientation === 'portrait' ? ', camera close, the subject fills the height of the frame' : ''}.${quiet}` : '',
+    negatives: lib.negatives,
   }
 }
 
+/** The prompt sent to the model. Negatives are kept in the parts for the
+    sidecar but never put into prompt text: the soul endpoint has no
+    negative-prompt field, and naming a fault in a positive prompt paints it. */
 export function composePrompt(lib: Library, req: ImageRequest): string {
-  const parts = promptParts(lib, req)
+  const parts = { ...promptParts(lib, req), negatives: '' }
   const order = (lib.order?.length ? lib.order : DEFAULT_ORDER).slice()
   // Shot type and the founder's corrections are not in the guide's order
   // list; they belong right after the subject.

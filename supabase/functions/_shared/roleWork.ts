@@ -381,7 +381,7 @@ export async function queueImages(admin: SupabaseClient, role: RoleRow, runId: s
 }
 
 interface Pending { spec: ImageRequest; prompt: string; aspect: string; requestId: string; statusUrl: string; n?: number; of?: number }
-export interface ImagePlan { images?: ImageRequest[]; runId?: string | null; pending?: Pending[]; made?: number; failed?: string[]; since?: string }
+export interface ImagePlan { images?: ImageRequest[]; runId?: string | null; pending?: Pending[]; made?: number; failed?: string[]; since?: string; batch?: number }
 
 /** Render the images in an IMAGES job. A render can take minutes, so this
     runs in phases across sweeps: submit everything, then on each later pass
@@ -408,7 +408,7 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
         // The guide says generate several and keep one. The live standard
         // endpoint returns one image per request whatever num_images says,
         // so a batch is that many separate requests.
-        const batch = Math.min(4, Math.max(1, lib.batch ?? 1))
+        const batch = Math.min(4, Math.max(1, plan.batch ?? lib.batch ?? 1))
         for (let k = 0; k < batch; k++) {
           const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p', count: 1, referenceUrl: lib.referenceUrls?.[0] })
           plan.pending.push({ spec: { ...spec, surface: surfaceKey(lib, spec.surface) ?? spec.surface }, prompt, aspect, requestId, statusUrl, n: k + 1, of: batch })
