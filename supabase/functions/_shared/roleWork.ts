@@ -17,6 +17,9 @@ import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
 import { roleDef, deptOf, toolsLine, ownsOf } from './orgShape.ts'
 
+/* `owner` is the signed-in user who does the work, which is not always the
+   brand profile's owner: a brand can be shared with members. Every row a seat
+   writes carries the seat's owner, never the brand's. */
 export interface RoleRow {
   id: string; owner: string; brand_id: string | null; key: string; name: string; title: string
   charter: string; instructions: string; enabled: boolean
@@ -296,6 +299,7 @@ export async function routeBriefing(
   )
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
   const filed: { to: string; brief: string }[] = []
+  console.log(`route leads=${leads.map((l) => l.name).join('|')} assignments=${JSON.stringify(r.assignments).slice(0, 600)}`)
   for (const a of r.assignments) {
     const lead = leads.find((l) => norm(l.name) === norm(a.to)) ?? leads.find((l) => norm(a.to).includes(norm(l.name)) || norm(l.name).includes(norm(a.to)) || norm(deptOf(l.dept)?.name ?? '') === norm(a.to))
     if (!lead || filed.some((f) => f.to === lead.name)) continue
