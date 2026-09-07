@@ -1,6 +1,6 @@
 # Remedae imagery style guide
 
-The single reference for every photograph, illustration and video made for Remedae: the site, social, email, the journal, and anything the Hue & Heal copilot generates. Version 1, 7 September 2026. Companion to `design-system.md` (tokens and layout) and `copy_bible_source.md` (voice). The machine-readable version of the prompt library is `content/imagery/prompt-library.json`.
+The single reference for every photograph, illustration and video made for Remedae: the site, social, email, the journal, and anything the Hue & Heal copilot generates. Version 1.1, 7 September 2026. Companion to `design-system.md` (tokens and layout) and `copy_bible_source.md` (voice). The machine-readable version of the prompt library is `content/imagery/prompt-library.json`.
 
 Tool of choice for generation is Higgsfield (image and video) through its MCP at `https://mcp.higgsfield.ai/mcp`. The copilot's own image function currently calls OpenAI with the Remedae master prompt; section 9 says how to move it to this guide.
 
@@ -17,11 +17,16 @@ What "modern lens" means in practice:
 - **Outdoors is bright and current.** A city park at lunch, a doorstep in morning sun, a canal path, a garden, a bus stop, a school run. Today's clothes, today's streets. Nothing that reads as rural nostalgia, period or "olden".
 - **Bright, vibrant, warm.** Every image is a warm lifestyle photograph with professional light and grade, consistent across the whole set. No moody low-key frames, no dark or desaturated looks, no filters.
 
-Three tests before an image is used:
+Four tests before an image is used:
 
 1. Could this be a still from someone's actual Tuesday, this year? If it reads as a campaign, a set, or another era, it fails.
 2. Is the remedy or practice identifiable without a caption? If the tradition is only in the mood, it fails.
-3. Is it bright, warm and consistent with the rest of the set? If it needs a grade to match, it fails.
+3. Would a photo editor accept it as a professional photograph? If anything reads as rendered, painted, over-sharpened or waxy, it fails outright.
+4. Is it bright, neutral-balanced and consistent with the rest of the set? If it needs a grade to match, or carries a colour cast, it fails.
+
+**The calibration pair.** Two Higgsfield frames made by the founder set the bar for the whole set: a tight crop of a woman's hands pressed to her stomach in a green sports top, outdoors in open daylight, background soft, skin and fabric pin-sharp, nothing else in frame. Every generation is judged against them. Keep them at `review/reference/` and pass them as style references wherever the tool allows.
+
+**The failure to learn from.** The copilot's first attempt put six people in one galley kitchen under an orange cast, rendered like a painting, with a man looking into the lens and tunics standing in for Ayurveda. Nothing in it could be pointed to as the remedy. Every rule in section 3 exists to make that image impossible.
 
 ## 2. Where the look comes from
 
@@ -35,19 +40,31 @@ Three tests before an image is used:
 
 These go into every prompt and every brief. They do not change by category.
 
-**Camera.** Full-frame, 50mm or 85mm, wide aperture, one clear plane of focus, shallow and natural fall-off. Eye level or slightly above for people; 45 degrees or straight down for objects on a surface.
+**Realism first.** The output must pass as a professional photograph, the kind a picture desk would license: true optical depth of field, real skin with pores and fine hair, fabric with visible weave and creases, honest reflections and shadows. Any hint of a render, illustration, painterly smoothing, over-sharpening, halo edges, waxy skin, or "AI glow" fails the image outright, whatever else it gets right.
 
-**Light.** Bright, natural and warm: a big window, an open door, morning or afternoon sun, or open shade outdoors. The room or street feels flooded with light. Soft shadows with detail in them. Never low-key, never moody, never clinical, never blown.
+**One subject, one action.** Default to a single person doing a single thing with a single named object. Two people only when the module needs it; three at the very most, and only for the connection pillar. Never a crowd, never a group all mid-task, never an ensemble. The copilot's six-person kitchen is the shape to avoid.
 
-**Grade.** One grade for the whole set: bright, warm, vibrant, believable, the look of a professional lifestyle shoot. Fine grain at most. No HDR, no teal-and-orange, no desaturated or grey looks, no dark moody frames, no beauty smoothing, no filters. Colour lives in objects, clothing and daylight, not in a wash.
+**Crop tight by default.** The house shot is close: hands and the object, a torso and the gesture, a face in profile at the window. Wide establishing frames are the exception and must still have one hero. Shot types, in order of how often they should be used:
 
-**Colour.** Naturally vibrant: botanical greens, warm timber, terracotta, mustard, blues, sand, warm white, the colours of real clothes and real rooms. No colour tone is applied to a category of image. Brand colour (mint, and yellow for Remedae+) is added at the UI level, in chips, borders and type, never in the photograph. An image made for a Remedae+ surface looks exactly like every other image.
+1. *Macro body*: hands on a belly, a wrist being held, fingers on a temple, a foot on a step. No face, or a partial face out of focus. The calibration pair is this type.
+2. *Hands and object*: tearing a sachet, stirring a pan, pouring water, holding a mug. Face optional, cropped at the chin or out of focus.
+3. *Portrait mid-task*: head and shoulders, eyes on the task or closed, 85mm, background soft.
+4. *Environmental single*: one person, three-quarter or full length, in a real room or street, with the room softly behind them.
+5. *Pair*: two people, each doing something different, only where the module calls for it.
 
-**Composition.** Three layers: hero subject, supporting object or action, environment. People carry 70 to 80 percent of attention when present. A quiet lower third or a quiet edge for overlaid type. Nothing centred by default.
+**Camera.** Full-frame, 50mm or 85mm for people, 100mm macro for body and object close-ups, f/2 to f/2.8, one clear plane of focus with natural fall-off. Eye level for people; 45 degrees or straight down for objects on a surface. No wide-angle lenses: nothing under 35mm, no distorted rooms, no stretched edges.
 
-**People.** Everyday people in today's clothes, real skin texture, fine lines, flyaway hair, clothing creases. Relaxed and unposed; mid-task, looking at the thing, or at each other, never at the camera. Children to elders, all body types, families of every size and shape. A cast that looks like the UK and its diaspora across every tradition, so no tradition is illustrated by one ethnicity as a costume. When two or more people appear, each is doing something different.
+**Light.** Bright, natural and neutral: a big window, an open door, morning or afternoon sun, or open shade outdoors. The scene feels flooded with light. Soft shadows with detail in them. Never low-key, never moody, never clinical, never blown.
 
-**Never in frame.** Text, captions, signage, logos, packaging brands, UI, watermarks. Scrubs, stethoscopes, white coats, exam tables. Crystals, incense clouds, mandalas, lotus poses, prayer hands, chakra diagrams. Pills spilling from bottles. Spa towels and orchids. Period or heritage interiors, rustic farmhouse styling, anything that reads as another era. Perfect symmetry. Matching smiles.
+**White balance and grade.** Daylight-neutral: whites are white, skin is its own colour, greens are green. Warmth comes from sunlight, timber and skin, never from a cast. No orange, sepia, amber or golden wash over the frame. No HDR, no teal-and-orange, no desaturated or grey looks, no vignette, no film-emulation filters, no beauty smoothing. One grade for the whole set: bright, clean, vibrant, believable, the look of a professional lifestyle shoot.
+
+**Colour.** Naturally vibrant: the colours of real clothes, real rooms and daylight. Solid-colour contemporary clothing photographs best (a green top, a sand knit, a white tee). No colour tone is applied to any category of image. Brand colour (mint, and yellow for Remedae+) is added at the UI level, never in the photograph.
+
+**Simplicity.** Besides the subject, at most three objects in frame, and the named object is one of them. Clean surfaces, soft backgrounds through depth of field, generous negative space. No prop dressing, no counters full of things, no decorative clutter.
+
+**People.** Everyday people in today's clothes: basics, knitwear, activewear, denim. Real skin texture, fine lines, flyaway hair, clothing creases. Relaxed and unposed; mid-task, looking at the thing, eyes closed, or in profile, never at the camera. Children to elders, all body types, families of every size and shape. A cast that looks like the UK and its diaspora across every tradition, so no tradition is illustrated by one ethnicity as a costume, and no tradition is signalled by dress: no kurta, kimono, kaftan or tunic as a stand-in for a tradition.
+
+**Never in frame.** Text, captions, signage, logos, packaging brands, UI, watermarks. Scrubs, stethoscopes, white coats, exam tables. Crystals, incense clouds, mandalas, lotus poses, prayer hands, chakra diagrams. Pills spilling from bottles. Spa towels and orchids. Period or heritage interiors, rustic farmhouse styling, anything that reads as another era. Traditional dress as costume. Crowds and ensembles. Eye contact with the camera. Perfect symmetry. Matching smiles.
 
 ---
 
@@ -142,19 +159,21 @@ Deliver JPEG at quality 85 for photographs, WebP where the pipeline converts, MP
 
 ## 7. How a prompt is built
 
-Every prompt is five parts in this order. The master and the negatives never change; the module and the surface spec come from this guide; only the subject line is written fresh.
+Generation models weight the first words most and lose precision in long paragraphs, so the prompt is short and front-loaded. Five parts in this order, under 120 words in total before the negatives.
 
-1. **Master** (section 3, as one paragraph; the exact text is in the prompt library under `master.image` or `master.video`).
-2. **Category module** (one paragraph from section 5).
-3. **Subject line**: who, where, doing what, with which named object, at what time of day. Twenty to forty words. Name the remedy as the site names it.
+1. **Subject line** first: shot type, who, doing what, with which named object, where, time of day. Twenty to forty words. Name the remedy as the site names it.
+2. **Realism spec**: the fixed phrase from the prompt library (`master.image`), about fifty words of camera, light and texture.
+3. **Module**: one short line from section 5, trimmed to the objects and the setting.
 4. **Surface spec**: aspect ratio, orientation, where the quiet area is.
-5. **Negatives** (section 3, "Never in frame", as one line; `negatives` in the prompt library).
+5. **Negatives**: the fixed list from the library, passed to the negative-prompt field where the tool has one.
 
-Three worked subject lines:
+Then generate four, pick one, and put the rest through the checklist in section 9. Reference images: pass the calibration pair as style references whenever the tool supports it.
 
-- Tradition, Kampo: "A woman in her forties at a small Tokyo apartment kitchen tears open a Rikkunshito granule sachet into a ceramic cup, morning light from the left, a kettle steaming behind her."
-- Condition, insomnia, felt experience: "A man in his thirties sits on the edge of a bed at 3 a.m., blue-grey street light through a gap in the curtain, phone face down on the far side of the room, eyes open and calm."
-- Lifestyle, sleep: "A woman opens a curtain to bright morning light in a plain bedroom, one hand still on the fabric, the light falling across an unmade bed."
+Three worked prompts in the new shape:
+
+- **Condition, gut ache, macro body, 4:5.** "Macro body shot: a woman's hands pressed flat to her stomach over a plain green sports top, outdoors in open morning daylight, hills soft in the background, no face."
+- **Tradition, Ayurveda, hands and object, 3:4.** "Hands-and-object shot: a woman's hand stirs ashwagandha powder into a small pan of warming milk on a modern hob, bright window light from the left, one mug beside the pan, cropped at the shoulders."
+- **Lifestyle, sleep, portrait mid-task, 9:16.** "Portrait mid-task: a man in his sixties in a plain white tee opens a bedroom curtain to bright morning light, in profile, eyes on the window, the room soft behind him."
 
 ---
 
@@ -172,16 +191,18 @@ Examples: `tradition-kampo-rikkunshito-01.jpg`, `condition-insomnia-felt-01.jpg`
 
 ## 9. Review before use
 
-1. Passes the three tests in section 1.
+1. Passes the four tests in section 1 and holds up beside the calibration pair.
 2. No text, logos or brands anywhere in frame, including on packaging, clothing and books.
-3. Hands and faces are anatomically right; count fingers, check teeth and ears.
-4. The named object is the real object (a Rikkunshito sachet, not a generic pouch; fresh ginger, not galangal).
-5. No tradition is shown through costume, ceremony or sacred objects.
-6. The cast across a set is mixed in age, body and ethnicity, and no tradition is illustrated by one ethnicity only.
-7. Lower third or an edge is quiet enough for overlaid type on the surface it is made for.
-8. Holds on #050a07 with the 80% gradient (test it on a card, not in the generator).
+3. Reads as a photograph, not a render: no waxy skin, halo edges, painterly smoothing, over-sharpening or glow. Hands and faces anatomically right; count fingers, check teeth and ears.
+4. Neutral white balance: whites are white, no orange or sepia cast.
+5. One subject, one action, at most three objects; the crop is as tight as the shot type allows.
+6. The named object is the real object (a Rikkunshito sachet, not a generic pouch; fresh ginger, not galangal).
+7. No tradition is shown through costume or dress, ceremony or sacred objects.
+8. The cast across a set is mixed in age, body and ethnicity, and no tradition is illustrated by one ethnicity only.
+9. Lower third or an edge is quiet enough for overlaid type on the surface it is made for.
+10. Bright and consistent with the set without a grade change.
 9. Correct ratio and minimum size for its surface; not upscaled.
-10. Sidecar written and file named to the convention.
+12. Sidecar written and file named to the convention.
 
 ---
 

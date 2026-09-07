@@ -1,19 +1,19 @@
 {
-  "version": 1,
+  "version": 1.1,
   "updated": "2026-09-07",
   "source": "docs/imagery-styleguide.md",
   "order": [
+    "subject",
     "master",
     "module",
-    "subject",
     "surface",
     "negatives"
   ],
   "master": {
-    "image": "Photorealistic professional lifestyle photograph for Remedae, a health literacy site that shows the world's healing traditions through a modern lens. Everyday people using a tradition's remedy or practice inside the life they already live: a real modern kitchen, a lived-in living room, a bright street, a park at lunchtime. Nothing that looks old, distant or from another era. The tradition shows in the object and the gesture, never in costume, ceremony or set dressing; practitioners are everyday professionals in everyday rooms. Homes look like real homes of today, with a kettle, a fridge, a sofa with a throw, a phone charger. Families of every size, age and race: single parents, flatmates, three generations, couples in their sixties. Outdoors is bright and current: city parks, doorsteps, canal paths, gardens, today's clothes and streets. Full-frame camera, 50mm or 85mm, wide aperture, one clear plane of focus. Bright natural warm light from a big window, an open door, morning or afternoon sun or open shade; the scene feels flooded with light, soft shadows with detail. One consistent grade across the whole set: bright, warm, vibrant, believable, the look of a professional lifestyle shoot. No HDR, no desaturated or grey look, no dark moody frames, no filters, no beauty smoothing. Naturally vibrant colour in clothes, rooms and daylight; no colour tone applied to the image. Three layers: hero subject, supporting object or action, environment. People carry most of the attention, with real skin texture and unposed faces, mid-task or on each other, never on the camera; when more than one person appears each is doing something different. A quiet lower third or edge for overlaid type.",
-    "video": "Cinematic professional lifestyle video clip for Remedae, 4 to 8 seconds, loopable, 24 fps. Everyday people using a healing tradition's remedy or practice inside a real modern home or a bright current outdoor setting; the tradition shows in the object and the gesture, never costume or ceremony. Motion belongs to the subject, not the camera: steam rising, tea pouring, hands stirring, a chest rising and falling, leaves moving. Camera at most a slow push or a gentle handheld drift. Bright natural warm light, one consistent vibrant grade, shallow focus, no dark moody frames. No speech, no music, no text, no transitions, no speed ramps, no added lens flares."
+    "image": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter.",
+    "video": "Professional lifestyle video clip, photorealistic, 4 to 8 seconds, loopable, 24 fps. 85mm or macro, shallow focus, bright natural daylight, neutral white balance. One subject, one slow action: steam rising, pouring, stirring, breathing, a curtain moving. Camera static or a slow push. Real skin and fabric texture. No colour cast, no speech, no music, no text, no transitions."
   },
-  "negatives": "No text, captions, signage, logos, packaging brands, UI or watermarks. No scrubs, stethoscopes, white coats or exam tables. No crystals, incense clouds, mandalas, lotus poses, prayer hands or chakra diagrams. No pills spilling from bottles. No spa towels or orchids. No costume, ceremony, masks, regalia or sacred objects. No period or heritage interiors, no rustic farmhouse styling, nothing that reads as another era. No dark, moody or low-key lighting. No perfect symmetry, no matching smiles, no eye contact with the camera, no fashion posing, no plastic skin, no beauty filter, no HDR, no grey desaturated grading, no stock-photo feel, no busy props.",
+  "negatives": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
   "modules": {
     "tradition": {
       "modern": "Modern medicine: a GP's consulting room that looks like a room, a high-street pharmacy counter, a blister pack and a glass of water on a kitchen table, a physiotherapist's hands on a shoulder, a sleep diary on a bedside table. Warmth and eye contact between people. No white coats, corridors or monitors.",
@@ -31,7 +31,7 @@
       "mind-body": "Mind-body medicine: a hand on the chest and one on the belly, eyes closed at a window, a group course in a community hall with mismatched chairs, a pen and a worry list at night. Breath shown as a body, not a pose."
     },
     "condition": {
-      "felt": "The felt experience of the condition, honest and gentle, never theatrical: awake at 3 a.m. in blue-grey light, a hand pressed to a stomach after a meal, a tissue and a hot drink on a windowsill, a stiff neck stretched at a desk. No grimacing, no clutching, no red-tinted pain. Children with a parent present and at ease.",
+      "felt": "Macro body or hands-and-object: the felt experience of the condition, honest and gentle, never theatrical. Hands pressed to a stomach, a palm on a temple, a wrist held, a tissue by a mug. No grimacing, no red-tinted pain, no face needed. Children with a parent's hand in frame.",
       "remedy": "The remedy moment: the first thing on the page a reader can do tonight, mid-action, the steam bowl, the warm milk, the walk, the diary."
     },
     "lifestyle": {
@@ -116,23 +116,42 @@
   "naming": "{category}-{subject}-{variant}.{ext}; category in tradition|condition|lifestyle|brand|ingredient; subject is the site slug; variant two digits; a .json sidecar with prompt, tool, model, seed, date, approver and surface beside every file",
   "examples": [
     {
-      "category": "tradition",
-      "module": "kampo",
-      "surface": "hero-card",
-      "subject": "A woman in her forties at a small Tokyo apartment kitchen tears open a Rikkunshito granule sachet into a ceramic cup, morning light from the left, a kettle steaming behind her."
-    },
-    {
       "category": "condition",
       "module": "felt",
-      "surface": "page-hero",
-      "subject": "A man in his thirties sits on the edge of a bed at 3 a.m., blue-grey street light through a gap in the curtain, phone face down on the far side of the room, eyes open and calm."
+      "shotType": "macro-body",
+      "surface": "tile",
+      "subject": "Macro body shot: a woman's hands pressed flat to her stomach over a plain green sports top, outdoors in open morning daylight, hills soft in the background, no face."
+    },
+    {
+      "category": "tradition",
+      "module": "ayurveda",
+      "shotType": "hands-object",
+      "surface": "hero-card",
+      "subject": "Hands-and-object shot: a woman's hand stirs ashwagandha powder into a small pan of warming milk on a modern hob, bright window light from the left, one mug beside the pan, cropped at the shoulders."
     },
     {
       "category": "lifestyle",
       "module": "sleep",
+      "shotType": "portrait-task",
       "surface": "social-story",
-      "subject": "A woman opens a curtain to bright morning light in a plain bedroom, one hand still on the fabric, the light falling across an unmade bed."
+      "subject": "Portrait mid-task: a man in his sixties in a plain white tee opens a bedroom curtain to bright morning light, in profile, eyes on the window, the room soft behind him."
     }
   ],
-  "principle": "Traditional medicine through a modern lens: everyday people using the world's healing traditions inside the lives they already live. Real modern homes, families of every size, age and race, bright current outdoor settings, one warm bright consistent professional grade. Brand colour is applied at the UI level, never in the image."
+  "principle": "Traditional medicine through a modern lens: everyday people using the world's healing traditions inside the lives they already live. Real modern homes, families of every size, age and race, bright current outdoor settings, one warm bright consistent professional grade. Brand colour is applied at the UI level, never in the image. Realism first: professional photograph or nothing. One subject, one action, tight crop, neutral daylight, no colour cast.",
+  "shotTypes": {
+    "macro-body": "Macro body shot, 100mm macro: hands on a belly, a wrist held, fingers on a temple, a foot on a step; no face or a partial face out of focus. The default for conditions.",
+    "hands-object": "Hands-and-object shot: tearing a sachet, stirring a pan, pouring water, holding a mug; face optional, cropped at the chin or out of focus. The default for traditions and ingredients.",
+    "portrait-task": "Portrait mid-task, 85mm: head and shoulders, eyes on the task, closed, or in profile, background soft.",
+    "environmental-single": "Environmental single: one person, three-quarter or full length, in a real modern room or street, room soft behind them. Use sparingly.",
+    "pair": "Pair: two people each doing something different, only for the connection pillar or a practitioner and a client."
+  },
+  "reference": {
+    "path": "review/reference/",
+    "note": "The founder's two Higgsfield macro frames (hands on stomach, green sports top, open daylight) are the calibration pair. Pass as style references where the tool allows; judge every output against them."
+  },
+  "generation": {
+    "batch": 4,
+    "pick": 1,
+    "note": "Generate four, keep one, checklist the rest. Prefer the tool's negative-prompt field for negatives."
+  }
 }
