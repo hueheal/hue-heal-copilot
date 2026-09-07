@@ -72,7 +72,7 @@ function composePrompt(b: Body): string {
 async function generatePng(b: Body): Promise<{ bytes: Uint8Array; contentType: string }> {
   const provider = b.provider ?? (hasHiggsfield() ? 'higgsfield' : IMAGE_PROVIDER)
   if (provider === 'higgsfield') {
-    const { url } = await generateImage(composePrompt(b), { aspect: asAspect(b.aspect, '4:5'), resolution: '2K' })
+    const { url } = await generateImage(composePrompt(b), { aspect: asAspect(b.aspect, '4:5'), resolution: '1080p' })
     return await download(url)
   }
   if (provider === 'openai') {

@@ -33,11 +33,11 @@ function keyShape(): string {
 }
 
 /** Generate one image and return its URL on Higgsfield's CDN plus the request id. */
-export async function generateImage(prompt: string, opts: { aspect?: Aspect; resolution?: '2K' | '4K'; timeoutMs?: number } = {}): Promise<{ url: string; requestId: string }> {
+export async function generateImage(prompt: string, opts: { aspect?: Aspect; resolution?: '720p' | '1080p'; timeoutMs?: number } = {}): Promise<{ url: string; requestId: string }> {
   if (!KEY) throw new Error('HIGGSFIELD_KEY is not set on the function.')
   const res = await fetch(`${BASE}/higgsfield-ai/soul/standard`, {
     method: 'POST', headers: headers(),
-    body: JSON.stringify({ prompt, num_images: 1, resolution: opts.resolution ?? '2K', aspect_ratio: opts.aspect ?? '4:5' }),
+    body: JSON.stringify({ prompt, num_images: 1, resolution: opts.resolution ?? '1080p', aspect_ratio: opts.aspect ?? '4:5' }),
   })
   if (!res.ok) throw new Error(`Higgsfield ${res.status}: ${(await res.text()).slice(0, 300)}${res.status === 401 ? ` (${keyShape()}; it must be the key id and secret from cloud.higgsfield.ai joined by a colon)` : ''}`)
   const sub = await res.json() as Submit

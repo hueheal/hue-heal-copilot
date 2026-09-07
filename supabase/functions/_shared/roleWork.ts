@@ -388,7 +388,7 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
   const results = await Promise.allSettled(specs.map(async (spec, i) => {
     const prompt = composePrompt(lib, spec)
     const aspect = asAspect(surfaceRatio(lib, spec.surface), '4:5')
-    const { url, requestId } = await generateImage(prompt, { aspect, resolution: '2K' })
+    const { url, requestId } = await generateImage(prompt, { aspect, resolution: '1080p' })
     const { bytes, contentType } = await download(url)
     const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : contentType.includes('webp') ? 'webp' : 'png'
     const path = `${role.owner}/library/${role.brand_id}/${slug(spec.category ?? 'image')}-${slug(spec.subject ?? spec.purpose ?? '')}-${String(Date.now()).slice(-6)}${i}.${ext}`
