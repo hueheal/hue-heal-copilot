@@ -77,9 +77,11 @@ Deno.serve(async (req) => {
 
   /* ---- the sweep ---- */
   if (CRON_SECRET && req.headers.get('x-cron-secret') === CRON_SECRET) {
+    // Jobs the studio kicked off itself are given 45 seconds before the sweep
+    // takes them; jobs queued from the phone are swept straight away.
     const cutoff = new Date(Date.now() - 45_000).toISOString()
     const { data } = await admin.from('role_jobs').select('id')
-      .eq('status', 'queued').lt('created_at', cutoff).order('created_at').limit(5)
+      .eq('status', 'queued').or(`created_at.lt.${cutoff},source.eq.telegram`).order('created_at').limit(4)
     const results: Record<string, string> = {}
     for (const row of (data ?? []) as { id: string }[]) {
       const job = await claim(admin, row.id)

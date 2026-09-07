@@ -399,3 +399,5 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 .ck-board-title { font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ck-faint); margin: 0 0 6px; display: flex; align-items: baseline; gap: 8px; }
 .ck-board-title b { font-weight: 600; color: var(--ck-ink); letter-spacing: 0; text-transform: none; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .ck-pill[data-live='1']::before { animation: none; } }
+.ck-brief { margin-top: 4px; }
+.ck-brief .ck-composer textarea { min-height: 54px; }

@@ -3,16 +3,22 @@
 // to the role's owner + brand world.
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+const KN_ORDER = ['business', 'audience', 'offerings', 'state', 'strategy', 'decisions', 'clients', 'team', 'market', 'technical', 'compliance', 'links', 'faqs']
 const KN_LABELS: Record<string, string> = {
-  business: 'BUSINESS', offerings: 'PRODUCTS & SERVICES', clients: 'CLIENTS & CASE STUDIES',
-  team: 'TEAM', strategy: 'STRATEGY & GOALS', market: 'MARKET', faqs: 'FAQS & TERMINOLOGY',
+  business: 'BUSINESS', audience: 'AUDIENCE', offerings: 'OFFERS & PRICING', state: 'CURRENT STATE OF PLAY',
+  strategy: 'STRATEGY & NEXT 90 DAYS', decisions: 'DECISIONS ALREADY MADE (do not reopen)', clients: 'CLIENTS & PROOF',
+  team: 'TEAM & PARTNERS', market: 'MARKET', technical: 'TECHNICAL', compliance: 'COMPLIANCE & RISKS', links: 'LINKS', faqs: 'FAQS, TERMINOLOGY & OPEN QUESTIONS',
 }
 
-export function knowledge(k: Record<string, string> | null | undefined): string | undefined {
+/** The knowledge base as a seat reads it. Seats get far more of it than the
+    content generators do (2,500 characters a section rather than 700): an
+    org that does not know the business cannot run it. */
+export function knowledge(k: Record<string, string> | null | undefined, cap = 2500): string | undefined {
   if (!k) return undefined
-  const parts = Object.entries(k)
-    .filter(([, v]) => (v ?? '').trim())
-    .map(([key, v]) => `${KN_LABELS[key] ?? key.toUpperCase()}: ${String(v).slice(0, 700)}`)
+  const keys = [...KN_ORDER.filter((x) => x in k), ...Object.keys(k).filter((x) => !KN_ORDER.includes(x))]
+  const parts = keys
+    .filter((key) => (k[key] ?? '').trim())
+    .map((key) => `${KN_LABELS[key] ?? key.toUpperCase()}: ${String(k[key]).slice(0, cap)}`)
   return parts.length ? parts.join('\n') : undefined
 }
 

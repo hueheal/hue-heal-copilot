@@ -1,6 +1,6 @@
 import { supabase, isSupabaseConfigured, functionsBase } from './supabase'
 import { filterByBrand, withBrandInsert } from './brandScope'
-import { seatsIn, seatFor, type OrgRole } from './org'
+import { seatsIn, seatFor, deptOf, type OrgRole } from './org'
 
 /* ============================================================
    Roles: persona agents a workspace employs. Each role is a
@@ -47,6 +47,7 @@ const presetOf = (r: OrgRole): RolePreset => ({ key: r.key, name: r.name, title:
    colleagues and decisions from its own workspace. Two workspaces staffed by
    the same person never meet. */
 
+export const deptNameOf = (role: Pick<Role, 'dept'>): string => deptOf(role.dept)?.name ?? 'department'
 export const ownsOf = (role: Pick<Role, 'key' | 'charter' | 'dept'>, brandName?: string | null): string =>
   seatFor(role, brandName)?.owns || (role.charter.split('.')[0] ?? '').slice(0, 120)
 export const defersOf = (role: Pick<Role, 'key' | 'dept'>, brandName?: string | null): string =>
@@ -191,9 +192,10 @@ export interface RoleJob {
   reviewed_at: string | null
   created_at: string
   finished_at: string | null
+  briefing_id: string | null
 }
 
-const JOB_COLS = 'id, role_id, dept, task, source, status, approval, plan, cost_pence, run_id, error, reviewed_at, created_at, finished_at'
+const JOB_COLS = 'id, role_id, dept, task, source, status, approval, plan, cost_pence, run_id, error, reviewed_at, created_at, finished_at, briefing_id'
 
 /** Every job in a department, newest first. */
 export async function listDeptJobs(dept: string): Promise<RoleJob[]> {
@@ -232,10 +234,10 @@ export async function listActiveJobs(): Promise<RoleJob[]> {
   return (data ?? []) as RoleJob[]
 }
 
-export async function assignJob(role: Role, task: string): Promise<{ job?: RoleJob; error?: string }> {
+export async function assignJob(role: Role, task: string, extra: { briefing_id?: string } = {}): Promise<{ job?: RoleJob; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { error: 'Roles need the connected studio (not available in local mode).' }
   const { data, error } = await supabase.from('role_jobs')
-    .insert(withBrandInsert({ role_id: role.id, dept: role.dept, task: task.trim(), source: 'studio' }) as never)
+    .insert(withBrandInsert({ role_id: role.id, dept: role.dept, task: task.trim(), source: 'studio', ...extra }) as never)
     .select(JOB_COLS).single()
   if (error) return { error: error.message }
   const job = data as RoleJob
@@ -274,6 +276,44 @@ export async function learnNow(lead: Role): Promise<{ lessons?: string[]; note?:
 export async function markReviewed(jobId: string): Promise<void> {
   if (!supabase) return
   await supabase.from('role_jobs').update({ reviewed_at: new Date().toISOString() } as never).eq('id', jobId)
+}
+
+/* ---- Briefings: one message to every lead at once ----
+   The founder talks to the leadership team together. Each lead answers with
+   its own job (taking what is theirs, handing over the rest), and the latest
+   briefing is read into every run that day. */
+export interface Briefing { id: string; text: string; source: string; created_at: string }
+
+/** The task each lead receives. Written here so the studio and the phone
+    brief the org identically. */
+export const briefingTask = (text: string, deptName: string) =>
+  `DAILY BRIEFING FROM THE FOUNDER, sent to every department lead at once:\n\n${text.trim()}\n\nYou are the ${deptName} lead. If nothing in this briefing concerns your department, say so in one line and stop: do not manufacture work. Otherwise: name what in it is yours, do it now where it can be done in this deliverable, hand anything that belongs to a colleague to them as a handoff, and say what you need from the founder. Short. Specific. Today.`
+
+export async function sendBriefing(text: string, leads: Role[]): Promise<{ briefing?: Briefing; jobs: RoleJob[]; error?: string }> {
+  if (!supabase) return { jobs: [], error: 'Not connected' }
+  const { data, error } = await supabase.from('role_briefings')
+    .insert(withBrandInsert({ text: text.trim(), source: 'studio' }) as never).select('id, text, source, created_at').single()
+  if (error) return { jobs: [], error: error.message }
+  const briefing = data as Briefing
+  const jobs: RoleJob[] = []
+  for (const lead of leads.filter((r) => r.seat === 'lead' && r.enabled)) {
+    const { job } = await assignJob(lead, briefingTask(text, deptNameOf(lead)), { briefing_id: briefing.id })
+    if (job) jobs.push(job)
+  }
+  return { briefing, jobs }
+}
+
+export async function latestBriefing(): Promise<Briefing | null> {
+  if (!supabase) return null
+  const { data } = await filterByBrand(supabase.from('role_briefings').select('id, text, source, created_at'))
+    .order('created_at', { ascending: false }).limit(1)
+  return ((data ?? [])[0] as Briefing | undefined) ?? null
+}
+
+export async function briefingJobs(briefingId: string): Promise<RoleJob[]> {
+  if (!supabase) return []
+  const { data } = await supabase.from('role_jobs').select(JOB_COLS).eq('briefing_id', briefingId).order('created_at')
+  return (data ?? []) as RoleJob[]
 }
 
 /* ---- Department state: playbook, budget, tools ---- */

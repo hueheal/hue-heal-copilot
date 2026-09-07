@@ -4,6 +4,7 @@ import { useBrand } from '../lib/brandContext'
 import { listRoles, hireDepartment, listWorkspaceJobs, decideJob, deptSpend, type Role, type RoleJob } from '../lib/roles'
 import { DEPARTMENTS, seatsIn, pounds, type OrgDept } from '../lib/org'
 import { agoLabel } from '../components/chrome/AssetCard'
+import Briefing from '../components/Briefing'
 
 /* ============================================================
    The team area. Departments as cards, each in its own colour,
@@ -69,6 +70,10 @@ export default function Team() {
           You talk to the leads. They brief their people, compile the work and sign it. Anything that would leave the building waits here for you.
         </div>
         {note && <div className="ck-note" role="status" style={{ marginTop: 12 }}>{note}</div>}
+
+        {roles !== null && roles.some((r) => r.seat === 'lead') && (
+          <div style={{ marginTop: 22 }}><Briefing compact /></div>
+        )}
 
         {roles === null ? (
           <div className="ck-cards" style={{ marginTop: 22 }}>{Array.from({ length: 3 }).map((_, i) => <div key={i} className="ck-skeleton" />)}</div>

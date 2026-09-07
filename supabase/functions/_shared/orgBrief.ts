@@ -45,6 +45,13 @@ export async function buildOrgBrief(
   const byId = new Map(all.map((r) => [r.id, r]))
   const lines: string[] = []
 
+  /* The founder's latest briefing, if it is from the last day: the whole org
+     works from the same page. */
+  const { data: briefRows } = await scope(admin.from('role_briefings').select('text, created_at'))
+    .gte('created_at', new Date(Date.now() - 86400000).toISOString()).order('created_at', { ascending: false }).limit(1)
+  const latest = ((briefRows ?? [])[0] as { text: string; created_at: string } | undefined)
+  if (latest) lines.push(`THE FOUNDER'S BRIEFING TO ALL LEADS (${ago(latest.created_at) || 'today'}; every department is working from this today):\n${trim(latest.text, 1500)}`, '')
+
   /* Latest deliverable from each colleague: the live state of their division. */
   const latest: string[] = []
   for (const other of others.slice(0, 8)) {

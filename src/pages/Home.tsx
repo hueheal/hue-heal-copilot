@@ -10,6 +10,9 @@ import { fontsFor } from '../lib/social/templates'
 import { INSTAGRAM_FORMATS } from '../lib/social/formats'
 import { SlideCanvas } from './SocialStudio'
 import Composer from '../components/chrome/Composer'
+import Briefing from '../components/Briefing'
+import { listRoles, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
+import { DEPARTMENTS, deptOf } from '../lib/org'
 import type { PostFormat } from '../lib/database.types'
 
 /* ============================================================
@@ -45,6 +48,17 @@ export default function Home() {
   const [recents, setRecents] = useState<Recent[] | null>(null)
   const [journals, setJournals] = useState<JournalArticle[]>([])
   const [newsletters, setNewsletters] = useState<Newsletter[]>([])
+  const [roles, setRoles] = useState<Role[]>([])
+  const [jobs, setJobs] = useState<RoleJob[]>([])
+
+  /* The org's pulse: who is working, what waits on you. */
+  useEffect(() => {
+    let live = true
+    const pull = () => Promise.all([listRoles(), listWorkspaceJobs()]).then(([rs, js]) => { if (live) { setRoles(rs); setJobs(js) } }).catch(() => {})
+    void pull()
+    const t = setInterval(pull, 10000)
+    return () => { live = false; clearInterval(t) }
+  }, [current?.id])
 
   useEffect(() => {
     let off = false
@@ -89,6 +103,16 @@ export default function Home() {
     return out.slice(0, 3)
   }, [recents, journals, newsletters])
 
+  const hasOrg = roles.some((r) => r.seat === 'lead')
+  const approvals = jobs.filter((j) => j.status === 'done' && j.approval === 'pending')
+  const working = jobs.filter((j) => j.status === 'queued' || j.status === 'running')
+  const unread = jobs.filter((j) => j.status === 'done' && j.approval !== 'pending' && !j.reviewed_at)
+  const depts = DEPARTMENTS.filter((d) => roles.some((r) => r.dept === d.key && r.seat === 'lead'))
+  async function decide(j: RoleJob, approval: 'approved' | 'declined') {
+    await decideJob(j.id, approval)
+    setJobs((l) => l.map((x) => (x.id === j.id ? { ...x, approval, reviewed_at: new Date().toISOString() } : x)))
+  }
+
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const day = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -97,8 +121,72 @@ export default function Home() {
     <div className="ck-page">
       <div className="ck-page-inner">
         <div className="ck-eyebrow">{day} · {current?.name ?? 'Studio'}</div>
-        <h1 className="ck-h1">{greeting}. What shall we make?</h1>
+        <h1 className="ck-h1">{greeting}.</h1>
 
+        {hasOrg ? (
+          <>
+            <Briefing compact />
+
+            {approvals.length > 0 && (
+              <>
+                <div className="ck-sectiongap" />
+                <div className="ck-board-title"><b>Needs your approval</b> {approvals.length}</div>
+                <div className="ck-jobs" style={{ margin: 0 }}>
+                  {approvals.slice(0, 5).map((j) => {
+                    const d = deptOf(j.dept); const by = roles.find((r) => r.id === j.role_id)
+                    return (
+                      <div key={j.id} className="ck-job" data-state="approval" style={{ ['--ck-dept' as never]: d?.accent }}>
+                        <span className="ck-dept-mark" data-size="s">{d?.mark ?? '··'}</span>
+                        <span style={{ flex: 1, minWidth: 0 }}>
+                          <span className="ck-job-task">{j.task}</span>
+                          <span className="ck-job-meta">{by?.name ?? 'A lead'} · {ago(j.finished_at ?? j.created_at)}</span>
+                        </span>
+                        <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                          <button className="ck-pill" onClick={() => nav(`/team/${j.dept}?job=${j.id}`)}>Read</button>
+                          <button className="ck-pill" data-on="1" onClick={() => void decide(j, 'approved')}>Approve</button>
+                          <button className="ck-pill" onClick={() => void decide(j, 'declined')}>Decline</button>
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            <div className="ck-sectiongap" />
+            <div className="ck-board-title"><b>Departments</b> {working.length ? `${working.length} working` : ''}{unread.length ? ` · ${unread.length} to read` : ''}</div>
+            <div className="ck-depts" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))' }}>
+              {depts.map((d) => {
+                const w = working.filter((j) => j.dept === d.key).length
+                const u = unread.filter((j) => j.dept === d.key).length
+                const lead = roles.find((r) => r.dept === d.key && r.seat === 'lead')
+                return (
+                  <button key={d.key} className="ck-dept" style={{ ['--ck-dept' as never]: d.accent, minHeight: 0, gap: 8, padding: '12px 14px' }} onClick={() => nav(`/team/${d.key}`)}>
+                    <span className="ck-dept-head">
+                      <span className="ck-dept-mark" data-size="s">{d.mark}</span>
+                      <span style={{ minWidth: 0 }}>
+                        <span className="ck-tile-label">{d.name}</span>
+                        <span className="ck-tile-sub" style={{ marginTop: 0 }}>{w ? `Working on ${w}` : u ? `${u} to read` : lead?.name ?? ''}</span>
+                      </span>
+                    </span>
+                  </button>
+                )
+              })}
+              <button className="ck-dept" data-open="1" style={{ minHeight: 0, gap: 8, padding: '12px 14px', cursor: 'pointer' }} onClick={() => nav('/team')}>
+                <span className="ck-tile-sub" style={{ marginTop: 0 }}>All departments →</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="ck-dept" data-open="1" style={{ minHeight: 0, marginTop: 4 }}>
+            <span className="ck-tile-label">Build your org</span>
+            <span className="ck-tile-sub" style={{ whiteSpace: 'normal', lineHeight: 1.5 }}>Hire departments on the Team page. Then this is where you brief the leads each morning and rule on what they bring back.</span>
+            <span><button className="ck-go" style={{ marginLeft: 0 }} onClick={() => nav('/team')}>Open Team</button></span>
+          </div>
+        )}
+
+        <div className="ck-sectiongap" />
+        <h2 className="ck-h2">Make something</h2>
         <Composer />
 
         {recents === null ? (

@@ -17,7 +17,7 @@ import {
   inviteBrandMember,
   removeBrandMember,
 } from '../lib/brand'
-import { KNOWLEDGE_FIELDS, type Knowledge } from '../lib/knowledge'
+import { KNOWLEDGE_FIELDS, parseDossier, type Knowledge } from '../lib/knowledge'
 import { getChannel, startPairing, setPush, unlinkChannel, type OrgChannel } from '../lib/channel'
 import { listRoles, type Role } from '../lib/roles'
 import { startInstagramConnect, finishInstagramConnect, refreshInstagramToken } from '../lib/instagramConnect'
@@ -513,8 +513,19 @@ function KnowledgePanel() {
   const [k, setK] = useState<Knowledge>({})
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
+  const [dossier, setDossier] = useState('')
+  const [pasting, setPasting] = useState(false)
 
-  useEffect(() => { setK((current?.knowledge as Knowledge) ?? {}) }, [current?.id])
+  useEffect(() => { setK((current?.knowledge as Knowledge) ?? {}); setDossier(''); setPasting(false) }, [current?.id])
+
+  function importDossier() {
+    const parsed = parseDossier(dossier)
+    const n = Object.keys(parsed).length
+    if (!n) { setStatus('Nothing recognised. Use the headings from the onboarding prompt.'); return }
+    setK((prev) => ({ ...prev, ...parsed }))
+    setDossier(''); setPasting(false)
+    setStatus(`${n} sections filled from the dossier. Read them over, then save.`)
+  }
 
   async function save() {
     if (!current) return
@@ -533,6 +544,22 @@ function KnowledgePanel() {
         social, newsletters, proposals and client documents, and never invents beyond them. Leave anything blank; only filled
         sections are used.
       </p>
+      <div style={{ margin: '4px 0 18px' }}>
+        {pasting ? (
+          <>
+            <label style={label}>Paste a dossier</label>
+            <textarea rows={8} value={dossier} onChange={(e) => setDossier(e.target.value)} style={area}
+              placeholder="Paste the answer to the onboarding prompt here. Its headings fill the sections below." />
+            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+              <PillButton tone="accent" onClick={importDossier} disabled={!dossier.trim()}>Fill the sections</PillButton>
+              <PillButton onClick={() => { setPasting(false); setDossier('') }}>Cancel</PillButton>
+            </div>
+          </>
+        ) : (
+          <PillButton onClick={() => setPasting(true)}>Paste a dossier</PillButton>
+        )}
+        <p style={hint}>The onboarding prompt lives in docs/workspace-onboarding-prompt.md. Send it to any chat that knows the business, paste the answer here, and the org is briefed the same way every time.</p>
+      </div>
       {KNOWLEDGE_FIELDS.map((f) => (
         <div key={f.key}>
           <label style={label}>{f.label}</label>

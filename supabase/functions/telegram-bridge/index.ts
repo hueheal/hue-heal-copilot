@@ -29,6 +29,10 @@ const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 interface Channel { id: string; owner: string; brand_id: string | null; push: boolean }
 
 const short = (id: string) => id.slice(0, 4)
+
+/** Same words as the studio uses, so the org is briefed identically. */
+const briefingTask = (text: string, deptName: string) =>
+  `DAILY BRIEFING FROM THE FOUNDER, sent to every department lead at once:\n\n${text.trim()}\n\nYou are the ${deptName} lead. If nothing in this briefing concerns your department, say so in one line and stop: do not manufacture work. Otherwise: name what in it is yours, do it now where it can be done in this deliverable, hand anything that belongs to a colleague to them as a handoff, and say what you need from the founder. Short. Specific. Today.`
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '')
 
 /** Long work (a role run) without holding the webhook open. Only safe when the
@@ -46,6 +50,7 @@ const HELP = [
   '',
   plain('Just type to brief the Head of Growth, or:'),
   plain('@growth plan september   — brief a department lead'),
+  plain('/brief <text>   brief every lead at once; replies land here'),
   plain('/team       your departments and who leads them'),
   plain('/inbox      what is waiting on your call'),
   plain('/approve a1b2   ·  /decline a1b2'),
@@ -114,6 +119,23 @@ async function handle(admin: SupabaseClient, ch: Channel, chatId: string, text: 
     if (!match) return sendMessage(chatId, plain('No workspace by that name with roles hired.'))
     await admin.from('org_channels').update({ brand_id: match.id, updated_at: new Date().toISOString() }).eq('id', ch.id)
     return sendMessage(chatId, plain(`This chat now talks to ${match.name}. Its roles only see ${match.name}'s work.`))
+  }
+
+  if (cmd === '/brief' || cmd === '/briefing') {
+    if (!arg.trim()) return sendMessage(chatId, plain('What is the briefing? /brief followed by the message.'))
+    const leads = roles.filter((r) => r.seat !== 'member' && r.enabled)
+    if (!leads.length) return sendMessage(chatId, plain('No departments hired in this workspace yet.'))
+    const { data: br } = await admin.from('role_briefings').insert({ owner: ch.owner, brand_id: ch.brand_id, text: arg.trim(), source: 'telegram' }).select('id').single()
+    const briefingId = (br as { id?: string } | null)?.id ?? null
+    // Queue one job per lead and let the minute sweep run them: seven leads
+    // in one webhook would keep Telegram waiting far too long.
+    for (const lead of leads) {
+      await admin.from('role_jobs').insert({
+        owner: ch.owner, brand_id: ch.brand_id, role_id: lead.id, dept: lead.dept ?? null, briefing_id: briefingId,
+        task: briefingTask(arg.trim(), deptOf(lead.dept)?.name ?? 'department'), source: 'telegram', status: 'queued',
+      })
+    }
+    return sendMessage(chatId, plain(`Briefed ${leads.length} lead${leads.length === 1 ? '' : 's'}: ${leads.map((l) => l.name).join(', ')}. Replies will land here over the next few minutes${ch.push ? '' : ' if push is on in Settings, Channel'}, and on the Team page.`))
   }
 
   if (cmd === '/roles' || cmd === '/team') {
