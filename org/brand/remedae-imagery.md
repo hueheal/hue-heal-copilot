@@ -1,6 +1,6 @@
 # Remedae imagery style guide
 
-The single reference for every photograph, illustration and video made for Remedae: the site, social, email, the journal, and anything the Hue & Heal copilot generates. Version 1.1, 7 September 2026. Companion to `design-system.md` (tokens and layout) and `copy_bible_source.md` (voice). The machine-readable version of the prompt library is `content/imagery/prompt-library.json`.
+The single reference for every photograph, illustration and video made for Remedae: the site, social, email, the journal, and anything the Hue & Heal copilot generates. Version 1.2, 7 September 2026. Companion to `design-system.md` (tokens and layout) and `copy_bible_source.md` (voice). The machine-readable version of the prompt library is `content/imagery/prompt-library.json`.
 
 Tool of choice for generation is Higgsfield (image and video) through its MCP at `https://mcp.higgsfield.ai/mcp`. The copilot's own image function currently calls OpenAI with the Remedae master prompt; section 9 says how to move it to this guide.
 
@@ -38,7 +38,7 @@ Four tests before an image is used:
 
 ## 3. The photographic constants
 
-These go into every prompt and every brief. They do not change by category.
+These go into every prompt and every brief. They do not change by category. The reference set in `public/assets/reference/` is the calibration for all of it: five frames the founder chose, and the copilot passes the category's frame to the generator as a style reference on every render.
 
 **Realism first.** The output must pass as a professional photograph, the kind a picture desk would license: true optical depth of field, real skin with pores and fine hair, fabric with visible weave and creases, honest reflections and shadows. Any hint of a render, illustration, painterly smoothing, over-sharpening, halo edges, waxy skin, or "AI glow" fails the image outright, whatever else it gets right.
 
@@ -54,13 +54,13 @@ These go into every prompt and every brief. They do not change by category.
 
 **Camera.** Full-frame, 50mm or 85mm for people, 100mm macro for body and object close-ups, f/2 to f/2.8, one clear plane of focus with natural fall-off. Eye level for people; 45 degrees or straight down for objects on a surface. No wide-angle lenses: nothing under 35mm, no distorted rooms, no stretched edges.
 
-**Light.** Bright, natural and neutral: a big window, an open door, morning or afternoon sun, or open shade outdoors. The scene feels flooded with light. Soft shadows with detail in them. Never low-key, never moody, never clinical, never blown.
+**Light.** Directional and premium, the way a fitness or lifestyle brand lights a campaign: sun through a window or open sky from one side, sculpting the subject, with real highlights and real shadow that still has detail. Warm is fine when it comes from the sun; a dark background is fine when the light on the person is honest. Never flat, never clinical, never blown, never a snapshot.
 
-**White balance and grade.** Daylight-neutral: whites are white, skin is its own colour, greens are green. Warmth comes from sunlight, timber and skin, never from a cast. No orange, sepia, amber or golden wash over the frame. No HDR, no teal-and-orange, no desaturated or grey looks, no vignette, no film-emulation filters, no beauty smoothing. One grade for the whole set: bright, clean, vibrant, believable, the look of a professional lifestyle shoot.
+**Grade.** Rich and true: skin is its own colour, greens are green, a lime top is lime. Warmth comes from sunlight, timber and skin, never from a wash laid over the frame. No HDR, no teal-and-orange, no desaturated or grey looks, no vignette, no film-emulation filters, no beauty smoothing. One grade for the whole set: vibrant, deep, believable, the look of a premium campaign, not a stock library and not a phone.
 
 **Colour.** Naturally vibrant: the colours of real clothes, real rooms and daylight. Solid-colour contemporary clothing photographs best (a green top, a sand knit, a white tee). No colour tone is applied to any category of image. Brand colour (mint, and yellow for Remedae+) is added at the UI level, never in the photograph.
 
-**Simplicity.** Besides the subject, at most three objects in frame, and the named object is one of them. Clean surfaces, soft backgrounds through depth of field, generous negative space. No prop dressing, no counters full of things, no decorative clutter.
+**Simplicity and depth.** Besides the subject, at most three objects in frame, and the named object is one of them. Clean surfaces, and a background with real distance in it, softened by depth of field rather than emptied: a room behind the person, a terrace wall, trees. Everyday detail belongs in the scene as texture, not as a checklist (a charger and a glass are not the subject). No prop dressing, no counters full of things, no decorative clutter.
 
 **People.** Everyday people in today's clothes: basics, knitwear, activewear, denim. Real skin texture, fine lines, flyaway hair, clothing creases. Relaxed and unposed; mid-task, looking at the thing, eyes closed, or in profile, never at the camera. Children to elders, all body types, families of every size and shape. A cast that looks like the UK and its diaspora across every tradition, so no tradition is illustrated by one ethnicity as a costume, and no tradition is signalled by dress: no kurta, kimono, kaftan or tunic as a stand-in for a tradition.
 

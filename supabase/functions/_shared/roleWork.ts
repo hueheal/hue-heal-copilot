@@ -16,7 +16,7 @@ import { buildOrgBrief, fileHandoffs } from './orgBrief.ts'
 import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
 import { roleDef, deptOf, toolsLine, ownsOf } from './orgShape.ts'
-import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, surfaceKey, destinationFor, recentVerdicts, verdictsLine, correctionsLine, type ImageRequest } from './imagery.ts'
+import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, surfaceKey, destinationFor, recentVerdicts, verdictsLine, correctionsLine, referenceFor, type ImageRequest } from './imagery.ts'
 import { hasHiggsfield, submitImage, checkImage, download, asAspect } from './higgsfield.ts'
 
 /* `owner` is the signed-in user who does the work, which is not always the
@@ -409,8 +409,9 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
         // endpoint returns one image per request whatever num_images says,
         // so a batch is that many separate requests.
         const batch = Math.min(4, Math.max(1, plan.batch ?? lib.batch ?? 1))
+        const referenceUrl = await referenceFor(lib, spec)
         for (let k = 0; k < batch; k++) {
-          const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p', count: 1, referenceUrl: lib.referenceUrls?.[0] })
+          const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p', count: 1, referenceUrl })
           plan.pending.push({ spec: { ...spec, surface: surfaceKey(lib, spec.surface) ?? spec.surface }, prompt, aspect, requestId, statusUrl, n: k + 1, of: batch })
         }
       } catch (e) { plan.failed.push(e instanceof Error ? e.message : String(e)) }

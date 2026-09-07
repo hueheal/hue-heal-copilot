@@ -24,6 +24,8 @@ export interface Library {
   batch?: number
   /** Public URLs of the calibration frames, when the founder has supplied them. */
   referenceUrls?: string[]
+  /** A calibration frame per category, preferred over the general list. */
+  referenceByCategory?: Record<string, string>
   /** Standing corrections from the founder's recent declines. */
   corrections?: string
 }
@@ -77,11 +79,12 @@ export async function loadLibrary(admin: SupabaseClient, brandId: string | null)
   const raw = row?.knowledge?._imagery_library
   if (typeof raw === 'string' && raw.trim()) {
     try {
-      const lib = JSON.parse(raw) as Partial<Library> & { generation?: { batch?: number }; reference?: { urls?: string[] } }
+      const lib = JSON.parse(raw) as Partial<Library> & { generation?: { batch?: number }; reference?: { urls?: string[]; byCategory?: Record<string, string> } }
       return {
         master: lib.master ?? row?.image_master_prompt ?? '', negatives: lib.negatives ?? row?.image_negatives ?? '',
         modules: lib.modules ?? {}, surfaces: lib.surfaces ?? {}, order: lib.order, shotTypes: lib.shotTypes,
         batch: lib.batch ?? lib.generation?.batch, referenceUrls: lib.referenceUrls ?? lib.reference?.urls,
+        referenceByCategory: lib.referenceByCategory ?? lib.reference?.byCategory,
       }
     } catch { /* fall through to the plain master prompt */ }
   }
@@ -160,4 +163,19 @@ export function destinationFor(surface?: string): 'studio' | 'remedae' {
   const s = (surface ?? '').toLowerCase()
   if (!s || /^(social|email|story|reel|post)/.test(s)) return 'studio'
   return 'remedae'
+}
+
+/** The calibration frame for a request, only if it is actually reachable:
+    a missing file must fall back to the standard endpoint, never fail. */
+const reachable = new Map<string, boolean>()
+export async function referenceFor(lib: Library, req: ImageRequest): Promise<string | undefined> {
+  const url = (req.category && lib.referenceByCategory?.[req.category]) || lib.referenceUrls?.[0]
+  if (!url) return undefined
+  if (!reachable.has(url)) {
+    try {
+      const r = await fetch(url, { method: 'HEAD' })
+      reachable.set(url, r.ok && (r.headers.get('content-type') ?? '').startsWith('image/'))
+    } catch { reachable.set(url, false) }
+  }
+  return reachable.get(url) ? url : undefined
 }
