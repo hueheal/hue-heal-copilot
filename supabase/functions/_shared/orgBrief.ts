@@ -49,8 +49,8 @@ export async function buildOrgBrief(
      works from the same page. */
   const { data: briefRows } = await scope(admin.from('role_briefings').select('text, created_at'))
     .gte('created_at', new Date(Date.now() - 86400000).toISOString()).order('created_at', { ascending: false }).limit(1)
-  const latest = ((briefRows ?? [])[0] as { text: string; created_at: string } | undefined)
-  if (latest) lines.push(`THE FOUNDER'S BRIEFING TO ALL LEADS (${ago(latest.created_at) || 'today'}; every department is working from this today):\n${trim(latest.text, 1500)}`, '')
+  const founderBrief = ((briefRows ?? [])[0] as { text: string; created_at: string } | undefined)
+  if (founderBrief) lines.push(`THE FOUNDER'S BRIEFING TO ALL LEADS (${ago(founderBrief.created_at) || 'today'}; every department is working from this today):\n${trim(founderBrief.text, 1500)}`, '')
 
   /* Latest deliverable from each colleague: the live state of their division. */
   const latest: string[] = []
