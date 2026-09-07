@@ -176,7 +176,7 @@ export async function listRuns(roleId: string): Promise<RoleRun[]> {
    server, so it survives a reload, a closed tab or a walk to the kettle; the
    room watches the row and the deliverable appears when it lands. */
 
-export interface JobPlan { approach: 'solo' | 'team'; reason: string; assignments: { to: string; roleId?: string; brief: string; runId?: string | null; ok?: boolean }[] }
+export interface JobPlan { approach?: 'solo' | 'team'; reason?: string; assignments?: { to: string; roleId?: string; brief: string; runId?: string | null; ok?: boolean }[]; images?: unknown[]; runId?: string | null }
 export interface RoleJob {
   id: string
   role_id: string
@@ -271,6 +271,20 @@ export async function learnNow(lead: Role): Promise<{ lessons?: string[]; note?:
   const data = await res.json().catch(() => ({})) as { lessons?: string[]; note?: string; error?: string }
   if (!res.ok) return { error: data.error ?? `Worker ${res.status}` }
   return data
+}
+
+/** Re-queue an image job with the same requests (its plan), rather than
+    briefing the lead with the job's label as if it were a task. */
+export async function retryImageJob(job: RoleJob): Promise<{ job?: RoleJob; error?: string }> {
+  if (!supabase) return { error: 'Not connected' }
+  const plan = (job.plan ?? {}) as Record<string, unknown>
+  const images = plan.images
+  if (!Array.isArray(images) || !images.length) return { error: 'This job has no image requests to retry.' }
+  const { data, error } = await supabase.from('role_jobs')
+    .insert(withBrandInsert({ role_id: job.role_id, dept: job.dept, task: job.task, source: 'desk', status: 'queued', plan: { images, runId: plan.runId ?? null } }) as never)
+    .select(JOB_COLS).single()
+  if (error) return { error: error.message }
+  return { job: data as RoleJob }
 }
 
 export async function markReviewed(jobId: string): Promise<void> {

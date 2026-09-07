@@ -9,9 +9,23 @@ const BASE = 'https://api.higgsfield.ai'
 
 export const hasHiggsfield = (): boolean => Boolean(KEY)
 
-export type Aspect = '1:1' | '4:3' | '3:4' | '3:2' | '2:3' | '5:4' | '4:5' | '16:9' | '9:16' | '21:9'
-const ASPECTS: Aspect[] = ['1:1', '4:3', '3:4', '3:2', '2:3', '5:4', '4:5', '16:9', '9:16', '21:9']
-export const asAspect = (s?: string | null, fallback: Aspect = '4:5'): Aspect => (ASPECTS.includes(s as Aspect) ? (s as Aspect) : fallback)
+/** The live API accepts these seven (its published spec lists more; they 422). */
+export type Aspect = '1:1' | '4:3' | '3:4' | '3:2' | '2:3' | '16:9' | '9:16'
+const ASPECTS: Aspect[] = ['1:1', '4:3', '3:4', '3:2', '2:3', '16:9', '9:16']
+/** Nearest accepted ratio to what a surface asks for (4:5 -> 3:4, 16:10 -> 16:9, 2:1 -> 16:9). */
+export function asAspect(s?: string | null, fallback: Aspect = '3:4'): Aspect {
+  const m = (s ?? '').trim().match(/^(\d+(?:\.\d+)?)\s*[:x/]\s*(\d+(?:\.\d+)?)$/)
+  if (!m) return fallback
+  const want = Number(m[1]) / Number(m[2])
+  if (!isFinite(want) || want <= 0) return fallback
+  let best: Aspect = fallback, gap = Infinity
+  for (const a of ASPECTS) {
+    const [w, h] = a.split(':').map(Number)
+    const d = Math.abs(Math.log(w / h) - Math.log(want))
+    if (d < gap) { gap = d; best = a }
+  }
+  return best
+}
 
 interface Submit { request_id: string; status_url: string; status: string }
 interface Status { status: string; images?: { url: string }[]; error?: string; detail?: string }
@@ -33,26 +47,29 @@ function keyShape(): string {
 }
 
 /** Submit one image and return the handles to poll with. */
-export async function submitImage(prompt: string, opts: { aspect?: Aspect; resolution?: '720p' | '1080p' } = {}): Promise<{ requestId: string; statusUrl: string }> {
+export async function submitImage(prompt: string, opts: { aspect?: Aspect; resolution?: '720p' | '1080p'; count?: number; referenceUrl?: string } = {}): Promise<{ requestId: string; statusUrl: string }> {
   if (!KEY) throw new Error('HIGGSFIELD_KEY is not set on the function.')
-  const res = await fetch(`${BASE}/higgsfield-ai/soul/standard`, {
-    method: 'POST', headers: headers(),
-    body: JSON.stringify({ prompt, num_images: 1, resolution: opts.resolution ?? '1080p', aspect_ratio: opts.aspect ?? '4:5' }),
-  })
+  const count = Math.min(4, Math.max(1, Math.round(opts.count ?? 1)))
+  // With a calibration frame the reference endpoint holds the look; otherwise standard.
+  const endpoint = opts.referenceUrl ? 'higgsfield-ai/soul/reference' : 'higgsfield-ai/soul/standard'
+  const body = opts.referenceUrl
+    ? { prompt, image_reference_url: opts.referenceUrl, batch_size: count, resolution: opts.resolution ?? '1080p', aspect_ratio: opts.aspect ?? '3:4', enhance_prompt: false, style_strength: 0.8 }
+    : { prompt, num_images: count, resolution: opts.resolution ?? '1080p', aspect_ratio: opts.aspect ?? '3:4' }
+  const res = await fetch(`${BASE}/${endpoint}`, { method: 'POST', headers: headers(), body: JSON.stringify(body) })
   if (!res.ok) throw new Error(`Higgsfield ${res.status}: ${(await res.text()).slice(0, 300)}${res.status === 401 ? ` (${keyShape()}; it must be the key id and secret from cloud.higgsfield.ai joined by a colon)` : ''}`)
   const sub = await res.json() as Submit
   if (!sub.request_id) throw new Error('Higgsfield returned no request id')
   return { requestId: sub.request_id, statusUrl: sub.status_url || `${BASE}/requests/${sub.request_id}/status` }
 }
 
-/** One look at a submitted image: ready with a URL, still rendering, or failed. */
-export async function checkImage(statusUrl: string): Promise<{ state: 'ready'; url: string } | { state: 'rendering' } | { state: 'failed'; reason: string }> {
+/** One look at a submitted request: ready with its image URLs, still rendering, or failed. */
+export async function checkImage(statusUrl: string): Promise<{ state: 'ready'; url: string; urls: string[] } | { state: 'rendering' } | { state: 'failed'; reason: string }> {
   const s = await fetch(statusUrl, { headers: headers() })
   if (!s.ok) throw new Error(`Higgsfield status ${s.status}`)
   const st = await s.json() as Status
   if (st.status === 'completed') {
-    const url = st.images?.[0]?.url
-    return url ? { state: 'ready', url } : { state: 'failed', reason: 'completed without an image' }
+    const urls = (st.images ?? []).map((i) => i.url).filter(Boolean)
+    return urls.length ? { state: 'ready', url: urls[0], urls } : { state: 'failed', reason: 'completed without an image' }
   }
   if (st.status === 'failed' || st.status === 'nsfw' || st.status === 'canceled') return { state: 'failed', reason: `${st.status}${st.error || st.detail ? `: ${st.error ?? st.detail}` : ''}` }
   return { state: 'rendering' }

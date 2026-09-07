@@ -16,7 +16,7 @@ import { buildOrgBrief, fileHandoffs } from './orgBrief.ts'
 import { buildFacts, knowledge } from './workspaceFacts.ts'
 import { sendMessage, formatDeliverable } from './telegram.ts'
 import { roleDef, deptOf, toolsLine, ownsOf } from './orgShape.ts'
-import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, destinationFor, type ImageRequest } from './imagery.ts'
+import { loadLibrary, composePrompt, promptParts, imageryLine, surfaceRatio, surfaceKey, destinationFor, type ImageRequest } from './imagery.ts'
 import { hasHiggsfield, submitImage, checkImage, download, asAspect } from './higgsfield.ts'
 
 /* `owner` is the signed-in user who does the work, which is not always the
@@ -392,6 +392,7 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
   const plan: ImagePlan = { ...(job.plan ?? {}) }
   plan.failed = plan.failed ?? []
   plan.made = plan.made ?? 0
+  if (!plan.pending && !(plan.images ?? []).length) throw new Error('Nothing to render: this job carries no image requests. Brief the department instead.')
   const lib = await loadLibrary(admin, role.brand_id)
   if (!lib) throw new Error('This workspace has no imagery library or master prompt yet.')
 
@@ -402,9 +403,9 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
     for (const spec of (plan.images ?? []).slice(0, 3)) {
       try {
         const prompt = composePrompt(lib, spec)
-        const aspect = asAspect(surfaceRatio(lib, spec.surface), '4:5')
-        const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p' })
-        plan.pending.push({ spec, prompt, aspect, requestId, statusUrl })
+        const aspect = asAspect(surfaceRatio(lib, spec.surface), '3:4')
+        const { requestId, statusUrl } = await submitImage(prompt, { aspect, resolution: '1080p', count: lib.batch ?? 1, referenceUrl: lib.referenceUrls?.[0] })
+        plan.pending.push({ spec: { ...spec, surface: surfaceKey(lib, spec.surface) ?? spec.surface }, prompt, aspect, requestId, statusUrl })
       } catch (e) { plan.failed.push(e instanceof Error ? e.message : String(e)) }
     }
   }
@@ -416,19 +417,23 @@ export async function renderImages(admin: SupabaseClient, role: RoleRow, job: { 
       const c = await checkImage(p.statusUrl)
       if (c.state === 'rendering') { still.push(p); continue }
       if (c.state === 'failed') { plan.failed.push(`Higgsfield ${c.reason}`); continue }
-      const { bytes, contentType } = await download(c.url)
-      const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : contentType.includes('webp') ? 'webp' : 'png'
-      const path = `${role.owner}/library/${role.brand_id}/${slug(p.spec.category ?? 'image')}-${slug(p.spec.subject ?? p.spec.purpose ?? '')}-${p.requestId.slice(0, 6)}.${ext}`
-      const { error } = await admin.storage.from('social-assets').upload(path, bytes, { contentType, upsert: true })
-      if (error) throw new Error(`Upload failed: ${error.message}`)
-      const { data: pub } = admin.storage.from('social-assets').getPublicUrl(path)
-      await admin.from('image_assets').insert({
-        owner: role.owner, brand_id: role.brand_id, dept: role.dept ?? null, role_id: role.id, run_id: plan.runId ?? null, job_id: job.id,
-        purpose: p.spec.purpose ?? '', category: [p.spec.category, p.spec.module].filter(Boolean).join('/'), surface: p.spec.surface ?? '',
-        prompt: p.prompt, parts: promptParts(lib, p.spec), aspect_ratio: p.aspect, provider: 'higgsfield', request_id: p.requestId,
-        storage_path: path, url: pub.publicUrl, status: 'pending', destination: destinationFor(p.spec.surface),
-      })
-      plan.made += 1
+      // Every candidate in the batch is stored; the founder keeps one.
+      for (const [n, url] of c.urls.entries()) {
+        const { bytes, contentType } = await download(url)
+        const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : contentType.includes('webp') ? 'webp' : 'png'
+        const path = `${role.owner}/library/${role.brand_id}/${slug(p.spec.category ?? 'image')}-${slug(p.spec.subject ?? p.spec.purpose ?? '')}-${p.requestId.slice(0, 6)}-${n + 1}.${ext}`
+        const { error } = await admin.storage.from('social-assets').upload(path, bytes, { contentType, upsert: true })
+        if (error) throw new Error(`Upload failed: ${error.message}`)
+        const { data: pub } = admin.storage.from('social-assets').getPublicUrl(path)
+        await admin.from('image_assets').insert({
+          owner: role.owner, brand_id: role.brand_id, dept: role.dept ?? null, role_id: role.id, run_id: plan.runId ?? null, job_id: job.id,
+          purpose: c.urls.length > 1 ? `${p.spec.purpose ?? ''} (${n + 1} of ${c.urls.length})` : p.spec.purpose ?? '',
+          category: [p.spec.category, p.spec.module].filter(Boolean).join('/'), surface: p.spec.surface ?? '',
+          prompt: p.prompt, parts: promptParts(lib, p.spec), aspect_ratio: p.aspect, provider: 'higgsfield', request_id: p.requestId,
+          storage_path: path, url: pub.publicUrl, status: 'pending', destination: destinationFor(p.spec.surface),
+        })
+        plan.made += 1
+      }
     } catch (e) { plan.failed.push(e instanceof Error ? e.message : String(e)) }
   }
   // Give a render fifteen minutes in total.

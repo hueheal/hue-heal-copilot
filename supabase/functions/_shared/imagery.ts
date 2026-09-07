@@ -14,9 +14,36 @@ export interface Library {
   /** category -> (module key -> module text) or category -> text */
   modules: Record<string, Record<string, string> | string>
   surfaces: Record<string, Surface>
+  /** Order the parts are joined in; the guide's own. */
+  order?: string[]
+  /** Shot types (macro-body, hands-object, portrait-task, ...) and their prose. */
+  shotTypes?: Record<string, string>
+  /** Generate this many, the founder keeps one. */
+  batch?: number
+  /** Public URLs of the calibration frames, when the founder has supplied them. */
+  referenceUrls?: string[]
 }
 
-export interface ImageRequest { purpose?: string; category?: string; module?: string; subject?: string; surface?: string }
+export interface ImageRequest { purpose?: string; category?: string; module?: string; subject?: string; surface?: string; shot?: string }
+
+const DEFAULT_ORDER = ['master', 'module', 'subject', 'surface', 'negatives']
+/** The guide's default shot per category. */
+const DEFAULT_SHOT: Record<string, string> = { condition: 'macro-body', tradition: 'hands-object', ingredient: 'hands-object', lifestyle: 'portrait-task' }
+
+/** "hero-card 3:4" or "Hero card" -> the library's own key. */
+export function surfaceKey(lib: Library, s?: string): string | undefined {
+  if (!s) return undefined
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  const keys = Object.keys(lib.surfaces)
+  const n = norm(s)
+  return keys.find((k) => norm(k) === n) ?? keys.find((k) => n.startsWith(norm(k))) ?? keys.find((k) => n.includes(norm(k)))
+}
+export function shotKey(lib: Library, req: ImageRequest): string | undefined {
+  const types = lib.shotTypes ?? {}
+  const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  const want = req.shot ? Object.keys(types).find((k) => norm(k) === norm(req.shot!) || norm(req.shot!).includes(norm(k))) : undefined
+  return want ?? (req.category && DEFAULT_SHOT[req.category] && types[DEFAULT_SHOT[req.category]] ? DEFAULT_SHOT[req.category] : undefined)
+}
 
 export async function loadLibrary(admin: SupabaseClient, brandId: string | null): Promise<Library | null> {
   if (!brandId) return null
@@ -25,8 +52,12 @@ export async function loadLibrary(admin: SupabaseClient, brandId: string | null)
   const raw = row?.knowledge?._imagery_library
   if (typeof raw === 'string' && raw.trim()) {
     try {
-      const lib = JSON.parse(raw) as Partial<Library>
-      return { master: lib.master ?? row?.image_master_prompt ?? '', negatives: lib.negatives ?? row?.image_negatives ?? '', modules: lib.modules ?? {}, surfaces: lib.surfaces ?? {} }
+      const lib = JSON.parse(raw) as Partial<Library> & { generation?: { batch?: number }; reference?: { urls?: string[] } }
+      return {
+        master: lib.master ?? row?.image_master_prompt ?? '', negatives: lib.negatives ?? row?.image_negatives ?? '',
+        modules: lib.modules ?? {}, surfaces: lib.surfaces ?? {}, order: lib.order, shotTypes: lib.shotTypes,
+        batch: lib.batch ?? lib.generation?.batch, referenceUrls: lib.referenceUrls ?? lib.reference?.urls,
+      }
     } catch { /* fall through to the plain master prompt */ }
   }
   if (row?.image_master_prompt) return { master: row.image_master_prompt, negatives: row.image_negatives ?? '', modules: {}, surfaces: {} }
@@ -34,35 +65,49 @@ export async function loadLibrary(admin: SupabaseClient, brandId: string | null)
 }
 
 /** Ratio string the surface asks for, if any. */
-export const surfaceRatio = (lib: Library, surface?: string): string | undefined => (surface && lib.surfaces[surface]?.ratio) || undefined
+export const surfaceRatio = (lib: Library, surface?: string): string | undefined => { const k = surfaceKey(lib, surface); return (k && lib.surfaces[k]?.ratio) || undefined }
+
+function moduleText(lib: Library, req: ImageRequest): string {
+  const cat = lib.modules[req.category ?? '']
+  if (typeof cat === 'string') return cat
+  if (!cat || !req.module) return ''
+  return cat[req.module] ?? cat[Object.keys(cat).find((k) => k.toLowerCase() === (req.module ?? '').toLowerCase()) ?? ''] ?? ''
+}
+
+/** The parts, keyed by the guide's names, so both the prompt and the
+    sidecar come from one place. */
+export function promptParts(lib: Library, req: ImageRequest): Record<string, string> {
+  const sk = surfaceKey(lib, req.surface)
+  const surf = sk ? lib.surfaces[sk] : undefined
+  const shot = shotKey(lib, req)
+  return {
+    subject: req.subject?.trim() ?? '',
+    shot: shot ? (lib.shotTypes?.[shot] ?? '') : '',
+    master: lib.master,
+    module: moduleText(lib, req),
+    surface: surf ? `Made for the ${sk} surface${surf.quiet && surf.quiet !== 'none' ? `: keep the ${surf.quiet} of the frame quiet and uncluttered for overlaid type` : ''}.` : '',
+    negatives: lib.negatives ? `Avoid: ${lib.negatives}` : '',
+  }
+}
 
 export function composePrompt(lib: Library, req: ImageRequest): string {
-  const cat = lib.modules[req.category ?? '']
-  let moduleText = ''
-  if (typeof cat === 'string') moduleText = cat
-  else if (cat && req.module) moduleText = cat[req.module] ?? cat[Object.keys(cat).find((k) => k.toLowerCase() === (req.module ?? '').toLowerCase()) ?? ''] ?? ''
-  const surf = req.surface ? lib.surfaces[req.surface] : undefined
-  const surfaceText = surf ? `Made for the ${req.surface} surface${surf.quiet && surf.quiet !== 'none' ? `: keep the ${surf.quiet} of the frame quiet and uncluttered for overlaid type` : ''}${surf.note ? ` (${surf.note})` : ''}.` : ''
-  return [lib.master, moduleText, req.subject?.trim() ? `Subject: ${req.subject.trim()}` : '', surfaceText, lib.negatives].filter(Boolean).join(' ')
+  const parts = promptParts(lib, req)
+  const order = (lib.order?.length ? lib.order : DEFAULT_ORDER).slice()
+  // The shot type is not in the guide's order list; it belongs right after the subject.
+  if (!order.includes('shot')) order.splice(order.indexOf('subject') + 1, 0, 'shot')
+  return order.map((k) => parts[k]).filter(Boolean).join(' ')
 }
 
 /** What a seat is told it can ask for. */
 export function imageryLine(lib: Library | null): string {
   if (!lib) return ''
   const cats = Object.entries(lib.modules).map(([c, m]) => (typeof m === 'string' ? c : `${c} (${Object.keys(m).join(', ')})`))
-  const surfs = Object.entries(lib.surfaces).map(([k, s]) => `${k} ${s.ratio}`)
+  const surfs = Object.keys(lib.surfaces)
+  const shots = Object.keys(lib.shotTypes ?? {})
   return [
-    'IMAGES: you may request production images in the deliverable\'s images field (at most 3 per deliverable, only when the work genuinely needs them). Each request names a purpose, a category' + (cats.length ? ` from: ${cats.join('; ')}` : '') + ', a subject (the specific everyday scene, object and gesture, in one or two sentences, no style words: the brand\'s master prompt and rules are added for you)' + (surfs.length ? `, and a surface from: ${surfs.join(', ')}` : '') + '.',
-    'Images land in the founder\'s review pile; nothing goes on the site or a post until approved.',
+    'IMAGES: you may request production images in the deliverable\'s images field (at most 3 per deliverable, only when the work genuinely needs them). Each request names a purpose, a category' + (cats.length ? ` from: ${cats.join('; ')}` : '') + ', a subject (one person, one action, at most three objects, in one short front-loaded sentence: who, the gesture, the object, the place; say the number of people; no style or camera words, the brand\'s master prompt and rules are added for you)' + (surfs.length ? `, a surface, exactly one of: ${surfs.join(', ')}` : '') + (shots.length ? `, and optionally a shot, one of: ${shots.join(', ')} (defaults: macro-body for conditions, hands-object for traditions and ingredients, portrait-task for lifestyle)` : '') + '.',
+    `Each request renders ${lib.batch ?? 1} candidate${(lib.batch ?? 1) === 1 ? '' : 's'}; the founder keeps one. Nothing goes on the site or a post until approved.`,
   ].join(' ')
-}
-
-/** The five parts, kept separately for the sidecar beside a library file. */
-export function promptParts(lib: Library, req: ImageRequest): Record<string, string> {
-  const cat = lib.modules[req.category ?? '']
-  const moduleText = typeof cat === 'string' ? cat : cat && req.module ? cat[req.module] ?? '' : ''
-  const surf = req.surface ? lib.surfaces[req.surface] : undefined
-  return { master: lib.master, module: moduleText, subject: req.subject ?? '', surface: surf ? `${req.surface}: ${surf.ratio}${surf.quiet ? `, quiet ${surf.quiet}` : ''}` : '', negatives: lib.negatives }
 }
 
 /** Where an approved image lives. Site surfaces go to the brand's own

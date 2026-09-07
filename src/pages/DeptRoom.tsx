@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
 import {
   listRoles, updateRole, retireDepartment, presetFor, listRunsFor, listDeptItems, setItemStatus,
-  assignJob, listDeptJobs, markReviewed, decideJob, getDeptState, saveDeptState, deptSpend, learnNow,
+  assignJob, listDeptJobs, markReviewed, decideJob, getDeptState, saveDeptState, deptSpend, learnNow, retryImageJob,
   type Role, type RoleRun, type RoleItem, type RoleSchedule, type RoleJob, type DeptState,
 } from '../lib/roles'
 import { deptOf, seatFor, toolOf, pounds } from '../lib/org'
@@ -124,7 +124,7 @@ export default function DeptRoom() {
   const nameOf = (id?: string | null) => team.find((r) => r.id === id)?.name ?? 'A seat'
   const runOf = (j: RoleJob) => runs.find((r) => r.id === j.run_id)
   const titleOf = (j: RoleJob) => runOf(j)?.output.title ?? j.task.replace(/^(ROUTE|DESK|IMAGES):\s*/, '')
-  const whoOf = (j: RoleJob) => `${nameOf(j.role_id)}${j.plan?.approach === 'team' ? ` with ${j.plan.assignments.filter((a) => a.ok !== false).map((a) => a.to).join(', ')}` : ''}`
+  const whoOf = (j: RoleJob) => `${nameOf(j.role_id)}${j.plan?.approach === 'team' ? ` with ${(j.plan.assignments ?? []).filter((a) => a.ok !== false).map((a) => a.to).join(', ')}` : ''}`
   const srcOf = (j: RoleJob) => (j.source === 'telegram' ? ' · from your phone' : j.source === 'schedule' ? ' · on its own cadence' : '')
 
   const approvals = jobs.filter((j) => j.status === 'done' && j.approval === 'pending')
@@ -220,8 +220,8 @@ export default function DeptRoom() {
                 {opened.plan?.approach === 'team' && (
                   <div style={{ marginTop: 18 }}>
                     <div className="ck-board-title">How the team worked it</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--ck-muted)', lineHeight: 1.55 }}>{opened.plan.reason}</div>
-                    {opened.plan.assignments.map((a, i) => {
+                    <div style={{ fontSize: 12.5, color: 'var(--ck-muted)', lineHeight: 1.55 }}>{opened.plan.reason ?? ''}</div>
+                    {(opened.plan.assignments ?? []).map((a, i) => {
                       const r = runs.find((x) => x.id === a.runId)
                       return (
                         <div key={i} className="ck-handoff" style={{ marginTop: 8 }}>
@@ -254,7 +254,7 @@ export default function DeptRoom() {
                     <div className="ck-jobs" style={{ margin: 0 }}>
                       {active.map((j) => <JobCard key={j.id} j={j} state="working" actions={null} />)}
                       {failed.map((j) => <JobCard key={j.id} j={j} state="failed" actions={<>
-                        <button className="ck-pill" disabled={busy} onClick={() => void brief(j.task)}>Try again</button>
+                        <button className="ck-pill" disabled={busy} onClick={() => { if (j.task.startsWith('IMAGES:')) { void retryImageJob(j).then((r) => { if (r.error) setNote(r.error); else if (r.job) { setJobs((l) => [r.job!, ...l]); void reviewed(j) } }) } else void brief(j.task) }}>Try again</button>
                         <button className="ck-pill" onClick={() => void reviewed(j)}>Dismiss</button>
                       </>} />)}
                     </div>

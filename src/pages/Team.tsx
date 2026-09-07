@@ -91,7 +91,7 @@ export default function Team() {
                         <span className="ck-dept-mark" data-size="s">{d?.mark ?? '··'}</span>
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <span className="ck-job-task">{j.task}</span>
-                          <span className="ck-job-meta">{by?.name ?? 'A lead'}{j.plan?.approach === 'team' ? ` with ${j.plan.assignments.map((a) => a.to).join(', ')}` : ''} · finished {agoLabel(j.finished_at ?? j.created_at)} · would go public or cost money</span>
+                          <span className="ck-job-meta">{by?.name ?? 'A lead'}{j.plan?.approach === 'team' ? ` with ${(j.plan.assignments ?? []).map((a) => a.to).join(', ')}` : ''} · finished {agoLabel(j.finished_at ?? j.created_at)} · would go public or cost money</span>
                         </span>
                         <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                           <button className="ck-pill" onClick={() => nav(`/team/${j.dept}?job=${j.id}`)}>Read</button>
