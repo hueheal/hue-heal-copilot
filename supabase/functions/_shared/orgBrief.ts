@@ -45,6 +45,20 @@ export async function buildOrgBrief(
   const byId = new Map(all.map((r) => [r.id, r]))
   const lines: string[] = []
 
+  /* The founder's priorities, in order. Every seat works to this list; the
+     chief's desk names which number its "Now" serves. */
+  const { data: prioRows } = await scope(admin.from('priorities').select('position, title, detail, dept, status, note'))
+    .in('status', ['active', 'parked']).order('position')
+  const prios = (prioRows ?? []) as { position: number; title: string; detail: string; dept: string | null; status: string; note: string | null }[]
+  const activeP = prios.filter((p) => p.status === 'active')
+  if (activeP.length) {
+    lines.push("THE FOUNDER'S PRIORITIES, IN ORDER (the first is the one thing; work to this order and say which number your work serves):")
+    activeP.forEach((p, i) => lines.push(`${i + 1}. ${p.title}${p.dept ? ` [${deptOf(p.dept)?.name ?? p.dept}]` : ''}${p.detail ? `: ${trim(p.detail, 240)}` : ''}`))
+    const parked = prios.filter((p) => p.status === 'parked')
+    if (parked.length) lines.push(`Parked by the founder, do not resurrect: ${parked.map((p) => `${p.title}${p.note ? ` (${p.note})` : ''}`).join('; ')}.`)
+    lines.push('')
+  }
+
   /* The founder's latest briefing, if it is from the last day: the whole org
      works from the same page. */
   const { data: briefRows } = await scope(admin.from('role_briefings').select('text, created_at'))

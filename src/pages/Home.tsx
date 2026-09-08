@@ -12,6 +12,7 @@ import { SlideCanvas } from './SocialStudio'
 import Composer from '../components/chrome/Composer'
 import Briefing from '../components/Briefing'
 import AssetReview from '../components/AssetReview'
+import Priorities from '../components/Priorities'
 import { listRoles, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
 import { DEPARTMENTS, deptOf } from '../lib/org'
 import type { PostFormat } from '../lib/database.types'
@@ -124,8 +125,10 @@ export default function Home() {
         <div className="ck-eyebrow">{day} · {current?.name ?? 'Studio'}</div>
         <h1 className="ck-h1">{greeting}.</h1>
 
+        <Priorities compact />
         {hasOrg ? (
           <>
+            <div className="ck-sectiongap" />
             <Briefing compact />
 
             {approvals.length > 0 && (

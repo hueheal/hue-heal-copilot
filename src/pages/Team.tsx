@@ -5,6 +5,7 @@ import { listRoles, hireDepartment, listWorkspaceJobs, decideJob, deptSpend, typ
 import { DEPARTMENTS, seatsIn, pounds, type OrgDept } from '../lib/org'
 import { agoLabel } from '../components/chrome/AssetCard'
 import Briefing from '../components/Briefing'
+import Priorities from '../components/Priorities'
 
 /* ============================================================
    The team area. Departments as cards, each in its own colour,
@@ -71,6 +72,7 @@ export default function Team() {
         </div>
         {note && <div className="ck-note" role="status" style={{ marginTop: 12 }}>{note}</div>}
 
+        <div style={{ marginTop: 22 }}><Priorities /></div>
         {roles !== null && roles.some((r) => r.seat === 'lead') && (
           <div style={{ marginTop: 22 }}><Briefing compact /></div>
         )}
