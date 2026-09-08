@@ -112,6 +112,45 @@ Each carries a proposed default so it can be answered in one word.
 16. Research route: the women's health charity or a university unit first. Default: the charity, for reach; a scoping review is the realistic first output.
 17. Entity: confirm Remedae holds the IP and pays its own bills before advance assurance. Default: yes, accountant this month.
 
+## Founder answers, 8 September
+
+Maria answered the seventeen the same evening. Approved items move from "proposed" to "decided" across the plan; parked items stay in the parked list with her reason.
+
+| # | Decision | Answer | Effect |
+|---|---|---|---|
+| 1 | Retire stale claims | Yes | Counsel's ten rewrites go into the deck, plan and model this week |
+| 2 | Secrets handover | Yes, needs the list | Two destinations, listed below. Nothing pasted into chat |
+| 3 | Availability and evidence vocabularies | Approve both | Ingredient layer (step 12) can start with the five availability and five evidence words as canonical |
+| 4 | Invitation waves and ten open conditions | Yes | September experiment goes ahead |
+| 5 | Ungate at 105 on the numbers | Yes | Trigger stays: misses under 10 percent and the interstitial live |
+| 6 | Remedae+ signpost | Keep as "tell me when" | Count the taps; that is the only Remedae+ demand signal this quarter |
+| 7 | Interaction notes; no family profiles at launch | Yes to both | Copy and scope change everywhere |
+| 8 | NHS.uk under the four conditions | Yes | Add to docs/sources.md, close the four drafts from it, provenance tags on every NHS-derived row, never behind Remedae+ |
+| 9 | Paid safety review pilot | Not yet | Parked until an advisor is named or readers are measured; the October safety review uses the advisor, not paid reviewers |
+| 10 | Advisor terms | Yes, subject to solicitor | Counsel drafts the outline; nothing signed without a solicitor |
+| 11 | Founding creator offer | Parked, not sure yet | The ten creator conversations in October become listening calls with no offer on the table |
+| 12 | £500k or SEIS tranche | Parked, not sure yet | Finance keeps both cases in model v2; no investor conversation opens until Maria picks |
+| 13 | Medical reviewer before engineer | Yes | First hire on close is a part-time contract reviewer |
+| 14 | Founder salary | £20k provisionally, unsure | Model v2 runs at £20k; against the £55k modelled that adds roughly seven months of runway. Revisit at close |
+| 15 | "Your nan was right" | Story, not lead | Keep it as one worldly line inside the narrative, in deck and consumer copy alike; never the opening claim or the tagline. The consumer rewrite in Counsel's list still applies where the line stands alone |
+| 16 | Research route | Charity, for reach | Open the women's health charity conversation in November; a scoping review is the first output |
+| 17 | Entity | Wants elaboration | See below; default stays "accountant this month" until she says otherwise |
+
+### Decision 2, the two handovers
+
+Nothing goes through chat. Both are done in a browser or a terminal on Maria's Mac.
+
+1. Database password. Supabase dashboard, project settings, Database, connection string (URI). Paste it into `.env.local` as `SUPABASE_DB_URL`. This unlocks the queue migration (step 9) and future migrations without the dashboard.
+2. GitHub Actions secrets for the nightly worker. Repository hueheal/remedae, Settings, Secrets and variables, Actions. Eight names: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, NCBI_API_KEY, WHO_ICD_CLIENT_ID, WHO_ICD_CLIENT_SECRET, CRON_SECRET. Seven already exist in `.env.local`; CRON_SECRET is new and also goes into Vercel's environment so the cron drain can authenticate. Shortcut: install the GitHub CLI (`brew install gh`, then `gh auth login`) and the copilot can set all eight from `.env.local` in one command.
+
+### Decision 17, why the entity question matters
+
+- SEIS and EIS advance assurance is granted to a company, and HMRC looks at what that company owns and does. If the code, the domain, the Supabase project and the Anthropic account sit with Hue & Heal, or with Maria personally, then the investment would be going into a shell with no assets, and assurance is refused or later withdrawn.
+- The fix is ordinary: a Remedae limited company (or confirmation it already exists and is clean), an IP assignment from Maria and from Hue & Heal into it for the repository, brand and content, and its own billing for Vercel, Supabase, Anthropic, Resend and the domain. Hue & Heal invoicing Remedae for past work is fine; Hue & Heal owning the work is not.
+- It also settles the cap table before any advisor equity (decision 10) or creator terms (decision 11) can be granted, since those are shares in a company that has to exist first.
+- Cost and time: an accountant's half day plus a solicitor for the IP assignment; a few hundred pounds; well under a month. It sits ahead of every fundraising step in November, which is why the default is "this month".
+- Risk if skipped: an investor's lawyer finds it in due diligence, which delays a close by weeks and reads as carelessness.
+
 ## Counsel's ten rewrites for the deck and plan
 
 1. "240+ conditions" becomes "105 published conditions, 240 mapped".
