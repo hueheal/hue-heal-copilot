@@ -42,7 +42,7 @@ export default function RemedaeArticlePreview({ article, isMobile }: { article: 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 26 }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 38, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.3)', background: 'rgba(0,0,0,0.3)', fontSize: 12, fontWeight: 500, color: '#fff' }}>RE</span>
             <span>
-              <span style={{ display: 'block', fontSize: 12.5, color: '#fff' }}>Remedae Editors</span>
+              <span style={{ display: 'block', fontSize: 12.5, color: '#fff' }}>Editor · Remedae</span>
               <span style={{ display: 'block', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.16em', color: 'rgba(255,255,255,0.6)' }}>The Remedae Journal</span>
             </span>
           </div>
