@@ -1,0 +1,137 @@
+{
+  "version": "1.0",
+  "updated": "2026-09-10",
+  "source": "docs/tradition-imagery.md",
+  "shots": [
+    {
+      "category": "tradition",
+      "module": "modern",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A white pharmacy prescription bag being opened on a kitchen table, one blister strip and a glass of water beside it, morning light from a window, hands only.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Modern medicine: a GP's consulting room that looks like a room, a high-street pharmacy counter, a blister pack and a glass of water on a kitchen table, a physiotherapist's hands on a shoulder, a sleep diary on a bedside table. Warmth and eye contact between people. No white coats, corridors or monitors. Subject: A white pharmacy prescription bag being opened on a kitchen table, one blister strip and a glass of water beside it, morning light from a window, hands only.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-modern-01"
+    },
+    {
+      "category": "tradition",
+      "module": "ayurveda",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A copper tongue scraper held in a hand at a bathroom sink, morning light, a steel cup of warm water on the ledge, no face.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Ayurveda: a kitchen at morning, warm water with lemon in a steel or copper cup, ghee in a small pan, ashwagandha powder stirred into warm milk, sesame oil warmed in the palms, a spice tin with cumin, coriander and fennel. Indian and non-Indian households alike. No temples, statues or yoga poses. Subject: A copper tongue scraper held in a hand at a bathroom sink, morning light, a steel cup of warm water on the ledge, no face.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-ayurveda-01"
+    },
+    {
+      "category": "tradition",
+      "module": "tcm",
+      "shotType": "macro-body",
+      "surface": "page-hero",
+      "subject": "Three fingers resting on the inside of a wrist at a clinic desk, both hands in frame, a plain sleeve, daylight from the side, faces out of frame.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Traditional Chinese Medicine: a pulse taken at a wrist, a decoction simmering in a clay pot, jujube and goji on a chopping board, a practitioner's hands at an acupuncture point, congee steaming. Everyday clinic rooms and kitchens. No dragons or calligraphy walls. Subject: Three fingers resting on the inside of a wrist at a clinic desk, both hands in frame, a plain sleeve, daylight from the side, faces out of frame.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-tcm-01"
+    },
+    {
+      "category": "tradition",
+      "module": "kampo",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A numbered foil stick of extract granules torn open and tipped into a small glass of water on a plain kitchen counter, hands only, bright daylight.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Kampo: granule sachets torn open into a cup, a Japanese pharmacy counter, ginger and jujube on a wooden board, a small ceramic cup on a lacquer tray. Precise, quiet, domestic. No kimono, no temple. Subject: A numbered foil stick of extract granules torn open and tipped into a small glass of water on a plain kitchen counter, hands only, bright daylight.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-kampo-01"
+    },
+    {
+      "category": "tradition",
+      "module": "unani",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A teaspoon of honey with black seeds stirred through it, held over a small glass bowl, a kitchen worktop soft behind, morning light.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Unani: honey and black seed on a spoon, a glass of rose-water, almonds soaking overnight, a practitioner feeling a pulse, warm oil in a small bottle. Middle-Eastern and South Asian kitchens rendered as homes, not sets. Subject: A teaspoon of honey with black seeds stirred through it, held over a small glass bowl, a kitchen worktop soft behind, morning light.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-unani-01"
+    },
+    {
+      "category": "tradition",
+      "module": "siddha",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A steel tumbler of dark brown nilavembu decoction held in one hand, a steel pan and strainer soft behind on a hob, daylight.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Siddha: nilavembu decoction in a steel tumbler, fresh herbs on a banana leaf, a mortar and pestle, a Tamil kitchen with morning light. No shrines. Subject: A steel tumbler of dark brown nilavembu decoction held in one hand, a steel pan and strainer soft behind on a hob, daylight.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-siddha-01"
+    },
+    {
+      "category": "tradition",
+      "module": "naturopathy",
+      "shotType": "macro-body",
+      "surface": "page-hero",
+      "subject": "A hand under a running shower head switched to cold, water beading on the forearm, tiles soft behind, bright bathroom light.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Naturopathy: hot and cold water at a basin, a steam bowl under a towel, whole vegetables mid-prep, a morning walk in a coat. The practitioner is in ordinary clothes at an ordinary desk. Subject: A hand under a running shower head switched to cold, water beading on the forearm, tiles soft behind, bright bathroom light.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-naturopathy-01"
+    },
+    {
+      "category": "tradition",
+      "module": "homeopathy",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "Small white pillules tipped from a brown glass vial into its cap, held in a palm, a plain table soft behind, daylight.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Homeopathy: a small brown glass vial and pellets on a palm, a pharmacy shelf of small bottles, a practitioner listening. Restrained; the image must not promise more than the page does. Subject: Small white pillules tipped from a brown glass vial into its cap, held in a palm, a plain table soft behind, daylight.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-homeopathy-01"
+    },
+    {
+      "category": "tradition",
+      "module": "african",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A bunch of fresh bitter leaf being rinsed under a kitchen tap, water on the leaves, hands only, bright daylight.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. African traditional medicine: plants, hands and landscape. Rooibos or moringa leaves, a market table of dried herbs, a clay pot on a stove, a grandmother's kitchen. Never ceremony, masks or tribal styling. When in doubt photograph the plant and the pot. Subject: A bunch of fresh bitter leaf being rinsed under a kitchen tap, water on the leaves, hands only, bright daylight.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-african-01"
+    },
+    {
+      "category": "tradition",
+      "module": "indigenous",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A small tin of kawakawa balm open on a windowsill, a fingertip taking a little, leaves soft behind the glass, daylight.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Indigenous healing: plants, water, land, hands, sweetgrass or eucalyptus on a table. No regalia, no sacred objects, no ceremony. Where no honest everyday image exists, use a brand texture instead. Subject: A small tin of kawakawa balm open on a windowsill, a fingertip taking a little, leaves soft behind the glass, daylight.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-indigenous-01"
+    },
+    {
+      "category": "tradition",
+      "module": "functional",
+      "shotType": "hands-object",
+      "surface": "page-hero",
+      "subject": "A finger-prick blood test kit laid out on a kitchen table beside a food and symptom diary and a coffee, hands filling in the diary, morning light.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Functional medicine: a kitchen table with a food diary and a fibre-rich breakfast, blood-test paperwork beside a coffee, a consultation over a laptop in a bright room. Systems thinking as ordinary organisation. Subject: A finger-prick blood test kit laid out on a kitchen table beside a food and symptom diary and a coffee, hands filling in the diary, morning light.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-functional-01"
+    },
+    {
+      "category": "tradition",
+      "module": "lifestyle",
+      "shotType": "environmental",
+      "surface": "page-hero",
+      "subject": "One person in a coat walking a canal path after lunch, phone in a pocket, bright overcast daylight, three-quarter length from behind.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Lifestyle medicine: morning daylight on a doorstep, a post-meal walk, a cool dark bedroom with the phone outside the door, a shared meal, a bike, a kettle switched off after noon. Subject: One person in a coat walking a canal path after lunch, phone in a pocket, bright overcast daylight, three-quarter length from behind.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-lifestyle-01"
+    },
+    {
+      "category": "tradition",
+      "module": "mind-body",
+      "shotType": "macro-body",
+      "surface": "page-hero",
+      "subject": "A hand flat on the chest and one on the belly over a plain tee, seated on an ordinary chair by a window, eyes closed, cropped at the chin.",
+      "prompt": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter. Mind-body medicine: a hand on the chest and one on the belly, eyes closed at a window, a group course in a community hall with mismatched chairs, a pen and a worry list at night. Breath shown as a body, not a pose. Subject: A hand flat on the chest and one on the belly over a plain tee, seated on an ordinary chair by a window, eyes closed, cropped at the chin.",
+      "negative": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+      "file": "tradition-mind-body-01"
+    }
+  ]
+}
