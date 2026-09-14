@@ -9,7 +9,7 @@ TLDR from the seats: No. Report what traditions and studies used, never instruct
 - Chief scientific officer: the deciding distinction is preparation versus pharmacology. Kitchen quantity in a recipe's steps is preparation, publish it. A mg, g or granule figure attached to a substance is pharmacology, report it in research context only, never in steps, titles or the imperative. Dose is exactly where an educational tool quietly becomes a treatment tool.
 - Counsel (not a solicitor): dosing instructions are the strongest single signal for both the MHRA medicinal-product borderline and the software-as-device line; the CAP Code separately bars advertising POMs to the public. Have a regulatory solicitor sanity check before marketing scales.
 
-## Recommended dosing policy (not yet adopted; awaiting the founder)
+## Recommended dosing policy (ADOPTED by the founder, 14 September 2026 — enforced in remedae per docs/dosing-policy.md)
 1. Recipe cards may state kitchen quantities and timings only (ml, cups, halves, minutes).
 2. No card ever states a pharmacological dose as an instruction: no mg, g, IU, granule or tablet counts in steps or titles.
 3. Study doses may appear only in the research pane, past tense, with study, year and population.
