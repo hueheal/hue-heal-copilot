@@ -72,7 +72,7 @@ export default function Team() {
         </div>
         {note && <div className="ck-note" role="status" style={{ marginTop: 12 }}>{note}</div>}
 
-        <div style={{ marginTop: 22 }}><Priorities /></div>
+        <div style={{ marginTop: 22 }}><Priorities key={current?.id} /></div>
         {roles !== null && roles.some((r) => r.seat === 'lead') && (
           <div style={{ marginTop: 22 }}><Briefing compact /></div>
         )}

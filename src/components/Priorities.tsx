@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import PriorityDetail from './PriorityDetail'
 import { useBrand } from '../lib/brandContext'
 import { listPriorities, addPriority, updatePriority, reorderPriorities, removePriority, type Priority } from '../lib/priorities'
 import { DEPARTMENTS, deptOf } from '../lib/org'
@@ -20,6 +21,8 @@ export default function Priorities({ compact = false }: { compact?: boolean }) {
   const [dept, setDept] = useState<string>('')
   const [showRest, setShowRest] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
+  const [params, setParams] = useSearchParams()
+  const [open, setOpen] = useState<string | null>(params.get('priority'))
 
   useEffect(() => { setItems(null); listPriorities().then(setItems).catch(() => setItems([])) }, [current?.id])
 
@@ -56,6 +59,17 @@ export default function Priorities({ compact = false }: { compact?: boolean }) {
   }
 
   if (items === null) return null
+  const opened = open ? items.find((x) => x.id === open) : null
+
+  if (opened && !compact) {
+    return (
+      <div className="ck-prio">
+        <PriorityDetail p={opened}
+          onChange={(patch) => setItems((l) => (l ?? []).map((x) => (x.id === opened.id ? { ...x, ...patch } : x)))}
+          onClose={() => { setOpen(null); if (params.get('priority')) setParams({}) }} />
+      </div>
+    )
+  }
 
   return (
     <div className="ck-prio">
@@ -96,7 +110,8 @@ export default function Priorities({ compact = false }: { compact?: boolean }) {
                     onBlur={(e) => { void saveEdit(p, { title: e.target.value.trim() || p.title }); setEditing(null) }}
                     onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); if (e.key === 'Escape') setEditing(null) }} />
                 ) : (
-                  <span className="ck-prio-title" onDoubleClick={() => setEditing(p.id)}>{p.title}</span>
+                  <button className="ck-prio-title" style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left', cursor: 'pointer', width: '100%' }}
+                    onClick={() => (compact ? nav(`/team?priority=${p.id}`) : setOpen(p.id))} onDoubleClick={() => !compact && setEditing(p.id)}>{p.title}</button>
                 )}
                 {(p.detail || d) && !compact && (
                   <span className="ck-prio-meta">
@@ -111,8 +126,11 @@ export default function Priorities({ compact = false }: { compact?: boolean }) {
                   <button className="ck-pill" title="Move up" disabled={i === 0} onClick={() => void move(p, -1)}>↑</button>
                   <button className="ck-pill" title="Move down" disabled={i === active.length - 1} onClick={() => void move(p, 1)}>↓</button>
                 </>}
-                <button className="ck-pill" onClick={() => void setStatus(p, 'done')}>Done</button>
-                <button className="ck-pill" onClick={() => void setStatus(p, 'parked')}>Park</button>
+                <button className="ck-pill" onClick={() => (compact ? nav(`/team?priority=${p.id}`) : setOpen(p.id))}>Open</button>
+                {!compact && <>
+                  <button className="ck-pill" onClick={() => void setStatus(p, 'done')}>Done</button>
+                  <button className="ck-pill" onClick={() => void setStatus(p, 'parked')}>Park</button>
+                </>}
               </span>
             </li>
           )
@@ -133,6 +151,7 @@ export default function Priorities({ compact = false }: { compact?: boolean }) {
                     {p.note && <span className="ck-prio-meta">{p.note}</span>}
                   </span>
                   <span className="ck-prio-actions">
+                    <button className="ck-pill" onClick={() => setOpen(p.id)}>Open</button>
                     <button className="ck-pill" onClick={() => void setStatus(p, 'active')}>Back in</button>
                     <button className="ck-pill" onClick={() => { void removePriority(p.id); setItems((l) => (l ?? []).filter((x) => x.id !== p.id)) }}>Remove</button>
                   </span>

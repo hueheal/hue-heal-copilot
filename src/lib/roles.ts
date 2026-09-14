@@ -193,9 +193,10 @@ export interface RoleJob {
   created_at: string
   finished_at: string | null
   briefing_id: string | null
+  priority_id?: string | null
 }
 
-const JOB_COLS = 'id, role_id, dept, task, source, status, approval, plan, cost_pence, run_id, error, reviewed_at, created_at, finished_at, briefing_id'
+const JOB_COLS = 'id, role_id, dept, task, source, status, approval, plan, cost_pence, run_id, error, reviewed_at, created_at, finished_at, briefing_id, priority_id'
 
 /** Every job in a department, newest first. */
 export async function listDeptJobs(dept: string): Promise<RoleJob[]> {
@@ -234,7 +235,7 @@ export async function listActiveJobs(): Promise<RoleJob[]> {
   return (data ?? []) as RoleJob[]
 }
 
-export async function assignJob(role: Role, task: string, extra: { briefing_id?: string } = {}): Promise<{ job?: RoleJob; error?: string }> {
+export async function assignJob(role: Role, task: string, extra: { briefing_id?: string; priority_id?: string } = {}): Promise<{ job?: RoleJob; error?: string }> {
   if (!(isSupabaseConfigured && supabase && functionsBase)) return { error: 'Roles need the connected studio (not available in local mode).' }
   const { data, error } = await supabase.from('role_jobs')
     .insert(withBrandInsert({ role_id: role.id, dept: role.dept, task: task.trim(), source: 'studio', ...extra }) as never)
@@ -285,6 +286,13 @@ export async function retryImageJob(job: RoleJob): Promise<{ job?: RoleJob; erro
     .select(JOB_COLS).single()
   if (error) return { error: error.message }
   return { job: data as RoleJob }
+}
+
+/** Work handed out from a priority, newest first. */
+export async function listPriorityJobs(priorityId: string): Promise<RoleJob[]> {
+  if (!supabase) return []
+  const { data } = await supabase.from('role_jobs').select(JOB_COLS).eq('priority_id', priorityId).order('created_at', { ascending: false }).limit(20)
+  return (data ?? []) as RoleJob[]
 }
 
 export async function markReviewed(jobId: string): Promise<void> {
