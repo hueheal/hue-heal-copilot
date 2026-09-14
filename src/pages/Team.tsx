@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
 import { listRoles, hireDepartment, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
@@ -33,6 +33,90 @@ function RoomCard({ d, sub, badges, onClick }: { d: { key: string; name: string;
         </span>
       </span>
     </button>
+  )
+}
+
+/* The office as an environment: one room fills the stage, its neighbours
+   wait at the edges. Glide between them with the arrows, the keyboard or a
+   swipe; click the centred room to walk in. */
+function Office({ roles, jobs, hired, onEnter }: { roles: Role[]; jobs: RoleJob[]; hired: OrgDept[]; onEnter: (key: string) => void }) {
+  const railRef = useRef<HTMLDivElement>(null)
+  const [idx, setIdx] = useState(0)
+  const rooms = useMemo(() => ([
+    ...hired.map((d) => ({ key: d.key, name: d.name, accent: d.accent, mark: d.mark })),
+    { key: 'meeting', name: 'Meeting room', accent: '#B5632F', mark: 'MR' },
+  ]), [hired])
+
+  const goto = (i: number) => {
+    const rail = railRef.current
+    if (!rail) return
+    const slide = rail.children[Math.max(0, Math.min(rooms.length - 1, i))] as HTMLElement | undefined
+    slide?.scrollIntoView({ behavior: 'matchMedia' in window && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', inline: 'center', block: 'nearest' })
+  }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
+      if (e.key === 'ArrowRight') { e.preventDefault(); goto(idx + 1) }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goto(idx - 1) }
+      if (e.key === 'Enter' && rooms[idx]) onEnter(rooms[idx].key)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    /* eslint-disable-next-line */
+  }, [idx, rooms.length])
+  const onScroll = () => {
+    const rail = railRef.current
+    if (!rail) return
+    const centre = rail.scrollLeft + rail.clientWidth / 2
+    let best = 0; let gap = Infinity
+    Array.from(rail.children).forEach((c, i) => {
+      const el = c as HTMLElement
+      const mid = el.offsetLeft + el.offsetWidth / 2
+      if (Math.abs(mid - centre) < gap) { gap = Math.abs(mid - centre); best = i }
+    })
+    setIdx(best)
+  }
+
+  const room = rooms[idx]
+  const lead = roles.find((r) => r.dept === room?.key && r.seat === 'lead')
+  const team = roles.filter((r) => r.dept === room?.key && r.seat === 'member').length
+  const w = jobs.filter((j) => j.dept === room?.key && (j.status === 'queued' || j.status === 'running')).length
+  const a = jobs.filter((j) => j.dept === room?.key && j.status === 'done' && j.approval === 'pending').length
+  const u = jobs.filter((j) => j.dept === room?.key && j.status === 'done' && !j.reviewed_at && j.approval !== 'pending').length
+
+  return (
+    <div className="ck-office">
+      <div className="ck-office-rail" ref={railRef} onScroll={onScroll}>
+        {rooms.map((r, i) => (
+          <button key={r.key} className="ck-office-slide" data-active={i === idx ? '1' : '0'} style={{ ['--ck-dept' as never]: r.accent }}
+            aria-label={r.name}
+            onClick={() => (i === idx ? onEnter(r.key) : goto(i))}>
+            <img src={officeImage(r.key)} alt="" draggable={false}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.visibility = 'hidden' }} />
+          </button>
+        ))}
+      </div>
+      <button className="ck-office-arrow" data-side="l" aria-label="Previous room" disabled={idx === 0} onClick={() => goto(idx - 1)}>‹</button>
+      <button className="ck-office-arrow" data-side="r" aria-label="Next room" disabled={idx === rooms.length - 1} onClick={() => goto(idx + 1)}>›</button>
+      {room && (
+        <div className="ck-office-meta">
+          <div style={{ fontSize: 17, fontWeight: 600 }}>{room.name}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ck-muted)' }}>
+            {room.key === 'meeting' ? 'Call anyone in. Minutes by your chief.' : `${lead?.name ?? ''}${team ? ` and ${team} more` : ''}`}
+          </div>
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap', minHeight: 26 }}>
+            {w > 0 && <span className="ck-pill" data-live="1" style={{ ['--ck-dept' as never]: room.accent, pointerEvents: 'none' }}>{w} working</span>}
+            {a > 0 && <span className="ck-pill" data-on="1" style={{ pointerEvents: 'none' }}>{a} to approve</span>}
+            {u > 0 && <span className="ck-pill" style={{ pointerEvents: 'none' }}>{u} to read</span>}
+          </div>
+          <button className="ck-go" style={{ marginLeft: 0 }} onClick={() => onEnter(room.key)}>{room.key === 'meeting' ? 'Walk in' : 'Enter the room'}</button>
+          <div className="ck-office-dots" role="tablist" aria-label="Rooms">
+            {rooms.map((r, i) => <button key={r.key} role="tab" aria-selected={i === idx} className="ck-office-dot" data-on={i === idx ? '1' : '0'} onClick={() => goto(i)} aria-label={r.name} />)}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -77,28 +161,10 @@ export default function Team() {
         {note && <div className="ck-note" role="status">{note}</div>}
 
         {roles === null ? (
-          <div className="ck-rooms">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="ck-skeleton" style={{ aspectRatio: '1/1', borderRadius: 20 }} />)}</div>
+          <div className="ck-skeleton" style={{ height: '52vh', borderRadius: 24 }} />
         ) : (
           <>
-            <div className="ck-rooms">
-              {hired.map((d) => {
-                const lead = roles.find((r) => r.dept === d.key && r.seat === 'lead')
-                const team = roles.filter((r) => r.dept === d.key && r.seat === 'member').length
-                const w = jobs.filter((j) => j.dept === d.key && (j.status === 'queued' || j.status === 'running')).length
-                const a = approvals.filter((j) => j.dept === d.key).length
-                const u = jobs.filter((j) => j.dept === d.key && j.status === 'done' && !j.reviewed_at && j.approval !== 'pending').length
-                return (
-                  <RoomCard key={d.key} d={d} sub={`${lead?.name ?? ''}${team ? ` +${team}` : ''}`}
-                    onClick={() => nav(`/team/${d.key}`)}
-                    badges={<>
-                      {w > 0 && <span className="ck-pill" data-live="1" style={{ ['--ck-dept' as never]: d.accent, pointerEvents: 'none' }}>{w} working</span>}
-                      {a > 0 && <span className="ck-pill" data-on="1" style={{ pointerEvents: 'none' }}>{a} to approve</span>}
-                      {u > 0 && <span className="ck-pill" style={{ pointerEvents: 'none' }}>{u} to read</span>}
-                    </>} />
-                )
-              })}
-              <RoomCard d={{ key: 'meeting', name: 'Meeting room', accent: '#B5632F' }} sub="Call anyone in. Minutes by your chief." onClick={() => nav('/team/meeting')} />
-            </div>
+            <Office roles={roles} jobs={jobs} hired={hired} onEnter={(k) => nav(k === 'meeting' ? '/team/meeting' : `/team/${k}`)} />
 
             {approvals.length > 0 && (
               <>

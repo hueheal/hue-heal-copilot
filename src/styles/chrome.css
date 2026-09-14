@@ -573,3 +573,45 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 .ck-people-chip:hover { box-shadow: inset 0 0 0 1px var(--ck-line-strong); }
 .ck-avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #FBFAF6; background: var(--ck-dept, var(--ck-accent)); }
 @media (max-width: 1080px) { .ck-room-stage { grid-template-columns: 1fr; height: auto; overflow: visible; } .ck-glasspanel { min-height: 0; } .ck-panel-scroll { max-height: 50vh; } }
+
+/* ---- The office as an environment ---- */
+.ck-office { position: relative; margin: 0 -40px; }
+.ck-office-rail {
+  display: flex; align-items: center; gap: 44px;
+  overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  padding: 18px calc(50% - min(27vw, 250px)) 8px;
+  scrollbar-width: none;
+}
+.ck-office-rail::-webkit-scrollbar { display: none; }
+.ck-office-slide {
+  flex: 0 0 auto; width: min(54vw, 500px); aspect-ratio: 1 / 1;
+  scroll-snap-align: center; border: none; padding: 0; cursor: pointer;
+  background: transparent; border-radius: 26px; position: relative;
+  transform: scale(0.84); opacity: 0.45; filter: saturate(0.85);
+  transition: transform 320ms var(--ck-ease), opacity 320ms var(--ck-ease), filter 320ms var(--ck-ease);
+}
+.ck-office-slide img {
+  width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 26px;
+  box-shadow: 0 18px 50px rgba(58, 46, 37, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  -webkit-user-select: none; user-select: none;
+}
+.ck-office-slide[data-active='1'] { transform: scale(1); opacity: 1; filter: none; }
+.ck-office-slide[data-active='1']:hover { transform: scale(1.015); }
+.ck-office-slide:focus-visible { outline: 2px solid var(--ck-dept, var(--ck-accent)); outline-offset: 4px; }
+.ck-office-arrow {
+  position: absolute; top: calc(min(27vw, 250px) - 18px); z-index: 5;
+  width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--ck-glass); -webkit-backdrop-filter: var(--ck-glass-blur); backdrop-filter: var(--ck-glass-blur);
+  box-shadow: var(--ck-shadow-glass); color: var(--ck-ink); font-size: 22px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; font-family: var(--ck-font);
+}
+.ck-office-arrow[data-side='l'] { left: 40px; }
+.ck-office-arrow[data-side='r'] { right: 40px; }
+.ck-office-arrow:disabled { opacity: 0.25; cursor: default; }
+.ck-office-arrow:not(:disabled):hover { color: var(--ck-accent); }
+.ck-office-meta { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 14px 40px 0; }
+.ck-office-dots { display: flex; gap: 7px; margin-top: 4px; }
+.ck-office-dot { width: 7px; height: 7px; border-radius: 50%; border: none; padding: 0; cursor: pointer; background: var(--ck-line-strong); transition: background 160ms var(--ck-ease), transform 160ms var(--ck-ease); }
+.ck-office-dot[data-on='1'] { background: var(--ck-accent); transform: scale(1.25); }
+@media (max-width: 700px) { .ck-office { margin: 0 -16px; } .ck-office-rail { gap: 20px; padding: 10px calc(50% - 38vw) 6px; } .ck-office-slide { width: 76vw; } .ck-office-arrow { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ck-office-slide { transition: none; } }
