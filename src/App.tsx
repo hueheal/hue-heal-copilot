@@ -1,11 +1,9 @@
 import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
 import StudioLayout from './components/StudioLayout'
 import Home from './pages/Home'
-import Library from './pages/Library'
 import Team from './pages/Team'
 import DeptRoom from './pages/DeptRoom'
 import RoleRoom from './pages/RoleRoom'
-import Calendar from './pages/Calendar'
 import Clients from './pages/Clients'
 import ClientRoom from './pages/ClientRoom'
 import ClientDocEditor from './pages/ClientDocEditor'
@@ -28,7 +26,6 @@ function StudioRedirect() {
   const { id } = useParams()
   return <Navigate to={`/create/social/${id}`} replace />
 }
-import Reports from './pages/Reports'
 import Settings from './pages/Settings'
 import TemplateGallery from './pages/TemplateGallery'
 import AuthGate from './components/AuthGate'
@@ -52,8 +49,8 @@ export default function App() {
         <Route path="create" element={<Create />} />
         <Route path="create/newsletter" element={<NewsletterEditor />} />
         <Route path="create/:family" element={<CreateEditor />} />
-        <Route path="calendar" element={<Calendar />} />
-        <Route path="library" element={<Library />} />
+        <Route path="calendar" element={<Navigate to="/" replace />} />
+        <Route path="library" element={<Navigate to="/" replace />} />
         <Route path="team" element={<Team />} />
         <Route path="team/:dept" element={<DeptRoom />} />
         <Route path="roles" element={<Navigate to="/team" replace />} />
@@ -69,7 +66,7 @@ export default function App() {
         <Route path="create/social/:id" element={<SocialStudio />} />
         <Route path="newsletter" element={<RedirectWithSearch to="/create/newsletter" />} />
         <Route path="journal" element={<Navigate to="/create/journal" replace />} />
-        <Route path="reports" element={<Reports />} />
+        <Route path="reports" element={<Navigate to="/" replace />} />
         <Route path="settings" element={<Settings />} />
         <Route path="research" element={<ComingSoon title="Research" blurb="Audience & market insight for this brand." />} />
         <Route path="linkedin" element={<ComingSoon title="LinkedIn" blurb="Long-form professional posts for this brand." />} />

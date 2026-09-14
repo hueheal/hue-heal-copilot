@@ -6,7 +6,7 @@ import { useTheme } from '../../lib/theme'
 import { savePost } from '../../lib/socialCopilot'
 import type { PostFormat } from '../../lib/database.types'
 import {
-  IcHome, IcCreate, IcClients, IcCalendar, IcChart, IcSettings,
+  IcHome, IcCreate, IcClients, IcSettings,
   IcSun, IcMoon, IcMonitor, IcDoc, IcMail, IcImage, IcLayers, IcInvoice,
 } from './icons'
 
@@ -60,11 +60,8 @@ export default function CommandBar({ open, onOpenChange }: { open: boolean; onOp
           <Command.Group heading="Go to">
             <Command.Item onSelect={() => go('/')}><IcHome /> Home</Command.Item>
             <Command.Item onSelect={() => go('/create')}><IcCreate /> Create</Command.Item>
-            <Command.Item onSelect={() => go('/library')}><IcLayers /> Library</Command.Item>
             <Command.Item onSelect={() => go('/team')}><IcClients /> Team</Command.Item>
             <Command.Item onSelect={() => go('/clients')}><IcClients /> Clients</Command.Item>
-            <Command.Item onSelect={() => go('/calendar')}><IcCalendar /> Calendar</Command.Item>
-            <Command.Item onSelect={() => go('/reports')}><IcChart /> Analytics</Command.Item>
             <Command.Item onSelect={() => go('/templates')}><IcImage /> Template gallery</Command.Item>
             <Command.Item onSelect={() => go('/settings')}><IcSettings /> Settings</Command.Item>
           </Command.Group>
