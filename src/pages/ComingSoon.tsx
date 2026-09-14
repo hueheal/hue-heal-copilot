@@ -10,7 +10,7 @@ export default function ComingSoon({ title, blurb }: { title: string; blurb: str
       <div style={{ padding: '48px 40px' }}>
         <div style={{ maxWidth: 520, border: '1px dashed var(--hh-line)', borderRadius: 16, padding: '40px 32px', textAlign: 'center', background: 'var(--hh-lotus)' }}>
           <div style={{ fontSize: 34, marginBottom: 12, opacity: 0.5 }}>✦</div>
-          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, marginBottom: 8 }}>Coming soon</div>
+          <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: 22, marginBottom: 8 }}>Coming soon</div>
           <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
             {title} is enabled for this brand and will appear here once it ships. We surface it in the menu now so your workspace is set up the way you want.
           </p>

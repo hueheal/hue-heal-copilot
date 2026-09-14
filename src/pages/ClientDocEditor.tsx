@@ -247,9 +247,9 @@ export default function ClientDocEditor() {
   const formCanvas = (
     <article style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--hh-line-card)', maxWidth: 760, background: '#FBFAF6' }}>
       <div style={{ background: 'var(--hh-anthracite)', color: '#F4F0E7', padding: isMobile ? '38px 26px' : '54px 56px' }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 21 }}>hue&heal<span style={{ color: 'var(--hh-ember)' }}>.</span></div>
+        <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: 21 }}>hue&heal<span style={{ color: 'var(--hh-ember)' }}>.</span></div>
         <div style={{ fontSize: 10.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--hh-ember)', margin: '28px 0 12px' }}>{kindLabel} · Hue & Heal × {client?.name ?? 'Client'}</div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 29 : 40, lineHeight: 1.08, margin: 0 }}>{title || `${kindLabel} for ${client?.name ?? 'your client'}`}</h1>
+        <h1 style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: isMobile ? 29 : 40, lineHeight: 1.08, margin: 0 }}>{title || `${kindLabel} for ${client?.name ?? 'your client'}`}</h1>
         {dek && <p style={{ fontFamily: 'var(--font-voice)', fontStyle: 'italic', fontSize: 16, lineHeight: 1.5, color: 'rgba(244,240,231,0.72)', margin: '16px 0 0' }}>{dek}</p>}
       </div>
       <div style={{ padding: isMobile ? '10px 22px 30px' : '18px 56px 44px' }}>
@@ -257,7 +257,7 @@ export default function ClientDocEditor() {
         {steps.map((s, i) => (
           <div key={s.id} style={{ padding: '20px 0', borderBottom: '1px solid var(--hh-line)' }}>
             <div style={{ fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 8 }}>{i + 1} / {steps.length}</div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontSize: isMobile ? 19 : 23, lineHeight: 1.3, color: 'var(--text-strong)' }}>{s.question || 'Untitled question'}</div>
+            <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: isMobile ? 19 : 23, lineHeight: 1.3, color: 'var(--text-strong)' }}>{s.question || 'Untitled question'}</div>
             {s.help && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 6 }}>{s.help}</div>}
             {s.type === 'choice' && (s.options ?? []).length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>

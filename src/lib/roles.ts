@@ -346,6 +346,41 @@ export async function briefingJobs(briefingId: string): Promise<RoleJob[]> {
   return (data ?? []) as RoleJob[]
 }
 
+/* ---- Meetings: the open house ----
+   The founder calls any set of seats into one room with one agenda. Each
+   attendee answers from its own remit; when the last reply lands the Chief
+   of staff writes the minutes (the same desk machinery as a briefing). */
+
+const meetingTask = (agenda: string, names: string[]) =>
+  `MEETING: ${agenda.trim()}\n\nThe founder has called a meeting. In the room: ${names.join(', ')}. Speak only for your own remit: your position on the agenda, what you commit to do, what you need decided, and any disagreement with a named colleague, stated once. Keep it under 250 words. No content pieces, no needs, no experiments unless the agenda asks for them.`
+
+export async function sendMeeting(agenda: string, attendees: Role[]): Promise<{ briefing?: Briefing; jobs: RoleJob[]; error?: string }> {
+  if (!supabase) return { jobs: [], error: 'Not connected' }
+  const seats = attendees.filter((r) => r.enabled)
+  if (!seats.length) return { jobs: [], error: 'Call at least one seat into the room.' }
+  const { data, error } = await supabase.from('role_briefings')
+    .insert(withBrandInsert({ text: agenda.trim(), source: 'meeting' }) as never).select('id, text, source, created_at').single()
+  if (error) return { jobs: [], error: error.message }
+  const briefing = data as Briefing
+  const names = seats.map((r) => r.name)
+  const jobs: RoleJob[] = []
+  for (const seat of seats) {
+    // source 'desk' so the minute sweep picks each up straight away.
+    const { data: j } = await supabase.from('role_jobs')
+      .insert(withBrandInsert({ role_id: seat.id, dept: seat.dept, task: meetingTask(agenda, names), source: 'desk', briefing_id: briefing.id }) as never)
+      .select(JOB_COLS).single()
+    if (j) jobs.push(j as RoleJob)
+  }
+  return { briefing, jobs }
+}
+
+export async function listMeetings(): Promise<Briefing[]> {
+  if (!supabase) return []
+  const { data } = await filterByBrand(supabase.from('role_briefings').select('id, text, source, created_at'))
+    .eq('source', 'meeting').order('created_at', { ascending: false }).limit(12)
+  return (data ?? []) as Briefing[]
+}
+
 /* ---- Department state: playbook, budget, tools ---- */
 export interface DeptState { dept: string; playbook: string; playbook_updated_at: string | null; budget_pence: number; tools: string[] }
 

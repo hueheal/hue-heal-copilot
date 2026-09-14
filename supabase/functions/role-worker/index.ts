@@ -86,7 +86,7 @@ async function work(admin: SupabaseClient, job: Job): Promise<string> {
     // A lead may brief its team; a member answers alone. Either way one
     // deliverable comes back, and if acting on it would leave the building
     // it waits for the founder's approval.
-    const { deliverable, runId, usage, plan } = await executeDepartment(admin, role, job.task, 'task', { channel: job.briefing_id ? null : channel, jobId: job.id })
+    const { deliverable, runId, usage, plan } = await executeDepartment(admin, role, job.task, 'task', { channel: job.briefing_id ? null : channel, jobId: job.id, solo: job.task.startsWith('MEETING:') })
     await admin.from('role_jobs').update({
       status: 'done', run_id: runId, finished_at: new Date().toISOString(),
       dept: role.dept ?? null, approval: deliverable.external ? 'pending' : 'none',

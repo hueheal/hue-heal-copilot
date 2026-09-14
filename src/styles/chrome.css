@@ -498,3 +498,75 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 .ck-stage { position: relative; height: 100%; }
 .ck-stage-main { height: 100%; overflow-y: auto; background: var(--ck-bg-glow), var(--ck-bg); }
 .ck-stage-main > * { padding-top: 84px !important; box-sizing: border-box; }
+
+/* ---- The office (phase 2): rooms, the stage, glass panels ---- */
+.ck-rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; margin-top: 12px; }
+.ck-room-card {
+  position: relative; display: flex; flex-direction: column; text-align: left; cursor: pointer;
+  border: none; padding: 0; background: transparent; font-family: var(--ck-font); color: var(--ck-ink);
+  border-radius: 20px; transition: transform 200ms var(--ck-ease);
+}
+.ck-room-card:hover { transform: translateY(-4px); }
+.ck-room-card:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 3px; border-radius: 20px; }
+.ck-room-img {
+  width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 20px; display: block;
+  background: var(--ck-surface-2);
+  box-shadow: 0 10px 30px rgba(58, 46, 37, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  transition: box-shadow 200ms var(--ck-ease);
+}
+.ck-room-card:hover .ck-room-img { box-shadow: 0 18px 44px rgba(58, 46, 37, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 0 0 2px color-mix(in srgb, var(--ck-dept, var(--ck-accent)) 45%, transparent); }
+.ck-room-meta { display: flex; align-items: center; gap: 8px; padding: 12px 6px 0; }
+.ck-room-name { font-size: 14px; font-weight: 600; }
+.ck-room-sub { font-size: 12px; color: var(--ck-faint); }
+.ck-room-badges { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+.ck-room-badges .ck-pill { background: var(--ck-glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-color: transparent; box-shadow: inset 0 0 0 1px var(--ck-glass-edge); }
+
+/* The stage: chat, room, tasks. Fills the viewport under the glass menu. */
+.ck-room-stage {
+  display: grid; grid-template-columns: 300px minmax(0, 1fr) 348px; gap: 16px;
+  height: 100vh; box-sizing: border-box; padding: 84px 16px 16px !important;
+  font-family: var(--ck-font); color: var(--ck-ink); letter-spacing: -0.005em;
+}
+.ck-glasspanel {
+  display: flex; flex-direction: column; min-height: 0; box-sizing: border-box;
+  border-radius: 18px; background: var(--ck-glass);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: var(--ck-shadow-glass); overflow: hidden;
+}
+.ck-panel-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ck-muted); flex-shrink: 0; }
+.ck-panel-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px 12px; }
+.ck-room-centre { min-width: 0; min-height: 0; overflow-y: auto; padding: 4px 4px 8px; }
+.ck-scene { position: relative; border-radius: 24px; overflow: hidden; box-shadow: 0 16px 44px rgba(58, 46, 37, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+.ck-scene img { display: block; width: 100%; max-height: 46vh; object-fit: cover; object-position: center 30%; }
+.ck-scene-veil { position: absolute; inset: auto 0 0 0; padding: 40px 20px 16px; background: linear-gradient(to top, rgba(30, 27, 24, 0.55), transparent); color: #FBFAF6; display: flex; align-items: flex-end; gap: 10px; }
+
+/* Chat */
+.ck-chat { display: flex; flex-direction: column; gap: 10px; padding: 6px 4px; }
+.ck-msg { max-width: 92%; border-radius: 14px; padding: 9px 12px; font-size: 12.5px; line-height: 1.5; box-sizing: border-box; }
+.ck-msg[data-me='1'] { align-self: flex-end; background: var(--ck-ink); color: var(--ck-bg); border-bottom-right-radius: 5px; }
+.ck-msg[data-me='0'] { align-self: flex-start; background: var(--ck-surface); box-shadow: var(--ck-shadow-md); border-bottom-left-radius: 5px; }
+.ck-msg[data-me='0'][data-click='1'] { cursor: pointer; }
+.ck-msg[data-me='0'][data-click='1']:hover { box-shadow: var(--ck-shadow-lg); }
+.ck-msg-meta { display: block; font-size: 10.5px; color: var(--ck-faint); margin-top: 3px; }
+.ck-msg[data-me='1'] .ck-msg-meta { color: rgba(251, 250, 246, 0.6); }
+.ck-chat-compose { flex-shrink: 0; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+.ck-chat-compose textarea {
+  width: 100%; box-sizing: border-box; resize: none; min-height: 62px;
+  border: none; border-radius: 12px; background: var(--ck-surface); color: var(--ck-ink);
+  font-family: var(--ck-font); font-size: 12.5px; line-height: 1.5; padding: 10px 12px;
+  box-shadow: var(--ck-shadow-md); outline: none;
+}
+.ck-chat-compose textarea:focus-visible { box-shadow: var(--ck-shadow-md), 0 0 0 2px var(--ck-accent); }
+
+/* Panel tabs */
+.ck-tabs { display: flex; gap: 2px; padding: 0 12px; flex-shrink: 0; }
+.ck-tab {
+  border: none; background: none; cursor: pointer; font-family: var(--ck-font);
+  font-size: 12px; font-weight: 500; color: var(--ck-muted); padding: 7px 11px; border-radius: 9px;
+}
+.ck-tab:hover { background: var(--ck-hover); color: var(--ck-ink); }
+.ck-tab[data-on='1'] { background: var(--ck-surface); color: var(--ck-ink); box-shadow: 0 2px 8px rgba(58, 46, 37, 0.1); }
+.ck-people-chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px 6px 7px; border-radius: 999px; background: var(--ck-glass); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px var(--ck-glass-edge); border: none; cursor: pointer; font-family: var(--ck-font); font-size: 12px; font-weight: 500; color: var(--ck-ink); }
+.ck-people-chip:hover { box-shadow: inset 0 0 0 1px var(--ck-line-strong); }
+.ck-avatar { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #FBFAF6; background: var(--ck-dept, var(--ck-accent)); }
+@media (max-width: 1080px) { .ck-room-stage { grid-template-columns: 1fr; height: auto; overflow: visible; } .ck-glasspanel { min-height: 0; } .ck-panel-scroll { max-height: 50vh; } }

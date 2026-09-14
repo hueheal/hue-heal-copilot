@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-do
 import StudioLayout from './components/StudioLayout'
 import Home from './pages/Home'
 import Team from './pages/Team'
+import MeetingRoom from './pages/MeetingRoom'
 import DeptRoom from './pages/DeptRoom'
 import RoleRoom from './pages/RoleRoom'
 import Clients from './pages/Clients'
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="calendar" element={<Navigate to="/" replace />} />
         <Route path="library" element={<Navigate to="/" replace />} />
         <Route path="team" element={<Team />} />
+        <Route path="team/meeting" element={<MeetingRoom />} />
         <Route path="team/:dept" element={<DeptRoom />} />
         <Route path="roles" element={<Navigate to="/team" replace />} />
         <Route path="roles/:id" element={<RoleRoom />} />

@@ -302,9 +302,9 @@ export default function CreateEditor() {
     <div style={{ maxWidth: 760 }}>
       {/* Report cover — dark, per the design */}
       <div style={{ background: 'var(--hh-anthracite)', color: '#F4F0E7', borderRadius: 14, padding: isMobile ? '44px 30px' : '64px 56px', marginBottom: 18 }}>
-        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 24 }}>hue&heal<span style={{ color: 'var(--hh-ember)' }}>.</span></div>
+        <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: 24 }}>hue&heal<span style={{ color: 'var(--hh-ember)' }}>.</span></div>
         <div style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--hh-ember)', margin: '34px 0 14px' }}>Report · {year}</div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 34 : 46, lineHeight: 1.05, margin: 0 }}>{title || 'The state of…'}</h1>
+        <h1 style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: isMobile ? 34 : 46, lineHeight: 1.05, margin: 0 }}>{title || 'The state of…'}</h1>
         {dek && <p style={{ fontFamily: 'var(--font-voice)', fontStyle: 'italic', fontSize: 17, lineHeight: 1.5, color: 'rgba(244,240,231,0.72)', margin: '18px 0 0' }}>{dek}</p>}
         <div style={{ fontSize: 12, color: 'rgba(244,240,231,0.55)', marginTop: 28 }}>{blocks.filter((b) => b.type === 'heading').length || '—'} chapters{readingTime ? ` · ${readingTime}` : ''}</div>
       </div>
@@ -322,7 +322,7 @@ export default function CreateEditor() {
       {hero && <img src={hero} alt="" style={{ display: 'block', width: '100%', height: isMobile ? 200 : 300, objectFit: 'cover' }} />}
       <div style={{ padding: isMobile ? '32px 22px 4px' : '48px 56px 8px' }}>
         {readingTime && <div style={{ fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-accent)', marginBottom: 16 }}>{readingTime}</div>}
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: isMobile ? 30 : 40, lineHeight: 1.12, color: 'var(--text-strong)', margin: '0 0 14px', letterSpacing: '-0.4px' }}>{title || 'Your article title'}</h1>
+        <h1 style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: isMobile ? 30 : 40, lineHeight: 1.12, color: 'var(--text-strong)', margin: '0 0 14px', letterSpacing: '-0.4px' }}>{title || 'Your article title'}</h1>
         {dek && <p style={{ fontFamily: 'var(--font-voice)', fontStyle: 'italic', fontSize: isMobile ? 17 : 20, lineHeight: 1.5, color: 'var(--text-muted)', margin: 0 }}>{dek}</p>}
       </div>
       <div style={{ padding: isMobile ? '4px 22px 28px' : '8px 56px 40px' }}>
@@ -536,7 +536,7 @@ function ArticleBody({ blocks, takeaways, isMobile, takeawaysLabel }: { blocks: 
   return (
     <>
       {blocks.map((b) => {
-        if (b.type === 'heading') return <h2 key={b.id} style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: isMobile ? 22 : 26, lineHeight: 1.25, color: 'var(--text-strong)', margin: '32px 0 12px' }}>{b.text || ' '}</h2>
+        if (b.type === 'heading') return <h2 key={b.id} style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1.25, color: 'var(--text-strong)', margin: '32px 0 12px' }}>{b.text || ' '}</h2>
         if (b.type === 'text') return <div key={b.id}>{b.text.split(/\n{2,}/).map((p, i) => p.trim() ? <p key={i} style={{ fontFamily: 'var(--font-sans)', fontSize: isMobile ? 15.5 : 17, lineHeight: 1.85, color: 'var(--text-body)', margin: '0 0 16px' }}>{p.trim()}</p> : null)}</div>
         if (b.type === 'image') return (
           <figure key={b.id} style={{ margin: '26px 0' }}>

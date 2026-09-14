@@ -179,7 +179,7 @@ export default function ClientRoom() {
   const totalDocs = docs.length + proposals.length + invoices.length
   const stageLabel = STAGES.find((s) => s.key === client.stage)?.label ?? '—'
 
-  const statNum: React.CSSProperties = { fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 32 : 40, lineHeight: 1, color: pal.accent }
+  const statNum: React.CSSProperties = { fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: isMobile ? 32 : 40, lineHeight: 1, color: pal.accent }
   const statLabel: React.CSSProperties = { fontSize: 11, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'rgba(244,239,226,0.55)', marginTop: 8 }
   const facts = [
     { k: 'Owner', v: USER.name },
@@ -209,7 +209,7 @@ export default function ClientRoom() {
         <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', gap: 32, flexWrap: 'wrap' }}>
           <div style={{ minWidth: isMobile ? 0 : 280, flex: 1 }}>
             <div style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: pal.accent }}>{[client.sector, stageLabel].filter(Boolean).join(' · ')}</div>
-            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: isMobile ? 38 : 60, lineHeight: 0.98, margin: '14px 0 0', letterSpacing: '-0.01em' }}>{client.name}</div>
+            <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: isMobile ? 38 : 60, lineHeight: 0.98, margin: '14px 0 0', letterSpacing: '-0.01em' }}>{client.name}</div>
             <p style={{ fontSize: 14.5, lineHeight: 1.7, color: 'rgba(244,239,226,0.72)', maxWidth: '52ch', margin: '16px 0 0', textWrap: 'pretty' }}>
               {client.note || 'Engagement brief not written yet. Add the scope, the spaces in play, and what success looks like.'}
             </p>
@@ -287,7 +287,7 @@ export default function ClientRoom() {
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'minmax(0, 1fr) 300px', gap: 22, padding: isMobile ? '22px 16px 40px' : '26px 40px 48px', alignItems: 'start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: 26, lineHeight: 1 }}>{phase.label}</div>
+            <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: 26, lineHeight: 1 }}>{phase.label}</div>
             <div style={{ fontSize: 12, color: 'var(--ck-muted)' }}>{phase.blurb}</div>
           </div>
 
@@ -337,7 +337,7 @@ export default function ClientRoom() {
 
           {/* Templates */}
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, margin: '34px 0 14px', flexWrap: 'wrap' }}>
-            <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: 22, lineHeight: 1 }}>Templates</div>
+            <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: 22, lineHeight: 1 }}>Templates</div>
             <div style={{ fontSize: 12, color: 'var(--ck-muted)' }}>Branded starting points for {phase.label}</div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 12 }}>
@@ -425,7 +425,7 @@ function DocCard({ onOpen, cover, coverTitle, tag, title, statusLabel, dot, meta
     <div className="hh-card-hover" style={{ background: 'var(--ck-surface)', border: '1px solid var(--ck-line-strong)', borderRadius: 14, overflow: 'hidden' }}>
       <button onClick={onOpen} style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', padding: 0, cursor: 'pointer', background: 'none' }}>
         <div style={{ height: 116, background: cover, position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: justify, padding: 14 }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontWeight: 300, fontSize: 19, lineHeight: 1.1, color: CREAM, maxWidth: '88%' }}>{coverTitle}</div>
+          <div style={{ fontFamily: 'var(--ck-font)', fontWeight: 500, fontSize: 19, lineHeight: 1.1, color: CREAM, maxWidth: '88%' }}>{coverTitle}</div>
           <div style={{ position: 'absolute', top: 12, right: 14, fontSize: 9.5, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(244,239,226,0.6)' }}>{tag}</div>
         </div>
         <div style={{ padding: '13px 14px 0' }}>

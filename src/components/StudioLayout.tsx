@@ -30,7 +30,7 @@ function LayoutInner() {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--ck-bg)', color: 'var(--ck-ink)', fontFamily: 'var(--ck-font)' }}>
         <header style={{ height: 50, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '0 16px', background: 'var(--ck-bg)', color: 'var(--ck-ink)', borderBottom: '1px solid var(--ck-line)', fontFamily: 'var(--ck-font)' }}>
-          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 17 }}>{current?.name ?? 'Hue & Heal'}</span>
+          <span style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: 15 }}>{current?.name ?? 'Hue & Heal'}</span>
         </header>
         <main key={current?.id ?? 'none'} style={{ flex: 1, minWidth: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 'calc(66px + env(safe-area-inset-bottom))' }}>
           <Outlet />

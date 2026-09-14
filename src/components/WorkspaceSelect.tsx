@@ -33,7 +33,7 @@ export default function WorkspaceSelect() {
     <Shell>
       <div style={{ width: '100%', maxWidth: 820 }}>
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}><Logo height={22} /></div>
-        <h1 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 30, textAlign: 'center', margin: '0 0 6px' }}>Choose a workspace</h1>
+        <h1 style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: 24, textAlign: 'center', margin: '0 0 6px' }}>Choose a workspace</h1>
         <p style={{ fontSize: 13.5, color: MUTED, textAlign: 'center', margin: '0 0 32px' }}>Each brand world has its own dashboard, content and identity.</p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
@@ -282,7 +282,7 @@ const noteStyle: React.CSSProperties = { fontSize: 12.5, color: MUTED, marginTop
 function chip(on: boolean): React.CSSProperties {
   return { border: `1px solid ${on ? 'var(--hh-copper)' : LINE}`, background: on ? 'rgba(244,240,231,0.08)' : 'transparent', color: CREAM, borderRadius: 999, padding: '8px 14px', fontSize: 12.5, cursor: 'pointer' }
 }
-function H({ children }: { children: React.ReactNode }) { return <h2 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 22, margin: '0 0 6px' }}>{children}</h2> }
+function H({ children }: { children: React.ReactNode }) { return <h2 style={{ fontFamily: 'var(--ck-font)', fontWeight: 600, fontSize: 18, margin: '0 0 6px' }}>{children}</h2> }
 function P({ children }: { children: React.ReactNode }) { return <p style={{ fontSize: 13, color: MUTED, margin: '0 0 16px', lineHeight: 1.55 }}>{children}</p> }
 function Row({ children }: { children: React.ReactNode }) { return <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 22 }}>{children}</div> }
 function Ghost({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {

@@ -1,55 +1,61 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
-import { listRoles, hireDepartment, listWorkspaceJobs, decideJob, deptSpend, type Role, type RoleJob } from '../lib/roles'
-import { DEPARTMENTS, seatsIn, pounds, type OrgDept } from '../lib/org'
+import { listRoles, hireDepartment, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
+import { DEPARTMENTS, seatsIn, deptOf, type OrgDept } from '../lib/org'
+import { officeImage } from '../lib/office'
 import { agoLabel } from '../components/chrome/AssetCard'
 import Briefing from '../components/Briefing'
 import Priorities from '../components/Priorities'
 
 /* ============================================================
-   The team area. Departments as cards, each in its own colour,
-   with what it is working on, what is done, and what is waiting
-   for you. You talk to the leads; they run their people.
+   The Team office. Rooms first: one diorama per department plus
+   the meeting room. Everything else folds beneath.
    ============================================================ */
+
+function RoomCard({ d, sub, badges, onClick }: { d: { key: string; name: string; accent?: string }; sub: string; badges?: React.ReactNode; onClick: () => void }) {
+  const [broken, setBroken] = useState(false)
+  const accent = (d as OrgDept).accent ?? 'var(--ck-accent)'
+  return (
+    <button className="ck-room-card" style={{ ['--ck-dept' as never]: accent }} onClick={onClick}>
+      {broken ? (
+        <span className="ck-room-img" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(145deg, color-mix(in srgb, ${accent} 16%, var(--ck-surface-2)), var(--ck-surface-2))` }}>
+          <span className="ck-dept-mark" data-size="l">{(d as OrgDept).mark ?? '··'}</span>
+        </span>
+      ) : (
+        <img className="ck-room-img" src={officeImage(d.key)} alt="" loading="lazy" onError={() => setBroken(true)} />
+      )}
+      {badges && <span className="ck-room-badges">{badges}</span>}
+      <span className="ck-room-meta">
+        <span style={{ minWidth: 0 }}>
+          <span className="ck-room-name" style={{ display: 'block' }}>{d.name}</span>
+          <span className="ck-room-sub">{sub}</span>
+        </span>
+      </span>
+    </button>
+  )
+}
 
 export default function Team() {
   const { current } = useBrand()
   const nav = useNavigate()
   const [roles, setRoles] = useState<Role[] | null>(null)
   const [jobs, setJobs] = useState<RoleJob[]>([])
-  const [spend, setSpend] = useState<Record<string, number>>({})
   const [busy, setBusy] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
+  const [showOpen, setShowOpen] = useState(false)
 
   useEffect(() => {
-    setRoles(null); setJobs([]); setSpend({})
+    setRoles(null); setJobs([])
     let live = true
-    const pull = async () => {
-      const [rs, js] = await Promise.all([listRoles(), listWorkspaceJobs()])
-      if (!live) return
-      setRoles(rs); setJobs(js)
-      const byDept: Record<string, number> = {}
-      for (const d of DEPARTMENTS) {
-        const ids = rs.filter((r) => r.dept === d.key).map((r) => r.id)
-        if (ids.length) byDept[d.key] = await deptSpend(ids)
-      }
-      if (live) setSpend(byDept)
-    }
+    const pull = () => Promise.all([listRoles(), listWorkspaceJobs()]).then(([rs, js]) => { if (live) { setRoles(rs); setJobs(js) } }).catch(() => {})
     void pull()
-    const t = setInterval(() => { listWorkspaceJobs().then((js) => live && setJobs(js)).catch(() => {}) }, 8000)
+    const t = setInterval(() => { listWorkspaceJobs().then((js) => live && setJobs(js)).catch(() => {}) }, 10000)
     return () => { live = false; clearInterval(t) }
   }, [current?.id])
 
-  // A department is hired once it has a lead: seats that arrived without one
-  // (earlier hires) are picked up by hiring the department, not duplicated.
   const hired = useMemo(() => DEPARTMENTS.filter((d) => (roles ?? []).some((r) => r.dept === d.key && r.seat === 'lead')), [roles])
   const open = useMemo(() => DEPARTMENTS.filter((d) => !(roles ?? []).some((r) => r.dept === d.key && r.seat === 'lead')), [roles])
-  const leadOf = (d: OrgDept) => (roles ?? []).find((r) => r.dept === d.key && r.seat === 'lead')
-  const teamOf = (d: OrgDept) => (roles ?? []).filter((r) => r.dept === d.key && r.seat === 'member')
-  const jobsOf = (d: OrgDept) => jobs.filter((j) => j.dept === d.key)
-  const working = (d: OrgDept) => jobsOf(d).filter((j) => j.status === 'queued' || j.status === 'running')
-  const toRead = (d: OrgDept) => jobsOf(d).filter((j) => j.status === 'done' && !j.reviewed_at && j.approval !== 'pending')
   const approvals = jobs.filter((j) => j.status === 'done' && j.approval === 'pending')
 
   async function hire(d: OrgDept) {
@@ -64,36 +70,49 @@ export default function Team() {
 
   return (
     <div className="ck-page">
-      <div className="ck-page-inner" style={{ maxWidth: 1040 }}>
+      <div className="ck-page-inner" style={{ maxWidth: 1060 }}>
         <div className="ck-eyebrow">{current?.name ?? 'Studio'}</div>
-        <h1 className="ck-h1" style={{ marginBottom: 4 }}>Team</h1>
-        <div style={{ fontSize: 13, color: 'var(--ck-muted)', maxWidth: '60ch', lineHeight: 1.55 }}>
-          You talk to the leads. They brief their people, compile the work and sign it. Anything that would leave the building waits here for you.
-        </div>
-        {note && <div className="ck-note" role="status" style={{ marginTop: 12 }}>{note}</div>}
+        <h1 className="ck-h1" style={{ marginBottom: 20 }}>Team</h1>
 
-        <div style={{ marginTop: 22 }}><Priorities key={current?.id} /></div>
-        {roles !== null && roles.some((r) => r.seat === 'lead') && (
-          <div style={{ marginTop: 22 }}><Briefing compact /></div>
-        )}
+        {note && <div className="ck-note" role="status">{note}</div>}
 
         {roles === null ? (
-          <div className="ck-cards" style={{ marginTop: 22 }}>{Array.from({ length: 3 }).map((_, i) => <div key={i} className="ck-skeleton" />)}</div>
+          <div className="ck-rooms">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="ck-skeleton" style={{ aspectRatio: '1/1', borderRadius: 20 }} />)}</div>
         ) : (
           <>
+            <div className="ck-rooms">
+              {hired.map((d) => {
+                const lead = roles.find((r) => r.dept === d.key && r.seat === 'lead')
+                const team = roles.filter((r) => r.dept === d.key && r.seat === 'member').length
+                const w = jobs.filter((j) => j.dept === d.key && (j.status === 'queued' || j.status === 'running')).length
+                const a = approvals.filter((j) => j.dept === d.key).length
+                const u = jobs.filter((j) => j.dept === d.key && j.status === 'done' && !j.reviewed_at && j.approval !== 'pending').length
+                return (
+                  <RoomCard key={d.key} d={d} sub={`${lead?.name ?? ''}${team ? ` +${team}` : ''}`}
+                    onClick={() => nav(`/team/${d.key}`)}
+                    badges={<>
+                      {w > 0 && <span className="ck-pill" data-live="1" style={{ ['--ck-dept' as never]: d.accent, pointerEvents: 'none' }}>{w} working</span>}
+                      {a > 0 && <span className="ck-pill" data-on="1" style={{ pointerEvents: 'none' }}>{a} to approve</span>}
+                      {u > 0 && <span className="ck-pill" style={{ pointerEvents: 'none' }}>{u} to read</span>}
+                    </>} />
+                )
+              })}
+              <RoomCard d={{ key: 'meeting', name: 'Meeting room', accent: '#B5632F' }} sub="Call anyone in. Minutes by your chief." onClick={() => nav('/team/meeting')} />
+            </div>
+
             {approvals.length > 0 && (
               <>
-                <h2 className="ck-h2" style={{ marginTop: 26 }}>Needs your approval</h2>
-                <div className="ck-jobs" style={{ marginTop: 6 }}>
-                  {approvals.map((j) => {
-                    const d = DEPARTMENTS.find((x) => x.key === j.dept)
-                    const by = roles.find((r) => r.id === j.role_id)
+                <div className="ck-sectiongap" style={{ height: 40 }} />
+                <div className="ck-board-title"><b>Needs your approval</b> {approvals.length}</div>
+                <div className="ck-jobs" style={{ margin: 0 }}>
+                  {approvals.slice(0, 5).map((j) => {
+                    const d = deptOf(j.dept); const by = roles.find((r) => r.id === j.role_id)
                     return (
                       <div key={j.id} className="ck-job" data-state="approval" style={{ ['--ck-dept' as never]: d?.accent }}>
                         <span className="ck-dept-mark" data-size="s">{d?.mark ?? '··'}</span>
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <span className="ck-job-task">{j.task}</span>
-                          <span className="ck-job-meta">{by?.name ?? 'A lead'}{j.plan?.approach === 'team' ? ` with ${(j.plan.assignments ?? []).map((a) => a.to).join(', ')}` : ''} · finished {agoLabel(j.finished_at ?? j.created_at)} · would go public or cost money</span>
+                          <span className="ck-job-meta">{by?.name ?? 'A lead'} · finished {agoLabel(j.finished_at ?? j.created_at)}</span>
                         </span>
                         <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                           <button className="ck-pill" onClick={() => nav(`/team/${j.dept}?job=${j.id}`)}>Read</button>
@@ -107,65 +126,31 @@ export default function Team() {
               </>
             )}
 
-            {hired.length > 0 && (
+            <div className="ck-sectiongap" style={{ height: 40 }} />
+            <Priorities />
+
+            {roles.some((r) => r.seat === 'lead') && (
               <>
-                <h2 className="ck-h2" style={{ marginTop: 26 }}>Your departments</h2>
-                <div className="ck-depts">
-                  {hired.map((d) => {
-                    const lead = leadOf(d); const team = teamOf(d)
-                    const w = working(d).length; const r = toRead(d).length; const a = approvals.filter((j) => j.dept === d.key).length
-                    const last = jobsOf(d).find((j) => j.status === 'done')
-                    return (
-                      <button key={d.key} className="ck-dept" style={{ ['--ck-dept' as never]: d.accent }} onClick={() => nav(`/team/${d.key}`)}>
-                        <span className="ck-dept-head">
-                          <span className="ck-dept-mark">{d.mark}</span>
-                          <span style={{ minWidth: 0 }}>
-                            <span className="ck-tile-label" style={{ fontSize: 15 }}>{d.name}</span>
-                            <span className="ck-tile-sub" style={{ whiteSpace: 'normal' }}>{lead?.name ?? 'No lead'}{team.length ? ` and ${team.length} more` : ''}</span>
-                          </span>
-                        </span>
-                        <span className="ck-dept-status">
-                          {w > 0 && <span className="ck-pill" data-live="1">Working on {w}</span>}
-                          {a > 0 && <span className="ck-pill" data-on="1">{a} for approval</span>}
-                          {r > 0 && <span className="ck-pill">{r} to read</span>}
-                          {w === 0 && a === 0 && r === 0 && <span className="ck-tile-sub" style={{ marginTop: 0 }}>{last ? `Last finished ${agoLabel(last.finished_at ?? last.created_at)}` : 'Nothing yet. Open to brief the lead.'}</span>}
-                        </span>
-                        <span className="ck-tile-sub" style={{ marginTop: 'auto' }}>{pounds(spend[d.key] ?? 0)} this month</span>
-                      </button>
-                    )
-                  })}
-                </div>
+                <div className="ck-sectiongap" style={{ height: 40 }} />
+                <Briefing compact />
               </>
             )}
 
             {open.length > 0 && (
               <>
-                <h2 className="ck-h2" style={{ marginTop: 30 }}>{hired.length ? 'Not hired yet' : 'Build your org'}</h2>
-                <div className="ck-depts">
-                  {open.map((d) => {
-                    const seats = seatsIn(d.key, current?.name)
-                    const lead = seats.find((s) => s.seat === 'lead')
-                    return (
-                      <div key={d.key} className="ck-dept" data-open="1" style={{ ['--ck-dept' as never]: d.accent }}>
-                        <span className="ck-dept-head">
-                          <span className="ck-dept-mark">{d.mark}</span>
-                          <span style={{ minWidth: 0 }}>
-                            <span className="ck-tile-label" style={{ fontSize: 15 }}>{d.name}</span>
-                            <span className="ck-tile-sub" style={{ whiteSpace: 'normal' }}>{d.tagline}</span>
-                          </span>
-                        </span>
-                        <span className="ck-tile-sub" style={{ whiteSpace: 'normal', lineHeight: 1.5 }}>
-                          {lead ? `${lead.name}${seats.length > 1 ? `, with ${seats.filter((s) => s.seat !== 'lead').map((s) => s.name.toLowerCase()).join(', ')}` : ', a single seat'}.` : 'No lead defined for this brand yet.'}
-                        </span>
-                        <span style={{ marginTop: 'auto' }}>
-                          <button className="ck-go" style={{ marginLeft: 0 }} disabled={busy === d.key || !lead} onClick={() => void hire(d)}>
-                            {busy === d.key ? 'Hiring…' : `Hire ${seats.length > 1 ? `${seats.length} seats` : 'the seat'}`}
-                          </button>
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
+                <div className="ck-sectiongap" style={{ height: 40 }} />
+                <button className="ck-pill" onClick={() => setShowOpen((v) => !v)}>{showOpen ? 'Hide open rooms' : `Open rooms (${open.length})`}</button>
+                {showOpen && (
+                  <div className="ck-rooms" style={{ marginTop: 16 }}>
+                    {open.map((d) => {
+                      const seats = seatsIn(d.key, current?.name)
+                      return (
+                        <RoomCard key={d.key} d={d} sub={busy === d.key ? 'Hiring…' : `Hire ${seats.length} seat${seats.length === 1 ? '' : 's'}`}
+                          onClick={() => { if (!busy) void hire(d) }} />
+                      )
+                    })}
+                  </div>
+                )}
               </>
             )}
           </>
