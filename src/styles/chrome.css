@@ -24,11 +24,13 @@
   --ck-hover: rgba(30, 27, 24, 0.05);
   --ck-active: rgba(30, 27, 24, 0.085);
   --ck-accent: #B5632F;
-  --ck-glass: rgba(251, 250, 246, 0.66);
+  --ck-glass: rgba(251, 250, 246, 0.52);
   --ck-glass-edge: rgba(255, 255, 255, 0.55);
+  --ck-glass-rim: rgba(30, 27, 24, 0.12);
+  --ck-glass-blur: blur(44px) saturate(1.6);
   --ck-shadow-md: 0 4px 16px rgba(58, 46, 37, 0.10), 0 0 0 1px rgba(58, 46, 37, 0.04);
   --ck-shadow-lg: 0 16px 48px rgba(58, 46, 37, 0.16), 0 0 0 1px rgba(58, 46, 37, 0.05);
-  --ck-shadow-glass: 0 8px 32px rgba(58, 46, 37, 0.12), inset 0 0 0 1px var(--ck-glass-edge);
+  --ck-shadow-glass: 0 0 6px rgba(30, 27, 24, 0.10), 0 10px 32px rgba(58, 46, 37, 0.12), 0 0 0 1px var(--ck-glass-rim), inset 0 0 0 1px var(--ck-glass-edge);
   --ck-scrim: rgba(30, 27, 24, 0.30);
   --ck-font: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --ck-radius: 9px;
@@ -44,10 +46,10 @@
     --ck-ink: #F5F1E8; --ck-muted: #B3A797; --ck-faint: #7E7264;
     --ck-line: rgba(245, 241, 232, 0.09); --ck-line-strong: rgba(245, 241, 232, 0.16);
     --ck-hover: rgba(245, 241, 232, 0.055); --ck-active: rgba(245, 241, 232, 0.09);
-    --ck-glass: rgba(42, 37, 31, 0.62); --ck-glass-edge: rgba(245, 241, 232, 0.10);
+    --ck-glass: rgba(42, 37, 31, 0.55); --ck-glass-edge: rgba(245, 241, 232, 0.10); --ck-glass-rim: rgba(0, 0, 0, 0.4); --ck-glass-blur: blur(44px) saturate(1.4);
     --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 241, 232, 0.06);
     --ck-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(245, 241, 232, 0.07);
-    --ck-shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--ck-glass-edge);
+    --ck-shadow-glass: 0 0 6px rgba(0, 0, 0, 0.35), 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--ck-glass-rim), inset 0 0 0 1px var(--ck-glass-edge);
     --ck-scrim: rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
@@ -59,10 +61,10 @@
   --ck-ink: #F5F1E8; --ck-muted: #B3A797; --ck-faint: #7E7264;
   --ck-line: rgba(245, 241, 232, 0.09); --ck-line-strong: rgba(245, 241, 232, 0.16);
   --ck-hover: rgba(245, 241, 232, 0.055); --ck-active: rgba(245, 241, 232, 0.09);
-  --ck-glass: rgba(42, 37, 31, 0.62); --ck-glass-edge: rgba(245, 241, 232, 0.10);
+  --ck-glass: rgba(42, 37, 31, 0.55); --ck-glass-edge: rgba(245, 241, 232, 0.10); --ck-glass-rim: rgba(0, 0, 0, 0.4); --ck-glass-blur: blur(44px) saturate(1.4);
   --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 241, 232, 0.06);
   --ck-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(245, 241, 232, 0.07);
-  --ck-shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--ck-glass-edge);
+  --ck-shadow-glass: 0 0 6px rgba(0, 0, 0, 0.35), 0 10px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--ck-glass-rim), inset 0 0 0 1px var(--ck-glass-edge);
   --ck-scrim: rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
@@ -452,16 +454,17 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
   z-index: 90; box-sizing: border-box;
   width: min(1060px, calc(100% - 32px));
   display: flex; align-items: center; gap: 16px;
-  padding: 8px 10px; border-radius: 18px;
+  padding: 7px 9px; border-radius: 16px;
   background: var(--ck-glass);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: var(--ck-glass-blur); backdrop-filter: var(--ck-glass-blur);
   box-shadow: var(--ck-shadow-glass);
   font-family: var(--ck-font); color: var(--ck-ink);
 }
 .ck-top-ws {
   display: flex; align-items: center; gap: 9px; flex-shrink: 0; max-width: 220px;
-  border: none; background: none; cursor: pointer; border-radius: 11px;
+  border: none; background: none; cursor: pointer;
   padding: 8px 12px; color: var(--ck-ink); font-family: var(--ck-font); font-size: 13px; font-weight: 500;
+  border-radius: 9px;
 }
 .ck-top-ws:hover { background: var(--ck-hover); }
 .ck-top-ws:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 1px; }
@@ -469,7 +472,7 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 .ck-top-nav { display: flex; gap: 2px; margin: 0 auto; }
 .ck-top-item {
   display: flex; align-items: center; gap: 8px;
-  padding: 8px 16px; border-radius: 11px; text-decoration: none;
+  padding: 8px 16px; border-radius: 9px; text-decoration: none;
   color: var(--ck-muted); font-size: 13px; font-weight: 500; font-family: var(--ck-font);
   transition: background 140ms var(--ck-ease), color 140ms var(--ck-ease), box-shadow 140ms var(--ck-ease);
 }
@@ -485,7 +488,7 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 .ck-top-utils { display: flex; gap: 2px; flex-shrink: 0; }
 .ck-top-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px; border-radius: 10px; border: none; background: none;
+  width: 36px; height: 36px; border-radius: 9px; border: none; background: none;
   color: var(--ck-muted); cursor: pointer; transition: background 140ms var(--ck-ease), color 140ms var(--ck-ease);
 }
 .ck-top-icon:hover { background: var(--ck-hover); color: var(--ck-ink); }
@@ -529,8 +532,8 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 }
 .ck-glasspanel {
   display: flex; flex-direction: column; min-height: 0; box-sizing: border-box;
-  border-radius: 18px; background: var(--ck-glass);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  border-radius: 16px; background: var(--ck-glass);
+  -webkit-backdrop-filter: var(--ck-glass-blur); backdrop-filter: var(--ck-glass-blur);
   box-shadow: var(--ck-shadow-glass); overflow: hidden;
 }
 .ck-panel-head { display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ck-muted); flex-shrink: 0; }
