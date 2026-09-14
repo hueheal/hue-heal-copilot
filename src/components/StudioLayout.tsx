@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import MobileNav from './MobileNav'
-import AppSidebar from './chrome/AppSidebar'
+import TopBar from './chrome/TopBar'
 import CommandBar from './chrome/CommandBar'
 import AuthGate from './AuthGate'
 import WorkspaceSelect from './WorkspaceSelect'
@@ -42,26 +42,13 @@ function LayoutInner() {
   }
 
   return (
-    <div style={{ width: '100%', height: '100vh', overflow: 'hidden', background: 'var(--ck-bg)' }}>
-      <div
-        style={{
-          display: 'flex',
-          height: '100%',
-          minHeight: 720,
-          width: '100%',
-          background: 'var(--ck-bg)',
-          color: 'var(--ck-ink)',
-          fontFamily: 'var(--ck-font)',
-          overflow: 'hidden',
-        }}
-      >
-        <AppSidebar onOpenCommand={() => setCmd(true)} />
-        {/* Keying on the brand id remounts the page when you switch worlds, so
-            every page re-fetches its data scoped to the new brand. */}
-        <main key={current?.id ?? 'none'} style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
-          <Outlet />
-        </main>
-      </div>
+    <div className="ck-stage" style={{ width: '100%', height: '100vh', overflow: 'hidden', color: 'var(--ck-ink)', fontFamily: 'var(--ck-font)' }}>
+      <TopBar onOpenCommand={() => setCmd(true)} />
+      {/* Keying on the brand id remounts the page when you switch worlds, so
+          every page re-fetches its data scoped to the new brand. */}
+      <main key={current?.id ?? 'none'} className="ck-stage-main">
+        <Outlet />
+      </main>
       <CommandBar open={cmd} onOpenChange={setCmd} />
     </div>
   )

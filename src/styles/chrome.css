@@ -1,55 +1,68 @@
 /* ============================================================
    Copilot chrome — the tool's own interface system.
-   shadcn/Apple treatment per the master redesign brief (§23–31):
-   Geist, warm neutrals, tonal layering, restrained radii, light
-   and dark. These tokens style ONLY the tool around the work.
+   Apple HIG treatment per docs/copilot-brief-2026-09.md: Poppins,
+   the Hue & Heal palette, glass navigation, depth by shadow,
+   breathable spacing. These tokens style ONLY the tool around the work.
    Brand canvases keep the --hh-* system and never read these.
    Naming: --ck-* (copilot kit). Classes: .ck-*.
    ============================================================ */
 
 :root {
   /* Light (default) — brief §24 */
-  --ck-bg: #F7F7F5;
-  --ck-surface: #FFFFFF;
-  --ck-surface-2: #F1F0ED;
-  --ck-ink: #151515;
-  --ck-muted: #6B6B6B;
-  --ck-faint: #999999;
-  --ck-line: rgba(0, 0, 0, 0.07);
-  --ck-line-strong: rgba(0, 0, 0, 0.12);
-  --ck-hover: rgba(0, 0, 0, 0.045);
-  --ck-active: rgba(0, 0, 0, 0.07);
-  --ck-accent: #B5632F; /* workspace accent, overridden per world */
-  --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
-  --ck-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  --ck-scrim: rgba(21, 21, 21, 0.28);
-  --ck-font: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --ck-radius: 8px;
-  --ck-radius-lg: 12px;
+  /* Hue & Heal in the chrome: sand ground, lotus panels, bone cards,
+     anthracite ink, copper for the one primary action. The workspace no
+     longer recolours the chrome; it shows as a name and dot only. */
+  --ck-bg: #ECE6DA;
+  --ck-bg-glow: radial-gradient(1200px 700px at 18% -10%, #F5EFE3 0%, rgba(245, 239, 227, 0) 55%), radial-gradient(1000px 600px at 100% 0%, #EFE7D6 0%, rgba(239, 231, 214, 0) 50%);
+  --ck-surface: #FBFAF6;
+  --ck-surface-2: #F5F1E8;
+  --ck-ink: #1E1B18;
+  --ck-muted: #6E6257;
+  --ck-faint: #9A8D7E;
+  --ck-line: rgba(30, 27, 24, 0.09);
+  --ck-line-strong: rgba(30, 27, 24, 0.16);
+  --ck-hover: rgba(30, 27, 24, 0.05);
+  --ck-active: rgba(30, 27, 24, 0.085);
+  --ck-accent: #B5632F;
+  --ck-glass: rgba(251, 250, 246, 0.66);
+  --ck-glass-edge: rgba(255, 255, 255, 0.55);
+  --ck-shadow-md: 0 4px 16px rgba(58, 46, 37, 0.10), 0 0 0 1px rgba(58, 46, 37, 0.04);
+  --ck-shadow-lg: 0 16px 48px rgba(58, 46, 37, 0.16), 0 0 0 1px rgba(58, 46, 37, 0.05);
+  --ck-shadow-glass: 0 8px 32px rgba(58, 46, 37, 0.12), inset 0 0 0 1px var(--ck-glass-edge);
+  --ck-scrim: rgba(30, 27, 24, 0.30);
+  --ck-font: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ck-radius: 9px;
+  --ck-radius-lg: 14px;
   --ck-ease: cubic-bezier(0.4, 0, 0.2, 1);
   color-scheme: light;
 }
 /* Dark — brief §25. System preference… */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --ck-bg: #1A1918; --ck-surface: #242321; --ck-surface-2: #2A2926;
-    --ck-ink: #F0EFED; --ck-muted: #A8A8A8; --ck-faint: #707070;
-    --ck-line: rgba(255, 255, 255, 0.08); --ck-line-strong: rgba(255, 255, 255, 0.13);
-    --ck-hover: rgba(255, 255, 255, 0.055); --ck-active: rgba(255, 255, 255, 0.09);
-    --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-    --ck-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+    --ck-bg: #1E1B18; --ck-bg-glow: radial-gradient(1200px 700px at 18% -10%, #262119 0%, rgba(38, 33, 25, 0) 55%);
+    --ck-surface: #2A251F; --ck-surface-2: #332D26;
+    --ck-ink: #F5F1E8; --ck-muted: #B3A797; --ck-faint: #7E7264;
+    --ck-line: rgba(245, 241, 232, 0.09); --ck-line-strong: rgba(245, 241, 232, 0.16);
+    --ck-hover: rgba(245, 241, 232, 0.055); --ck-active: rgba(245, 241, 232, 0.09);
+    --ck-glass: rgba(42, 37, 31, 0.62); --ck-glass-edge: rgba(245, 241, 232, 0.10);
+    --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 241, 232, 0.06);
+    --ck-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(245, 241, 232, 0.07);
+    --ck-shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--ck-glass-edge);
     --ck-scrim: rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
 }
 /* …and the explicit toggle wins in both directions. */
 :root[data-theme='dark'] {
-  --ck-bg: #1A1918; --ck-surface: #242321; --ck-surface-2: #2A2926;
-  --ck-ink: #F0EFED; --ck-muted: #A8A8A8; --ck-faint: #707070;
-  --ck-line: rgba(255, 255, 255, 0.08); --ck-line-strong: rgba(255, 255, 255, 0.13);
-  --ck-hover: rgba(255, 255, 255, 0.055); --ck-active: rgba(255, 255, 255, 0.09);
-  --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --ck-shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  --ck-bg: #1E1B18; --ck-bg-glow: radial-gradient(1200px 700px at 18% -10%, #262119 0%, rgba(38, 33, 25, 0) 55%);
+  --ck-surface: #2A251F; --ck-surface-2: #332D26;
+  --ck-ink: #F5F1E8; --ck-muted: #B3A797; --ck-faint: #7E7264;
+  --ck-line: rgba(245, 241, 232, 0.09); --ck-line-strong: rgba(245, 241, 232, 0.16);
+  --ck-hover: rgba(245, 241, 232, 0.055); --ck-active: rgba(245, 241, 232, 0.09);
+  --ck-glass: rgba(42, 37, 31, 0.62); --ck-glass-edge: rgba(245, 241, 232, 0.10);
+  --ck-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(245, 241, 232, 0.06);
+  --ck-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(245, 241, 232, 0.07);
+  --ck-shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 0 0 1px var(--ck-glass-edge);
   --ck-scrim: rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
@@ -167,14 +180,16 @@
 
 /* ---- Home (Phase 5): the first full chrome page ---- */
 .ck-page {
-  min-height: 100%; box-sizing: border-box; background: var(--ck-bg); color: var(--ck-ink);
-  font-family: var(--ck-font); padding: 56px 40px 80px;
+  min-height: 100%; box-sizing: border-box; background: transparent; color: var(--ck-ink);
+  font-family: var(--ck-font); padding: 56px 40px 88px;
 }
 .ck-page-inner { max-width: 880px; margin: 0 auto; }
+.ck-page { letter-spacing: -0.005em; }
 .ck-eyebrow { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--ck-faint); font-weight: 500; }
-.ck-h1 { font-size: 32px; font-weight: 600; letter-spacing: -0.02em; margin: 8px 0 40px; line-height: 1.2; }
-.ck-h2 { font-size: 13px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ck-muted); margin: 0 0 14px; }
+.ck-h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; margin: 8px 0 36px; line-height: 1.25; }
+.ck-h2 { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ck-muted); margin: 0 0 14px; }
 .ck-sectiongap { height: 48px; }
+.ck-card, .ck-tile, .ck-dept, .ck-job, .ck-prio-item, .ck-deliverable, .ck-composer { background-clip: padding-box; }
 
 .ck-composer {
   background: var(--ck-surface); border: 1px solid var(--ck-line); border-radius: 16px;
@@ -430,3 +445,56 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 .ck-prio-grid { display: grid; grid-template-columns: 1fr 260px; gap: 24px; margin-top: 6px; }
 @media (max-width: 860px) { .ck-prio-grid { grid-template-columns: 1fr; } }
 .ck-prio-actions { opacity: 1; }
+
+/* ---- The floating glass menu (September brief §4) ---- */
+.ck-topbar {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 90; box-sizing: border-box;
+  width: min(1060px, calc(100% - 32px));
+  display: flex; align-items: center; gap: 16px;
+  padding: 8px 10px; border-radius: 18px;
+  background: var(--ck-glass);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5); backdrop-filter: blur(20px) saturate(1.5);
+  box-shadow: var(--ck-shadow-glass);
+  font-family: var(--ck-font); color: var(--ck-ink);
+}
+.ck-top-ws {
+  display: flex; align-items: center; gap: 9px; flex-shrink: 0; max-width: 220px;
+  border: none; background: none; cursor: pointer; border-radius: 11px;
+  padding: 8px 12px; color: var(--ck-ink); font-family: var(--ck-font); font-size: 13px; font-weight: 500;
+}
+.ck-top-ws:hover { background: var(--ck-hover); }
+.ck-top-ws:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 1px; }
+.ck-top-ws-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ck-top-nav { display: flex; gap: 2px; margin: 0 auto; }
+.ck-top-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 11px; text-decoration: none;
+  color: var(--ck-muted); font-size: 13px; font-weight: 500; font-family: var(--ck-font);
+  transition: background 140ms var(--ck-ease), color 140ms var(--ck-ease), box-shadow 140ms var(--ck-ease);
+}
+.ck-top-item svg { color: var(--ck-faint); transition: color 140ms var(--ck-ease); }
+.ck-top-item:hover { color: var(--ck-ink); background: var(--ck-hover); }
+.ck-top-item:hover svg { color: var(--ck-ink); }
+.ck-top-item[aria-current='page'] {
+  color: var(--ck-ink); background: var(--ck-surface);
+  box-shadow: 0 2px 8px rgba(58, 46, 37, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+:root[data-theme='dark'] .ck-top-item[aria-current='page'] { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(245, 241, 232, 0.08); }
+.ck-top-item[aria-current='page'] svg { color: var(--ck-accent); }
+.ck-top-utils { display: flex; gap: 2px; flex-shrink: 0; }
+.ck-top-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 10px; border: none; background: none;
+  color: var(--ck-muted); cursor: pointer; transition: background 140ms var(--ck-ease), color 140ms var(--ck-ease);
+}
+.ck-top-icon:hover { background: var(--ck-hover); color: var(--ck-ink); }
+.ck-top-icon:focus-visible { outline: 2px solid var(--ck-accent); outline-offset: 1px; }
+.ck-top-icon svg { width: 17px; height: 17px; }
+@media (max-width: 860px) { .ck-top-item span { display: none; } .ck-top-item { padding: 8px 12px; } }
+
+/* The stage under the glass: the scroller carries the sand glow, content
+   starts below the bar and passes beneath it. */
+.ck-stage { position: relative; height: 100%; }
+.ck-stage-main { height: 100%; overflow-y: auto; background: var(--ck-bg-glow), var(--ck-bg); }
+.ck-stage-main > * { padding-top: 84px !important; box-sizing: border-box; }
