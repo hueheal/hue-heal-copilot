@@ -615,3 +615,9 @@ button.ck-dept:hover { border-color: var(--ck-line-strong); box-shadow: var(--ck
 .ck-office-dot[data-on='1'] { background: var(--ck-accent); transform: scale(1.25); }
 @media (max-width: 700px) { .ck-office { margin: 0 -16px; } .ck-office-rail { gap: 20px; padding: 10px calc(50% - 38vw) 6px; } .ck-office-slide { width: 76vw; } .ck-office-arrow { display: none; } }
 @media (prefers-reduced-motion: reduce) { .ck-office-slide { transition: none; } }
+
+/* In the narrow work panel a card stacks: title and meta first, the actions
+   on their own row beneath, so the task stays readable. */
+.ck-glasspanel .ck-job { flex-wrap: wrap; }
+.ck-glasspanel .ck-job > span:last-child { flex-basis: 100%; justify-content: flex-start !important; margin-left: 19px; margin-top: 4px; }
+.ck-glasspanel .ck-job .ck-job-task { white-space: normal; overflow: visible; display: block; }
