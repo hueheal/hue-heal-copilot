@@ -29,7 +29,7 @@ Hashtags: none anywhere. The social system doc does not provide for them, so the
 
 ## Claims discipline
 
-Facts stated across the batch: 23 women's health conditions live; every tradition read side by side with modern medicine; safety notes on every card; the shelf at remedae.app/womens-health; the journal piece at remedae.app/journal/traditions-wrote-it-down. The only numbers used are the three sourced stats from the journal piece itself (listed in `journal.md`). No testimonials, no health claims, no invented figures, no em or en dashes.
+Facts stated across the batch: 23 women's health conditions live; every tradition read side by side with modern medicine; safety notes on every card; the shelf at remedae.app/womens-health; the journal piece at remedae.app/journal/start-in-the-kitchen. The only numbers used are the three sourced stats from the journal piece itself (listed in `journal.md`). No testimonials, no health claims, no invented figures, no em or en dashes.
 
 **Ready for the founder's send. Nothing has been sent or posted.**
 

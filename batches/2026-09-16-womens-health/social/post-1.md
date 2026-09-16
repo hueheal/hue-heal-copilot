@@ -20,7 +20,7 @@ Every fact on slides 3 to 6 is taken from the live remedy cards (ids: nausea-for
 
 Ginger when the mornings turn queasy. Fennel seeds on the stove. A pinch of ajwain before dinner. Honeybush in the pot.
 
-Nobody handed out a leaflet for any of it. Someone showed you.
+Someone showed you how. Almost nobody explained why.
 
 Four remedies from four traditions, all from the supermarket shelf. Save it for your next shop, and send it to the woman who taught you one.
 

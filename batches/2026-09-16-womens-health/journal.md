@@ -1,10 +1,10 @@
 # Journal anchor · reframed, awaiting founder approval
 
-The anchor piece has been rewritten on the founder's direction of 16 September 2026: the batch is no longer about a research gap nobody has closed, it is about women understanding their bodies through traditions that have existed for centuries. The rewrite sits in the Remedae repo as a draft (`content/journal/articles.ts`) and goes live only after the founder approves it.
+The anchor piece has been rewritten on the founder's direction of 16 September 2026: the batch is no longer about a research gap nobody has closed, it credits the traditions with centuries of learning about women's bodies, and names the gap Remedae closes: most women inherited the habit, rarely the reason. Never say women "have understood their bodies" already; that argues against Remedae's reason to exist. The rewrite sits in the Remedae repo as a draft (`content/journal/articles.ts`) and goes live only after the founder approves it.
 
-- **URL (once approved):** https://remedae.app/journal/traditions-wrote-it-down
-- **Title:** Women have understood their bodies for centuries. The traditions wrote it down.
-- **Dek:** A lot of women's medicine never lived in a pharmacy. It lived in the kitchen, in jars and on the stove, handed down one generation at a time.
+- **URL (once approved):** https://remedae.app/journal/start-in-the-kitchen
+- **Title:** Every tradition has been learning about women's bodies. Start in the kitchen.
+- **Dek:** A lot of women's medicine never lived in a pharmacy. It lived in the kitchen, passed down with the habit but rarely the reason.
 - **Category:** Reading the body · 4 min read
 - **Hero:** /Users/maria/Claude/remedae/public/assets/womens-health-movement-01.jpg
 - **In-body images:** brand-ginger-drink-01.jpg (before the remedy cards), womens-health-hero-01.jpg (after them).

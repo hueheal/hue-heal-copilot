@@ -9,11 +9,11 @@ Caption (under 1,024 characters, Telegram photo-caption limit):
 
 A lot of women's medicine never lived in a pharmacy. It lived in the kitchen.
 
-Ginger when the mornings turn queasy. Fennel seeds boiled on the stove. A pot of honeybush tea for the menopause years. Nobody handed out a leaflet. Someone showed you.
+Ginger when the mornings turn queasy. Fennel seeds boiled on the stove. A pot of honeybush tea for the menopause years. Someone showed you how. Almost nobody explained why.
 
 Our new journal piece picks three jars worth knowing and tells you honestly which ones have the most behind them.
 
-Read it: https://remedae.app/journal/traditions-wrote-it-down
+Read it: https://remedae.app/journal/start-in-the-kitchen
 Explore the shelf: https://remedae.app/womens-health
 
 Link order note: lead with the journal link while the shelf stays behind sign-in; swap the order the day the shelf opens to everyone.
