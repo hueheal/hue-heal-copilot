@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 /* ============================================================
-   Batches. Content batches the seats produce (newsletter, socials,
-   journal anchors) live as files under /batches in the repo; this
-   page makes them readable in the studio. Markdown renders as
-   plain reading text, newsletter HTML renders in a sandboxed
+   The batch shelf. Content batches the seats produce (newsletter,
+   socials, journal anchors, telegram) live as files under /batches
+   in the repo. BatchShelf renders them inside the growth room's
+   Library tab; BatchReviewCard is the Home nudge that points there.
+   Markdown renders as reading text, newsletter HTML in a sandboxed
    frame exactly as an inbox would lay it out.
    ============================================================ */
 
@@ -40,7 +42,7 @@ function collect(): Batch[] {
     .sort((a, b) => b.key.localeCompare(a.key))
 }
 
-export default function Batches() {
+export function BatchShelf() {
   const batches = useMemo(collect, [])
   const [openKey, setOpenKey] = useState(batches[0]?.key)
   const [openFile, setOpenFile] = useState<string | undefined>(batches[0]?.files[0]?.name)
@@ -112,5 +114,46 @@ export default function Batches() {
         )}
       </section>
     </div>
+  )
+}
+
+
+/** Home: one review nudge per batch still marked ready-to-send. */
+export function BatchReviewCard() {
+  const nav = useNavigate()
+  const batches = useMemo(collect, [])
+  const waiting = batches.filter((b) =>
+    b.files.some((f) => f.name === 'README.md' && f.content.includes('Nothing has been sent or posted')),
+  )
+  if (!waiting.length) return null
+  return (
+    <>
+      <div className="ck-sectiongap" />
+      <div className="ck-board-title"><b>Batches to review</b> {waiting.length}</div>
+      <div className="ck-jobs" style={{ margin: 0 }}>
+        {waiting.map((b) => {
+          const kinds = [
+            b.files.some((f) => f.name.endsWith('.html')) ? 'newsletter' : null,
+            b.files.filter((f) => f.name.startsWith('social/')).length
+              ? `${b.files.filter((f) => f.name.startsWith('social/')).length} socials`
+              : null,
+            b.files.some((f) => f.name === 'telegram.md') ? 'telegram' : null,
+            b.files.some((f) => f.name === 'journal.md') ? 'journal anchor' : null,
+          ].filter(Boolean).join(' · ')
+          return (
+            <div key={b.key} className="ck-job" data-state="approval">
+              <span className="ck-dept-mark" data-size="s">{'\u25A4'}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="ck-job-task">{b.key.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/-/g, ' ')} batch</span>
+                <span className="ck-job-meta">{kinds} · ready for your send</span>
+              </span>
+              <span style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                <button className="ck-pill" data-on="1" onClick={() => nav('/team/growth?tab=library')}>Review</button>
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    </>
   )
 }

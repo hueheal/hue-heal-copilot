@@ -11,6 +11,7 @@ import { officeImage } from '../lib/office'
 import { agoLabel } from '../components/chrome/AssetCard'
 import DeliverableView from '../components/DeliverableView'
 import AssetReview from '../components/AssetReview'
+import { BatchShelf } from '../components/BatchShelf'
 import ConfirmButton from '../components/ConfirmButton'
 
 /* ============================================================
@@ -19,7 +20,7 @@ import ConfirmButton from '../components/ConfirmButton'
    behind tabs. Progressive disclosure per the September brief.
    ============================================================ */
 
-type Tab = 'tasks' | 'images' | 'room'
+type Tab = 'tasks' | 'images' | 'room' | 'library'
 
 export default function DeptRoom() {
   const { dept: deptKey } = useParams()
@@ -61,7 +62,7 @@ export default function DeptRoom() {
       if (r) setViewRun(r)
     }
   }
-  useEffect(() => { setRoster(null); setViewRun(null); setTab('tasks'); void reload() /* eslint-disable-next-line */ }, [deptKey, brand?.id])
+  useEffect(() => { setRoster(null); setViewRun(null); setTab(new URLSearchParams(window.location.search).get('tab') === 'library' && deptKey === 'growth' ? 'library' : 'tasks'); void reload() /* eslint-disable-next-line */ }, [deptKey, brand?.id])
 
   const active = jobs.filter((j) => j.status === 'queued' || j.status === 'running')
   useEffect(() => {
@@ -125,6 +126,9 @@ export default function DeptRoom() {
   if (!lead) return (
     <div className="ck-page"><div className="ck-page-inner">
       <div className="ck-empty"><div style={{ fontSize: 15, fontWeight: 500 }}>{dept.name} is not hired in {brand?.name ?? 'this workspace'}</div><p><button className="ck-pill" onClick={() => nav('/team')}>← Team</button></p></div>
+      {/* Batches are repo files, not org data: readable even before the
+          department is hired, so the Home review link never dead-ends. */}
+      {deptKey === 'growth' && <BatchShelf />}
     </div></div>
   )
 
@@ -269,6 +273,7 @@ export default function DeptRoom() {
           <button className="ck-tab" data-on={tab === 'tasks' ? '1' : '0'} onClick={() => setTab('tasks')}>Tasks{approvals.length + unread.length > 0 ? ` · ${approvals.length + unread.length}` : ''}</button>
           <button className="ck-tab" data-on={tab === 'images' ? '1' : '0'} onClick={() => setTab('images')}>Images</button>
           <button className="ck-tab" data-on={tab === 'room' ? '1' : '0'} onClick={() => setTab('room')}>Room</button>
+          {deptKey === 'growth' && <button className="ck-tab" data-on={tab === 'library' ? '1' : '0'} onClick={() => setTab('library')}>Library</button>}
         </div>
         <div className="ck-panel-scroll">
           {tab === 'tasks' && (
@@ -329,6 +334,7 @@ export default function DeptRoom() {
             </div>
           )}
           {tab === 'images' && <AssetReview dept={dept.key} showApproved />}
+          {tab === 'library' && <BatchShelf />}
           {tab === 'room' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 18, paddingTop: 8 }}>
               <div>

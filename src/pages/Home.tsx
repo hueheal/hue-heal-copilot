@@ -12,6 +12,7 @@ import { SlideCanvas } from './SocialStudio'
 import Composer from '../components/chrome/Composer'
 import Briefing from '../components/Briefing'
 import AssetReview from '../components/AssetReview'
+import { BatchReviewCard } from '../components/BatchShelf'
 import Priorities from '../components/Priorities'
 import { listRoles, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
 import { DEPARTMENTS, deptOf } from '../lib/org'
@@ -126,6 +127,7 @@ export default function Home() {
         <h1 className="ck-h1">{greeting}.</h1>
 
         <Priorities compact />
+        <BatchReviewCard />
         {hasOrg ? (
           <>
             <div className="ck-sectiongap" />
