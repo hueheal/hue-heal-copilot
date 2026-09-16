@@ -4,19 +4,18 @@ The anchor piece has been rewritten on the founder's direction of 16 September 2
 
 - **URL (once approved):** https://remedae.app/journal/traditions-wrote-it-down
 - **Title:** Women have understood their bodies for centuries. The traditions wrote it down.
-- **Dek:** From the first period to long after the last, the world's healing systems have kept careful notes on women's bodies. Here is how to read them, with three cards from the shelf to start on.
-- **Category:** Reading the body · 5 min read
-- **Hero:** /Users/maria/Claude/remedae/public/assets/womens-health-movement-01.jpg (live at https://remedae.app/assets/womens-health-movement-01.jpg)
-- **In-body images:** womens-health-cycles-band-01.jpg (after the demand stats), womens-health-family-01.jpg (after the remedy cards). Both contextual, both already live on the assets path.
-- **Remedy cards in the piece (all verified from the live shelf, each with a button into its section):**
-  1. Endometriosis · TCM · Shao Fu Zhu Yu Tang → `/conditions/endometriosis?open=tcm`
-  2. PCOS · Naturopathy · Myo-inositol with d-chiro-inositol → `/conditions/pcos?open=naturopathy`
-  3. Menopause · Kampo · Kamishoyosan → `/conditions/menopause?open=kampo`
+- **Dek:** A lot of women's medicine never lived in a pharmacy. It lived in the kitchen, in jars and on the stove, handed down one generation at a time.
+- **Category:** Reading the body · 4 min read
+- **Hero:** /Users/maria/Claude/remedae/public/assets/womens-health-movement-01.jpg
+- **In-body images:** brand-ginger-drink-01.jpg (before the remedy cards), womens-health-hero-01.jpg (after them).
+- **Remedy cards (kitchen ingredients only, each with a button into its section):**
+  1. Pregnancy nausea · Naturopathy · Fresh ginger tea → `/conditions/nausea-for-pregnancy?open=naturopathy`
+  2. PCOS · Ayurveda · Fennel seed decoction → `/conditions/pcos?open=ayurveda`
+  3. Perimenopause · African · Honeybush tea → `/conditions/perimenopause?open=african`
 
-## Standfirst (echoed by the newsletter lede and the social captions)
+## Standfirst (echoed by the newsletter, telegram and captions)
 
-Women have understood their bodies through traditions that have existed for centuries.
-The new shelf holds those notes side by side with modern medicine, in plain English, with every source cited.
+A lot of women's medicine never lived in a pharmacy. It lived in the kitchen.
 
 ## Stats cleared for reuse (from this article only, with its sourcing)
 
@@ -24,4 +23,4 @@ The new shelf holds those notes side by side with modern medicine, in plain Engl
 - Monthly searches for acupuncture rose from 329,000 in 2016 to 2.2 million in 2024 (Ahrefs data compiled by Healthnews).
 - Searches for perimenopause supplements were up 63 percent year on year by August 2026 (Glimpse trend data).
 
-Nothing outside this list may be quoted as a number in follow-up assets. "Nobody has properly studied" and any variant of that claim is retired across the whole batch: it was not true, and the founder has struck it.
+Nothing outside this list, or the numbers printed on the four live remedy cards used in this batch (1,278 people, 2014; 30 women, 2018), may be quoted as a number in follow-up assets. "Nobody has properly studied" and any variant of that claim is retired across the whole batch: it was not true, and the founder has struck it.

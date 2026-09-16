@@ -1,31 +1,30 @@
-# Post 3 · The reframe (told vs actually, earns swipes and shares)
+# Post 3 · The reframe (earns swipes and site visits)
 
-- **Template:** The reframe (Swipes family: told, struck through, vs what the traditions say)
-- **Format:** Portrait 4:5, single post
-- **Image (repo path):** /Users/maria/Claude/remedae/public/assets/womens-health-cycles-band-01.jpg. Note for the studio: if this template owns its ground (`noPhoto`), it will correctly ignore the photo per system rule 4; the path is supplied in case the portrait variant takes one.
+- **Template:** The reframe (told, struck through, vs what the traditions say)
+- **Format:** Portrait 4:5, single image (template owns its ground)
 
 ## On-image text
 
-- Told (struck through): `"It's just folklore."`
-- What the shelf says: `Ayurveda, TCM and Kampo have kept written notes on women's bodies for centuries. Folklore doesn't come with a formulary.`
-- Cue (last line before footer): `Read the piece ›`
+- Told (struck through): `"Spices are just for flavour."`
+- What the traditions say: `Fennel for the cycle. Ajwain for the bloat. Ginger for the queasy mornings. Kitchens have been pharmacies for a very long time.`
+- **End hook (cue line, last before footer):** `Find the rest on remedae.app ›`
+
+Sources: live cards pcos-ayurveda-2, bloating-unani-1, nausea-for-pregnancy-naturopathy-1.
 
 ## Caption
 
-In Japan, formulas for menstrual and menopausal complaints sit on the national formulary, standardised dose by dose and dispensed on prescription. Ayurveda's classical texts treat women's health as a field of its own. TCM has prescribed for menstrual pain since its classical formularies. That is a written record, not a rumour.
+Look in your spice rack. Fennel seeds, carom seeds, a knob of ginger in the fridge.
 
-Our women's health shelf reads that record side by side with modern medicine: 23 conditions live, every card stating plainly what stands behind it, safety notes throughout.
+Ayurveda boils fennel for irregular cycles. Unani stirs ajwain into warm water before a meal. And ginger for pregnancy nausea now has trials to match its reputation.
 
-remedae.app/womens-health. Traditionally used, not medical advice.
+Which jar in your kitchen came with a story? The rest of the shelf is on remedae.app. Traditionally used, not medical advice.
 
-Which tradition does your family read the body through?
-
-*(101 words)*
+*(64 words)*
 
 ## Alt text
 
-The phrase "It's just folklore" struck through, with the line "Ayurveda, TCM and Kampo have kept written notes on women's bodies for centuries. Folklore doesn't come with a formulary." beneath it.
+The phrase "Spices are just for flavour" struck through, above the line "Fennel for the cycle. Ajwain for the bloat. Ginger for the queasy mornings. Kitchens have been pharmacies for a very long time." Beneath it: "Find the rest on remedae.app."
 
 ## First-comment hashtags
 
-None. The social system doc does not provide for hashtags, so this batch omits them rather than assume permission.
+None.

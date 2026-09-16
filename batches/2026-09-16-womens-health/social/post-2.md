@@ -1,33 +1,31 @@
-# Post 2 · The number (curiosity, earns comments)
+# Post 2 · The number (earns saves and shares)
 
-- **Template:** The number (Comments / curiosity family: one big mint stat over a photo, then the statement it completes)
-- **Format:** Portrait 4:5, single post
-- **Image (repo path):** /Users/maria/Claude/remedae/public/assets/womens-health-everyday-01.jpg (sits under the forest scrim per the template)
+- **Template:** The number (one big mint stat over a photo, then the statement it completes)
+- **Format:** Portrait 4:5, single image
+- **Image (repo path):** /Users/maria/Claude/remedae/public/assets/brand-ginger-drink-01.jpg (fresh ginger and a cup of tea, under the forest scrim)
 
 ## On-image text
 
-The number template takes its copy as `stat | statement`:
+- Stat (mint, dominant): `1,278`
+- Statement (Poppins): `people in a 2014 review. Fresh ginger eased early pregnancy nausea as well as vitamin B6.`
+- **End hook (cue line, last before footer):** `Save it for someone expecting ›`
 
-- Stat (mint, dominant): `65.9%`
-- Statement (Poppins): `of UK adults used a traditional, complementary or integrative remedy in the past year.`
-- Cue (last line before footer): `The full picture ›`
+Source: live card nausea-for-pregnancy-naturopathy-1 (Viljoen et al. meta-analysis, 2014).
 
 ## Caption
 
-That number is from a BMJ Open survey published in 2026, covering 1,559 UK adults. Two thirds. Not a fringe.
+A kitchen remedy for morning sickness, with one of the strongest trial records on our shelf.
 
-It says something simple: people never stopped reading their bodies through the systems their families used. So we built a shelf that treats that knowledge with respect: 23 women's health conditions live, every tradition beside modern medicine, each card stating plainly what stands behind it, with safety notes throughout.
+Grate a thumb of fresh ginger into hot water. Up to four cups a day. Check with your midwife before you start.
 
-The shelf is at remedae.app/womens-health, and the story behind the number is on the journal. Traditionally used, not medical advice.
+Save this for someone expecting. Traditionally used, not medical advice.
 
-What did your household reach for before anyone thought to call it a remedy?
-
-*(108 words)*
+*(47 words)*
 
 ## Alt text
 
-A woman enjoying a colourful bowl of food on a sunny terrace, behind the statistic "65.9% of UK adults used a traditional, complementary or integrative remedy in the past year."
+Fresh ginger root beside a cup of tea, with the number "1,278" and the line "people in a 2014 review. Fresh ginger eased early pregnancy nausea as well as vitamin B6." Beneath it: "Save it for someone expecting."
 
 ## First-comment hashtags
 
-None. The social system doc does not provide for hashtags, so this batch omits them rather than assume permission.
+None.

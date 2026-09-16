@@ -37,3 +37,14 @@ Facts stated across the batch: 23 women's health conditions live; every traditio
 ## Reframe note · 16 September 2026
 
 The founder struck the "nobody has properly studied" framing across the whole batch: it was untrue. The batch now leads with women understanding their bodies through traditions that have existed for centuries. Every asset in this folder reflects that; the journal rewrite awaits the founder's approval before going live.
+
+## Kitchen rework · 16 September 2026, evening
+
+Founder direction: less explaining what Remedae is, more writing people remember; show only kitchen or well-known ingredients in this batch and leave the rest for people to discover on the app; every social post ends on a hook (save, visit, or a named action).
+
+- Carousel rebuilt from the founder's Figma (7 slides, `social/carousel/`), ending on "Save this for your next shop."
+- Remedies used across the batch: fresh ginger tea, fennel seed decoction, ajwain seed water, honeybush tea. All facts taken from their live cards.
+- Posts 2 and 3 end on their own hook lines ("Save it for someone expecting", "Find the rest on remedae.app").
+- Newsletter, telegram and journal draft rewritten on the kitchen line: "A lot of women's medicine never lived in a pharmacy. It lived in the kitchen."
+
+Still a draft. Nothing has been sent or posted, and the journal rewrite is not live.

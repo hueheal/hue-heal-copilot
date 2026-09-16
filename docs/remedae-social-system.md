@@ -50,6 +50,13 @@ slide automatically.
 | | Habit cards | Four cream cards on a photo, headline between them |
 | | Myth · truth | The belief struck through, what the traditions say beneath |
 
+## Founder rules for every post (16 September 2026)
+
+1. **End on a hook.** Every carousel ends with a dedicated hook slide, and every single-image post carries its hook as the cue line. The hook asks for one specific action: save it ("Save this for your next shop"), visit the site ("Find the rest on remedae.app"), or a named action the brief specifies. Never end on information alone.
+2. **Don't explain Remedae.** Skip the stock lines about traditions "side by side", "in plain English", "cited to source". Spend the words on one idea someone will remember and repeat.
+3. **Tease, don't empty the shelf.** Show a few accessible, recognisable remedies (kitchen or well-known ingredients) and leave the rest for people to discover on the app.
+4. **Carousel story shape** (founder's Figma, Social Media page, women's health row): photo cover with the promise → one context slide that earns the swipe → numbered remedy slides (tradition and region top-left, number top-right, "for ..." eyebrow, name, how plus one verified fact, a short care note) → hook slide with a quick-glance list of what was covered. Worked example: `batches/2026-09-16-womens-health/social/carousel/`.
+
 ## Rules baked into the templates
 
 0. Quando is for headlines, remedy names and quotes only. Every line that can
