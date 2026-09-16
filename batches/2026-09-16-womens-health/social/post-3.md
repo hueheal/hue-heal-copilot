@@ -6,25 +6,25 @@
 
 ## On-image text
 
-- Told (struck through): `"There's no evidence for it."`
-- What the shelf says: `For most of these remedies, nobody has run the trial yet. Unproven is not disproven.`
+- Told (struck through): `"It's just folklore."`
+- What the shelf says: `Ayurveda, TCM and Kampo have kept written notes on women's bodies for centuries. Folklore doesn't come with a formulary.`
 - Cue (last line before footer): `Read the piece ›`
 
 ## Caption
 
-When we grade the evidence on our women's health shelf, condition by condition, the honest grade for most traditional entries is: long tradition of use, early or thin research. That is not the same as "it doesn't work". It means the trial has not been run.
+In Japan, formulas for menstrual and menopausal complaints sit on the national formulary, standardised dose by dose and dispensed on prescription. Ayurveda's classical texts treat women's health as a field of its own. TCM has prescribed for menstrual pain since its classical formularies. That is a written record, not a rumour.
 
-So every page says exactly which it is. 23 conditions live, every tradition read beside modern medicine, safety notes on every card, and the gap shown rather than papered over. The journal piece makes the case for closing it, with an open invitation to researchers and clinics.
+Our women's health shelf reads that record side by side with modern medicine: 23 conditions live, every card stating plainly what stands behind it, safety notes throughout.
 
 remedae.app/womens-health. Traditionally used, not medical advice.
 
-Which women's health question do you wish had a proper trial behind it?
+Which tradition does your family read the body through?
 
-*(115 words)*
+*(101 words)*
 
 ## Alt text
 
-The phrase "There's no evidence for it" struck through, with the line "For most of these remedies, nobody has run the trial yet. Unproven is not disproven." beneath it.
+The phrase "It's just folklore" struck through, with the line "Ayurveda, TCM and Kampo have kept written notes on women's bodies for centuries. Folklore doesn't come with a formulary." beneath it.
 
 ## First-comment hashtags
 

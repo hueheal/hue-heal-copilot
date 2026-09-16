@@ -14,15 +14,15 @@ The number template takes its copy as `stat | statement`:
 
 ## Caption
 
-That number is from a BMJ Open survey published in 2026, covering 1,559 UK adults between May 2024 and October 2024. Two thirds. Not a fringe.
+That number is from a BMJ Open survey published in 2026, covering 1,559 UK adults. Two thirds. Not a fringe.
 
-The remedies behind it, the teas, the compresses, the kitchen spices, are mostly documented in small trials or not at all. So we built a shelf that says plainly what each one has behind it: 23 women's health conditions live, every tradition beside modern medicine, safety notes on every card.
+It says something simple: people never stopped reading their bodies through the systems their families used. So we built a shelf that treats that knowledge with respect: 23 women's health conditions live, every tradition beside modern medicine, each card stating plainly what stands behind it, with safety notes throughout.
 
 The shelf is at remedae.app/womens-health, and the story behind the number is on the journal. Traditionally used, not medical advice.
 
 What did your household reach for before anyone thought to call it a remedy?
 
-*(112 words)*
+*(108 words)*
 
 ## Alt text
 

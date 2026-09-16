@@ -9,10 +9,10 @@ Location note: neither the social system doc nor the copilot repo defines a batc
 | Asset | What it is | Where it goes |
 |---|---|---|
 | `newsletter.html` | Complete editorial (Family B, light) email announcing the shelf and pointing to the journal piece. Subject and preheader in the HTML comment at the top. Two CTAs (shelf, article), the family maximum. Unsubscribe placeholder `{{unsubscribe_token}}` in the footer, on the marketing templates' `/api/auth/unsubscribe?token=` pattern; the send pipeline substitutes the per-recipient HMAC token. | `POST /api/studio/email` via the Studio, or `sendMail` with `editorialShell`. Editorial sends go only to `journal_subscribers` not on `email_unsubscribes`, max one editorial email per address per week. |
-| `social/post-1.md` | Editorial cover carousel promoting the journal piece (earns reads). | Social Studio → Article → Instagram flow, then the founder's approval pile. |
+| `social/post-1.md` | Editorial cover carousel promoting the journal piece (earns reads). Rendered PNG slides in `social/carousel/`. | Social Studio → Article → Instagram flow, then the founder's approval pile. |
 | `social/post-2.md` | The number: the 65.9% BMJ Open stat (earns comments). | Social Studio → Create → Social → portrait, then the approval pile. |
 | `social/post-3.md` | The reframe: unproven is not disproven (earns swipes and shares). | Social Studio → Create → Social → portrait, then the approval pile. |
-| `journal.md` | Note that the journal anchor is already live, with URL, dek, the shared standfirst, and the only stats cleared for reuse. | Reference only; nothing to publish. |
+| `journal.md` | The reframed journal anchor: URL, dek, standfirst, the remedy cards it carries, and the only stats cleared for reuse. The rewrite sits as a draft in the Remedae repo pending the founder's approval. | Reference only; the founder approves the article before it ships. |
 
 Images: all from the live set at `https://remedae.app/assets/womens-health-*.jpg`; social posts reference the same files by repo path under `/Users/maria/Claude/remedae/public/assets/` for the studio to compose.
 
@@ -29,6 +29,11 @@ Hashtags: none anywhere. The social system doc does not provide for them, so the
 
 ## Claims discipline
 
-Facts stated across the batch: 23 women's health conditions live; every tradition read side by side with modern medicine; safety notes on every card; the shelf at remedae.app/womens-health; the journal piece at remedae.app/journal/womens-health-evidence-gap. The only numbers used are the three sourced stats from the journal piece itself (listed in `journal.md`). No testimonials, no health claims, no invented figures, no em or en dashes.
+Facts stated across the batch: 23 women's health conditions live; every tradition read side by side with modern medicine; safety notes on every card; the shelf at remedae.app/womens-health; the journal piece at remedae.app/journal/traditions-wrote-it-down. The only numbers used are the three sourced stats from the journal piece itself (listed in `journal.md`). No testimonials, no health claims, no invented figures, no em or en dashes.
 
 **Ready for the founder's send. Nothing has been sent or posted.**
+
+
+## Reframe note · 16 September 2026
+
+The founder struck the "nobody has properly studied" framing across the whole batch: it was untrue. The batch now leads with women understanding their bodies through traditions that have existed for centuries. Every asset in this folder reflects that; the journal rewrite awaits the founder's approval before going live.
