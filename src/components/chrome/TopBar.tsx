@@ -4,7 +4,7 @@ import * as Dropdown from '@radix-ui/react-dropdown-menu'
 import { useBrand } from '../../lib/brandContext'
 import { useTheme, type ThemeMode } from '../../lib/theme'
 import { useAuth } from '../../lib/auth'
-import { IcHome, IcCreate, IcClients, IcSettings, IcSearch, IcSun, IcMoon, IcMonitor, IcChevronsUpDown, IcRole } from './icons'
+import { IcHome, IcCreate, IcClients, IcSettings, IcSearch, IcSun, IcMoon, IcMonitor, IcChevronsUpDown, IcRole, IcLayers } from './icons'
 
 /* ============================================================
    The floating glass menu. One bar: workspace, the areas, search,
@@ -20,6 +20,7 @@ const AREAS: { key: string; label: string; path: string; icon: () => ReactNode; 
   { key: 'roles', label: 'Team', path: '/team', icon: IcRole },
   { key: 'create', label: 'Create', path: '/create', icon: IcCreate },
   { key: 'clients', label: 'Clients', path: '/clients', icon: IcClients },
+  { key: 'batches', label: 'Batches', path: '/batches', icon: IcLayers },
 ]
 
 export default function TopBar({ onOpenCommand }: { onOpenCommand: () => void }) {

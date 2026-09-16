@@ -8,7 +8,7 @@ import { useTheme, type ThemeMode } from '../../lib/theme'
 import { useAuth } from '../../lib/auth'
 import {
   IcHome, IcCreate, IcClients, IcSettings,
-  IcSearch, IcSun, IcMoon, IcMonitor, IcPanel, IcChevronsUpDown, IcRole,
+  IcSearch, IcSun, IcMoon, IcMonitor, IcPanel, IcChevronsUpDown, IcRole, IcLayers,
 } from './icons'
 
 /* ============================================================
@@ -26,6 +26,7 @@ const NAV: { key: string; label: string; path: string; icon: () => ReactNode; en
   { key: 'create', label: 'Create', path: '/create', icon: IcCreate },
   { key: 'roles', label: 'Team', path: '/team', icon: IcRole },
   { key: 'clients', label: 'Clients', path: '/clients', icon: IcClients },
+  { key: 'batches', label: 'Batches', path: '/batches', icon: IcLayers },
 ]
 
 function WithTip({ children, label, rail }: { children: ReactNode; label: string; rail: boolean }) {

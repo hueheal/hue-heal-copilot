@@ -6,6 +6,7 @@ import MeetingRoom from './pages/MeetingRoom'
 import DeptRoom from './pages/DeptRoom'
 import RoleRoom from './pages/RoleRoom'
 import Clients from './pages/Clients'
+import Batches from './pages/Batches'
 import ClientRoom from './pages/ClientRoom'
 import ClientDocEditor from './pages/ClientDocEditor'
 import Proposals from './pages/Proposals'
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="team/:dept" element={<DeptRoom />} />
         <Route path="roles" element={<Navigate to="/team" replace />} />
         <Route path="roles/:id" element={<RoleRoom />} />
+        <Route path="batches" element={<Batches />} />
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:id" element={<ClientRoom />} />
         <Route path="clients/:id/doc/:docId" element={<ClientDocEditor />} />
