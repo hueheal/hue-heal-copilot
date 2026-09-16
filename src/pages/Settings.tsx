@@ -294,6 +294,9 @@ function BrandsPanel() {
               <div style={{ flex: 1, minWidth: 220 }}>
                 <label style={{ ...label, margin: '0 0 8px' }}>Newsletter sender</label>
                 <input value={draft.sender_email || ''} onChange={(e) => patch({ sender_email: e.target.value })} placeholder="Remedae <news@remedae.app>" style={inp} />
+                <span style={label}>Personal sender (optional)</span>
+                <input value={((draft as unknown as { sender_personal?: string }).sender_personal) || ''} onChange={(e) => patch({ sender_personal: e.target.value } as never)} placeholder="Maria <maria@remedae.app>" style={inp} />
+                <p style={hint}>When set, the newsletter composer offers "Send as" you rather than the brand. The address must be an alias you actually receive (Microsoft 365 alias on this domain).</p>
                 <p style={hint}>Verified Resend address emails send from. Empty = the default sender.</p>
               </div>
               <div style={{ flex: 1, minWidth: 180 }}>

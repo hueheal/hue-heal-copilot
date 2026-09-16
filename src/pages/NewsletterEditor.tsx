@@ -64,6 +64,9 @@ export default function NewsletterEditor() {
   const [subInput, setSubInput] = useState('')
   const [testEmail, setTestEmail] = useState(auth.email ?? '')
   const [sendGroup, setSendGroup] = useState<string>('__all')
+  const [sendAs, setSendAs] = useState<'brand' | 'personal'>('brand')
+  const personalSender = ((brand as unknown as { sender_personal?: string } | null)?.sender_personal ?? '').trim()
+  const fromAddress = sendAs === 'personal' && personalSender ? personalSender : brand?.sender_email
   const [copied, setCopied] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -213,7 +216,7 @@ export default function NewsletterEditor() {
     if (sending) return
     if (!testEmail) { setStatus('Enter a test email'); return }
     setSending(true); setStatus('Sending test…')
-    try { const { sent, error } = await sendNewsletter(subject, html, [testEmail], brand?.sender_email); setStatus(sent ? `Test sent to ${testEmail}` : `Test failed: ${error}`) }
+    try { const { sent, error } = await sendNewsletter(subject, html, [testEmail], fromAddress); setStatus(sent ? `Test sent to ${testEmail}` : `Test failed: ${error}`) }
     finally { setSending(false) }
   }
   async function sendToList() {
@@ -225,7 +228,7 @@ export default function NewsletterEditor() {
     if (!recipients.length) { setStatus(sendGroup === '__all' ? 'No subscribers yet' : `No subscribers in “${sendGroup}”`); return }
     setSending(true); setStatus(`Sending to ${recipients.length}…`)
     try {
-      const { sent, error } = await sendNewsletter(subject, html, recipients, brand?.sender_email)
+      const { sent, error } = await sendNewsletter(subject, html, recipients, fromAddress)
       if (sent) { if (currentId) await updateNewsletter(currentId, { status: 'sent', sent_at: new Date().toISOString(), recipients_count: sent }); setStatus(`Sent to ${sent} subscriber${sent > 1 ? 's' : ''}`); await reload() }
       else setStatus(`Send failed: ${error}`)
     } finally { setSending(false) }
@@ -321,6 +324,13 @@ export default function NewsletterEditor() {
           </div>
 
           <div style={rail}>Send</div>
+          {personalSender && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, fontSize: 12 }}>
+              <span style={{ color: 'var(--ck-faint)' }}>Send as</span>
+              <button className="ck-pill" data-on={sendAs === 'brand' ? '1' : '0'} onClick={() => setSendAs('brand')}>{(brand?.sender_email || 'The brand').split('<')[0].trim() || 'The brand'}</button>
+              <button className="ck-pill" data-on={sendAs === 'personal' ? '1' : '0'} onClick={() => setSendAs('personal')}>{personalSender.split('<')[0].trim() || 'You'}</button>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 6 }}>
             <input style={{ ...inp, flex: 1 }} placeholder="you@studio.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} />
             <button className="hh-btn" onClick={testSend} disabled={sending}
