@@ -32,6 +32,9 @@ export interface Library {
   referenceByShot?: Record<string, string>
   /** Frames per surface (social covers), preferred over everything else. */
   referenceBySurface?: Record<string, string>
+  /** false keeps frames in the guide but sends none (a model that copies the
+      reference instead of following the brief). */
+  referenceEnabled?: boolean
   /** Standing corrections from the founder's recent declines. */
   corrections?: string
 }
@@ -85,7 +88,7 @@ export async function loadLibrary(admin: SupabaseClient, brandId: string | null)
   const raw = row?.knowledge?._imagery_library
   if (typeof raw === 'string' && raw.trim()) {
     try {
-      const lib = JSON.parse(raw) as Partial<Library> & { generation?: { batch?: number }; reference?: { urls?: string[]; byCategory?: Record<string, string>; byModule?: Record<string, string>; byShot?: Record<string, string>; bySurface?: Record<string, string> } }
+      const lib = JSON.parse(raw) as Partial<Library> & { generation?: { batch?: number }; reference?: { enabled?: boolean; urls?: string[]; byCategory?: Record<string, string>; byModule?: Record<string, string>; byShot?: Record<string, string>; bySurface?: Record<string, string> } }
       // The guide keeps master as { image, video }; the image composer wants
       // the image text. A bare object here printed "[object Object]" into
       // every prompt in place of the house style.
@@ -99,6 +102,7 @@ export async function loadLibrary(admin: SupabaseClient, brandId: string | null)
         referenceByModule: lib.referenceByModule ?? lib.reference?.byModule,
         referenceByShot: lib.referenceByShot ?? lib.reference?.byShot,
         referenceBySurface: lib.referenceBySurface ?? lib.reference?.bySurface,
+        referenceEnabled: lib.referenceEnabled ?? lib.reference?.enabled,
       }
     } catch { /* fall through to the plain master prompt */ }
   }
@@ -189,6 +193,7 @@ export function destinationFor(surface?: string): 'studio' | 'remedae' {
     a missing file must fall back to the standard endpoint, never fail. */
 const reachable = new Map<string, boolean>()
 export async function referenceFor(lib: Library, req: ImageRequest): Promise<string | undefined> {
+  if (lib.referenceEnabled === false) return undefined
   const sk = surfaceKey(lib, req.surface)
   const shot = shotKey(lib, req)
   const url = (sk && lib.referenceBySurface?.[sk])

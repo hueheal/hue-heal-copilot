@@ -161,8 +161,9 @@
     "family": "Family or friends: three to five people in one lived-in room, each doing something different with their own expression, candid, nobody looking into the lens. For the connection pillar and cover moments."
   },
   "reference": {
+    "enabled": false,
     "path": "public/assets/reference/",
-    "note": "Calibration frames from the founder's moodboard (Figma node 361:2). The composer sends the frame for the request's module first, then its category, then the default. Frames where everyone smiles at once are deliberately excluded.",
+    "note": "Calibration frames from the founder's moodboard (Figma node 361:2). The composer sends the frame for the request's module first, then its category, then the default. Frames where everyone smiles at once are deliberately excluded. Disabled (enabled: false) until the production model is chosen: in the 17 Sep model test Higgsfield Soul copied the reference photo instead of following the brief, and the copilot's live endpoint is Soul. Re-enable when switching to GPT Image 2.5 or Nano Banana, ideally with two or three frames per request.",
     "urls": [
       "https://remedae.app/assets/reference/lifestyle-light.jpg"
     ],
