@@ -84,7 +84,10 @@ Nothing else is asked at sign-up: no register numbers or declared interests. The
 
 Consent line under the button: "Remedae may contact you about the Expert Panel."
 
-**Expert step 3, how you would like to be involved** (multi-select, all optional, each with one plain line of what it means):
+**Expert step 3, what you would like to be part of.** The screen opens with a short framing line, then a multi-select (all optional, each with one plain line of what it means):
+
+> *As Remedae opens to the public, we will build new parts of it with experts at the centre. Choose the ones you would like to contribute to or be part of when they open. Nothing here is a commitment; we will ask you first.*
+
 - **Practitioners directory**: be listed when Remedae's directory opens.
 - **Safety and accuracy reviewer**: check condition pages in your field.
 - **Contributor or interviewee**: a recorded conversation, quotes, a journal piece.
