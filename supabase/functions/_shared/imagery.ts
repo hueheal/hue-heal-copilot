@@ -7,7 +7,7 @@
 // ============================================================================
 import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-export interface Surface { ratio: string; min?: string; quiet?: string; note?: string }
+export interface Surface { ratio: string; min?: string; quiet?: string; note?: string; composition?: string }
 export interface ImageRequest { purpose?: string; category?: string; module?: string; subject?: string; surface?: string; shot?: string }
 
 export interface Library {
@@ -26,6 +26,12 @@ export interface Library {
   referenceUrls?: string[]
   /** A calibration frame per category, preferred over the general list. */
   referenceByCategory?: Record<string, string>
+  /** Frames keyed "category.module", preferred over the category's frame. */
+  referenceByModule?: Record<string, string>
+  /** Frames per shot type (pair, family), preferred over module and category. */
+  referenceByShot?: Record<string, string>
+  /** Frames per surface (social covers), preferred over everything else. */
+  referenceBySurface?: Record<string, string>
   /** Standing corrections from the founder's recent declines. */
   corrections?: string
 }
@@ -79,12 +85,20 @@ export async function loadLibrary(admin: SupabaseClient, brandId: string | null)
   const raw = row?.knowledge?._imagery_library
   if (typeof raw === 'string' && raw.trim()) {
     try {
-      const lib = JSON.parse(raw) as Partial<Library> & { generation?: { batch?: number }; reference?: { urls?: string[]; byCategory?: Record<string, string> } }
+      const lib = JSON.parse(raw) as Partial<Library> & { generation?: { batch?: number }; reference?: { urls?: string[]; byCategory?: Record<string, string>; byModule?: Record<string, string>; byShot?: Record<string, string>; bySurface?: Record<string, string> } }
+      // The guide keeps master as { image, video }; the image composer wants
+      // the image text. A bare object here printed "[object Object]" into
+      // every prompt in place of the house style.
+      const rawMaster = lib.master as unknown
+      const master = typeof rawMaster === 'string' ? rawMaster : (rawMaster as { image?: string } | undefined)?.image
       return {
-        master: lib.master ?? row?.image_master_prompt ?? '', negatives: lib.negatives ?? row?.image_negatives ?? '',
+        master: master ?? row?.image_master_prompt ?? '', negatives: lib.negatives ?? row?.image_negatives ?? '',
         modules: lib.modules ?? {}, surfaces: lib.surfaces ?? {}, order: lib.order, shotTypes: lib.shotTypes,
         batch: lib.batch ?? lib.generation?.batch, referenceUrls: lib.referenceUrls ?? lib.reference?.urls,
         referenceByCategory: lib.referenceByCategory ?? lib.reference?.byCategory,
+        referenceByModule: lib.referenceByModule ?? lib.reference?.byModule,
+        referenceByShot: lib.referenceByShot ?? lib.reference?.byShot,
+        referenceBySurface: lib.referenceBySurface ?? lib.reference?.bySurface,
       }
     } catch { /* fall through to the plain master prompt */ }
   }
@@ -127,7 +141,10 @@ export function promptParts(lib: Library, req: ImageRequest): Record<string, str
     shot: '',
     master: lib.master,
     module: moduleText(lib, req),
-    surface: surf ? `${orientation ? `${orientation[0].toUpperCase()}${orientation.slice(1)} ${ratio}` : ratio}${orientation === 'portrait' ? ', camera close, the subject fills the height of the frame' : ''}.${quiet}` : '',
+    // A surface with its own composition (social covers keep generous open
+    // space above the subject) replaces the default close-framing line. It is
+    // written as scenery, never as space for type, which letterboxes.
+    surface: surf ? `${orientation ? `${orientation[0].toUpperCase()}${orientation.slice(1)} ${ratio}` : ratio}${surf.composition ? `. ${surf.composition}` : orientation === 'portrait' ? ', camera close, the subject fills the height of the frame.' : '.'}${quiet}` : '',
     negatives: lib.negatives,
   }
 }
@@ -172,7 +189,13 @@ export function destinationFor(surface?: string): 'studio' | 'remedae' {
     a missing file must fall back to the standard endpoint, never fail. */
 const reachable = new Map<string, boolean>()
 export async function referenceFor(lib: Library, req: ImageRequest): Promise<string | undefined> {
-  const url = (req.category && lib.referenceByCategory?.[req.category]) || lib.referenceUrls?.[0]
+  const sk = surfaceKey(lib, req.surface)
+  const shot = shotKey(lib, req)
+  const url = (sk && lib.referenceBySurface?.[sk])
+    || (shot && lib.referenceByShot?.[shot])
+    || (req.category && req.module && lib.referenceByModule?.[`${req.category}.${req.module.toLowerCase()}`])
+    || (req.category && lib.referenceByCategory?.[req.category])
+    || lib.referenceUrls?.[0]
   if (!url) return undefined
   if (!reachable.has(url)) {
     try {

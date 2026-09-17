@@ -1,7 +1,7 @@
 {
-  "version": 1.1,
-  "updated": "2026-09-07",
-  "source": "docs/imagery-styleguide.md",
+  "version": "1.3",
+  "updated": "2026-09-17",
+  "source": "docs/imagery-styleguide.md | 1.3: rebuilt from the founder's Figma moodboard 'Traditional remedies meet modern vibrant lifestyle' (file Z3EfpRcsUWV40K0cpR60ZS, Imagery Styleguide page, node 361:2).",
   "order": [
     "subject",
     "master",
@@ -10,10 +10,10 @@
     "negatives"
   ],
   "master": {
-    "image": "Professional lifestyle photograph, photorealistic, editorial quality. Full-frame camera, 85mm or 100mm macro, f/2.4, one sharp plane of focus with natural fall-off, no wide-angle distortion. Bright natural daylight, neutral white balance, whites white, soft shadows with detail. Real skin with pores and fine hair, fabric with visible weave and creases. One subject, one action, at most three objects, clean soft background, generous negative space. Modern everyday setting, today's clothes, no colour cast, no filter.",
+    "image": "Premium editorial lifestyle photograph, campaign quality, photorealistic. Full-frame camera, 50mm to 85mm, shallow depth of field, a soft background with real depth. Warm directional natural light: late-afternoon sun raking through a window or across an open space, golden highlights on skin, long soft shadows with detail; at night, one warm lamp and deep shadow that still holds detail. Rich warm palette: terracotta, rust, sage, olive, ochre and sun-warmed cream, true to life and vibrant, never a filter. Lived-in modern homes with plants, warm wood, linen and colourful art on the walls; or bright contemporary outdoor places. Candid moment, nobody performing for the camera. Every person carries their own expression: calm, absorbed, thoughtful, amused, eyes closed; never everyone smiling at once. Real skin with texture, hair with flyaways, fabric with weave and crease. Today's clothes, people of every age and heritage.",
     "video": "Professional lifestyle video clip, photorealistic, 4 to 8 seconds, loopable, 24 fps. 85mm or macro, shallow focus, bright natural daylight, neutral white balance. One subject, one slow action: steam rising, pouring, stirring, breathing, a curtain moving. Camera static or a slow push. Real skin and fabric texture. No colour cast, no speech, no music, no text, no transitions."
   },
-  "negatives": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, orange cast, sepia, golden wash, teal and orange, desaturated, grey, moody, low-key, wide-angle distortion, crowd, group, ensemble, many people, eye contact, looking at camera, posed, matching smiles, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, kurta, kimono, kaftan, tunic, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, vintage, another era, extra fingers, deformed hands",
+  "negatives": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, teal and orange, desaturated, grey, cold blue cast, flat light, wide-angle distortion, crowd, looking into the lens, posed, everyone smiling, matching smiles, identical expressions, forced grin, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, another era, extra fingers, deformed hands, clinical, stock photo, snapshot, phone photo",
   "modules": {
     "tradition": {
       "modern": "Modern medicine: a GP's consulting room that looks like a room, a high-street pharmacy counter, a blister pack and a glass of water on a kitchen table, a physiotherapist's hands on a shoulder, a sleep diary on a bedside table. Warmth and eye contact between people. No white coats, corridors or monitors.",
@@ -35,11 +35,11 @@
       "remedy": "The remedy moment: the first thing on the page a reader can do tonight, mid-action, the steam bowl, the warm milk, the walk, the diary."
     },
     "lifestyle": {
-      "nutrition": "Real food mid-preparation, hands and knives, a plate that looks eaten from. No smoothie-bowl styling.",
+      "nutrition": "Real food mid-preparation in a warm home kitchen: hands, knives, a pot on the hob, a bowl that looks eaten from; one cook absorbed in the task, or two people cooking together. No smoothie-bowl styling.",
       "movement": "Walking, stairs, a bike, stretching in ordinary clothes, outdoors where possible. No gym mirrors, no activewear campaign.",
-      "sleep": "Cool, dark, quiet bedrooms; morning light through a curtain; a phone charging in another room.",
-      "stress": "A pause in an ordinary place: a kettle, a doorstep, a bus stop, a window. Breath and stillness, no meditation cushions.",
-      "connection": "Two or more people in the same room doing different things; a shared meal; a phone call on a walk.",
+      "sleep": "Night and rest in intimate low light: a person lying awake in dark bedding with one warm lamp or the last blue of evening on their face, deep shadow that still holds detail; or soft morning light through a curtain. A phone charging in another room.",
+      "stress": "A pause in an ordinary place: a hand on the chest at a sunlit window, eyes closed, a kettle, a doorstep. Breath and stillness shown as a body in warm light, no meditation cushions.",
+      "connection": "Two to five people who share a life, in one warm lived-in room or around a table: a grandmother and daughter with tea, a family on a sofa, friends cooking. Each doing something slightly different, each with their own expression: one laughing, one listening, one looking away, one quiet.",
       "substances": "Caffeine and alcohol as choices: the last coffee at noon, a glass of water where the wine was. Never moralising."
     },
     "brand": {
@@ -111,6 +111,20 @@
       "fps": 24,
       "seconds": "4 to 8",
       "note": "site and journal"
+    },
+    "social-cover": {
+      "ratio": "4:5",
+      "min": "1080x1350",
+      "quiet": "top half",
+      "composition": "The people sit in the lower half of the frame, with a wide calm stretch of sunlit wall, sky or soft room above them.",
+      "note": "Instagram carousel and post covers: generous negative space above the subject for the headline."
+    },
+    "social-story-cover": {
+      "ratio": "9:16",
+      "min": "1080x1920",
+      "quiet": "top half",
+      "composition": "The people sit in the lower third of the frame, with a tall calm stretch of sunlit wall, sky or soft room above them.",
+      "note": "Story and reel covers: generous negative space above the subject."
     }
   },
   "naming": "{category}-{subject}-{variant}.{ext}; category in tradition|condition|lifestyle|brand|ingredient; subject is the site slug; variant two digits; a .json sidecar with prompt, tool, model, seed, date, approver and surface beside every file",
@@ -137,17 +151,48 @@
       "subject": "Portrait mid-task: a man in his sixties in a plain white tee opens a bedroom curtain to bright morning light, in profile, eyes on the window, the room soft behind him."
     }
   ],
-  "principle": "Traditional medicine through a modern lens: everyday people using the world's healing traditions inside the lives they already live. Real modern homes, families of every size, age and race, bright current outdoor settings, one warm bright consistent professional grade. Brand colour is applied at the UI level, never in the image. Realism first: professional photograph or nothing. One subject, one action, tight crop, neutral daylight, no colour cast.",
+  "principle": "Traditional remedies meet modern vibrant lifestyle: real people of every age and heritage using the world's healing traditions inside the lives they already live, alone or with the people they share those lives with. Warm, sunlit, lived-in modern homes and bright outdoor places, photographed like a premium lifestyle campaign. Candid, never posed, and every person has their own expression. Rich warm colour and directional light; intimate low light when the subject is night or sleep. Brand colour is applied at the UI level, never in the image.",
   "shotTypes": {
     "macro-body": "Macro body shot, 100mm macro: hands on a belly, a wrist held, fingers on a temple, a foot on a step; no face or a partial face out of focus. The default for conditions.",
     "hands-object": "Hands-and-object shot: tearing a sachet, stirring a pan, pouring water, holding a mug; face optional, cropped at the chin or out of focus. The default for traditions and ingredients.",
     "portrait-task": "Portrait mid-task, 85mm: head and shoulders, eyes on the task, closed, or in profile, background soft.",
     "environmental-single": "Environmental single: one person, three-quarter or full length, in a real modern room or street, room soft behind them. Use sparingly.",
-    "pair": "Pair: two people each doing something different, only for the connection pillar or a practitioner and a client."
+    "pair": "Pair: two people who share a life, each with their own gesture and expression (one laughing, one listening), candid, in the same warm room.",
+    "family": "Family or friends: three to five people in one lived-in room, each doing something different with their own expression, candid, nobody looking into the lens. For the connection pillar and cover moments."
   },
   "reference": {
-    "path": "review/reference/",
-    "note": "The founder's two Higgsfield macro frames (hands on stomach, green sports top, open daylight) are the calibration pair. Pass as style references where the tool allows; judge every output against them."
+    "path": "public/assets/reference/",
+    "note": "Calibration frames from the founder's moodboard (Figma node 361:2). The composer sends the frame for the request's module first, then its category, then the default. Frames where everyone smiles at once are deliberately excluded.",
+    "urls": [
+      "https://remedae.app/assets/reference/lifestyle-light.jpg"
+    ],
+    "byCategory": {
+      "condition": "https://remedae.app/assets/reference/condition-belly.jpg",
+      "lifestyle": "https://remedae.app/assets/reference/lifestyle-light.jpg",
+      "tradition": "https://remedae.app/assets/reference/tradition-hands.jpg",
+      "ingredient": "https://remedae.app/assets/reference/tradition-hands.jpg",
+      "brand": "https://remedae.app/assets/reference/lifestyle-light.jpg"
+    },
+    "byModule": {
+      "lifestyle.nutrition": "https://remedae.app/assets/reference/lifestyle-cooking.jpg",
+      "lifestyle.movement": "https://remedae.app/assets/reference/lifestyle-walk.jpg",
+      "lifestyle.sleep": "https://remedae.app/assets/reference/lifestyle-sleep.jpg",
+      "lifestyle.stress": "https://remedae.app/assets/reference/lifestyle-breath.jpg",
+      "lifestyle.connection": "https://remedae.app/assets/reference/lifestyle-connection.jpg",
+      "lifestyle.substances": "https://remedae.app/assets/reference/lifestyle-drink.jpg",
+      "condition.felt": "https://remedae.app/assets/reference/condition-belly.jpg",
+      "condition.remedy": "https://remedae.app/assets/reference/tradition-hands.jpg",
+      "tradition.mind-body": "https://remedae.app/assets/reference/lifestyle-breath.jpg",
+      "tradition.lifestyle": "https://remedae.app/assets/reference/lifestyle-cooking.jpg"
+    },
+    "byShot": {
+      "pair": "https://remedae.app/assets/reference/lifestyle-pair.jpg",
+      "family": "https://remedae.app/assets/reference/lifestyle-connection.jpg"
+    },
+    "bySurface": {
+      "social-cover": "https://remedae.app/assets/reference/lifestyle-connection.jpg",
+      "social-story-cover": "https://remedae.app/assets/reference/lifestyle-connection.jpg"
+    }
   },
   "generation": {
     "batch": 4,
