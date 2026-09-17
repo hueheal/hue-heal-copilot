@@ -10,7 +10,7 @@ Every fact is marked **known** (checked in the product or database on 17 Septemb
 
 1. **Credibility is earned, not borrowed.** Remedae does not ask anyone to endorse it. It asks independent people to challenge, review and contribute, and shows that work on the page.
 2. **The first relationship is a named clinical advisor.** It is the single blocker under growth, partnerships, reviews and the round (September strategy, decision 10). Nothing else in this plan outranks it.
-3. **Open an Expert Panel inside the pilot.** One entryway for clinicians, practitioners, researchers and creators, with a self-declared role, verification, and interest buckets (directory, reviewer, contributor, advisor, research partner, teacher). It feeds every other workstream.
+3. **Open an Expert Panel inside the pilot.** One entryway for clinicians, practitioners, researchers and creators, with a self-declared role, a light check (profession and organisation), and interest buckets (directory, reviewer, contributor, advisor, research partner, teacher). It feeds every other workstream.
 4. **Fix the evidence base before inviting scrutiny of it.** On 17 September an audit found 131 hand-written corpus passages that could not be traced to a specific source. Re-grounding them on real, page-linked sources is under way (Unani done). Academics are approached after the methodology page and the first re-grounded traditions are live, not before.
 5. **Few, well-prepared approaches beat big lists.** Eight academic, eight practitioner and ten Global Wellness Summit conversations, each with a verified reason, rather than a database blast.
 6. **The copilot runs it; Maria decides.** Owners are copilot seats (Chief of staff, Experts, Partnerships, Growth, Product, Counsel, Finance). Maria sees only decisions with a default attached.
@@ -56,7 +56,7 @@ The ChatGPT draft assumed a UK wellness publisher with no product, no analytics,
 
 ### The recommendation
 
-**One pilot, two tracks, two invite links.** Keep a single onboarding flow and a single sign-in, but open it with a fork: *"How are you joining?"* The reader track is today's pilot. The Expert Panel track asks different questions, gets verified, and receives different weekly tasks.
+**One pilot, two tracks, two invite links.** Keep a single onboarding flow and a single sign-in, but open it with a fork: *"How are you joining?"* The reader track is today's pilot. The Expert Panel track asks two light questions about who they are, then how they would like to be involved, and receives different weekly tasks.
 
 Why not a separate programme: experts need an account on the same product to review it, and a second system doubles the build and splits the data. Why not the same tasks: a pharmacist asked "did you save three things" is wasted; asked "is this safety note right" they are invaluable.
 
@@ -64,7 +64,7 @@ Give the track its own name and link so it can be sent to universities, clinics 
 
 ### Who it is for
 
-Clinicians (GPs, pharmacists, nurses, midwives, dietitians, physiotherapists), registered traditional practitioners (Ayurveda, TCM and acupuncture, Kampo, Unani, Siddha, herbal medicine, homeopathy, naturopathy), researchers and academics (including PhD students and research institutes), public health professionals, health writers and educators, and practitioner-creators with a real credential.
+Clinicians (GPs, pharmacists, nurses, midwives, dietitians, physiotherapists), registered traditional practitioners (Ayurveda, TCM and acupuncture, Kampo, Unani, Siddha, herbal medicine, homeopathy, naturopathy), researchers and academics (including PhD students and research institutes), public health professionals, health writers and educators, practitioner-creators, and the wider health and wellness field (coaches, doulas, therapists, movement teachers). Leave it open: the dashboard sorts who actually joins.
 
 ### The flow
 
@@ -74,21 +74,16 @@ Clinicians (GPs, pharmacists, nurses, midwives, dietitians, physiotherapists), r
 
 **Expert step 1, basics.** Name, email, password (as today).
 
-**Expert step 2, your practice.**
-- Profession (single choice): Doctor or GP; Pharmacist; Nurse, midwife or health visitor; Dietitian or nutritionist; Physiotherapist or allied health; Traditional or complementary practitioner; Researcher or academic; Student or trainee; Health writer, educator or creator; Other.
-- Tradition or field (multi): the thirteen traditions plus "conventional clinical practice" and "research methods".
-- Specialisms (free text, short): for example women's health, gut health, pharmacognosy.
-- Years in practice (band).
-- Where you practise or study: organisation and country.
+**Expert step 2, who you are.** Two questions, both required, both open text:
+- **Profession**: "What do you do?" Free text, so a doula, a sleep coach, a pharmacognosist and a GP can all answer in their own words. No fixed list at this stage.
+- **Organisation**: "Where do you work or study?" Company, clinic, university or "independent practice".
+- Optional, one tap: the traditions you know best (the thirteen plus "conventional clinical practice").
 
-**Expert step 3, how we verify you.** Verification is what makes the panel worth anything, so it asks for what a checker can actually confirm:
-- Professional register and number, where one exists (for example GMC, GPhC, NMC, HCPC, RNutr, British Acupuncture Council, National Institute of Medical Herbalists, Register of Chinese Herbal Medicine, Ayurvedic Practitioners Association, a state AYUSH council registration).
-- One institutional or practice page that names you (university profile, clinic page).
-- Optional: ORCID, LinkedIn, and public handles (Instagram, YouTube, podcast). Handles are for contact and content, never evidence of expertise.
-- Declared interests: products, supplements, clinics or courses you sell or are paid by.
-- Consent: "Remedae may check these details against public registers and contact you about the Expert Panel." Required.
+Nothing else is asked at sign-up: no register numbers, profile links, handles or declared interests. The panel is a pilot, and the lighter the ask, the more of the field joins. Those details are collected later, only from people who move into a role that needs them (a named reviewer, an advisor, a directory listing).
 
-**Expert step 4, how you would like to be involved** (multi-select, all optional, each with one plain line of what it means):
+Consent line under the button: "Remedae may contact you about the Expert Panel."
+
+**Expert step 3, how you would like to be involved** (multi-select, all optional, each with one plain line of what it means):
 - **Practitioners directory**: be listed when Remedae's directory opens.
 - **Safety and accuracy reviewer**: check condition pages in your field.
 - **Contributor or interviewee**: a recorded conversation, quotes, a journal piece.
@@ -99,7 +94,7 @@ Clinicians (GPs, pharmacists, nurses, midwives, dietitians, physiotherapists), r
 - **Event speaker**.
 - **Just the panel for now**.
 
-**Expert step 5, your focus.** Reuse today's focus areas as "areas you know best", then the pilot commitment screen rewritten for experts: about 20 minutes a week for four weeks, what they get (early access, credit on pages they review, a say in the methodology, first place in the directory), and a plain statement that joining is not an endorsement either way.
+**Expert step 4, your focus.** Reuse today's focus areas as "areas you know best", then the pilot commitment screen rewritten for experts: about 20 minutes a week for four weeks, what they get (early access, credit on pages they review, a say in the methodology, first place in the directory), and a plain statement that joining is not an endorsement either way.
 
 ### What experts are asked to do (four weeks)
 
@@ -112,14 +107,13 @@ Clinicians (GPs, pharmacists, nurses, midwives, dietitians, physiotherapists), r
 
 Week 1 uses a structured form (per remedy: correct / needs change / unsafe, plus a note), so reviews become data, not email threads.
 
-### Verification process
+### Checking and sorting
 
-Status on every expert: **pending**, **verified**, **could not verify**, **declined**.
-1. The Experts seat checks the register number on the public register and the institutional page, and records what was checked and when.
-2. Declared interests are recorded, not judged at this stage.
-3. Only verified experts see review tasks, appear on a page, or are contacted about roles.
+Status on every expert: **new**, **looks right**, **needs a look**.
+1. A quick sense check: does the organisation exist, and does the profession fit it. No register lookups at pilot stage.
+2. Professions stay as people wrote them. The admin dashboard groups them into families (for example clinical, traditional practice, nutrition and movement, mental health, research, education and media), shows counts per family, per organisation type and per interest bucket, and flags answers it could not place so they can be grouped by hand.
+3. Deeper verification (register, practice page, declared interests) happens only when someone moves into a role that is visible or trusted: a named reviewer on a page, an advisor, a directory listing.
 4. Nothing public (name, credit, directory listing, badge) appears without a second, explicit opt-in.
-5. Social reach is never a verification signal.
 
 ### Buckets and where each leads
 
@@ -127,7 +121,7 @@ The interest answers become the CRM segments the rest of this plan uses. Each bu
 
 | Bucket | Owner seat | Now | When the feature exists |
 |---|---|---|---|
-| Directory | Partnerships | Collect and verify | Directory launch invite |
+| Directory | Partnerships | Collect interest | Directory launch invite |
 | Reviewer | Experts | Week 1 reviews | Paid safety review (parked, decision 9) |
 | Contributor | Growth (editor) | Interview shortlist | Journal and video series |
 | Teacher | Growth (offer) | Hold | Remedae+ rituals and classes |
@@ -142,15 +136,15 @@ People join the panel as individuals. Institutions (a university department, a r
 
 ### Implementation (Remedae repo)
 
-1. **Data.** A new `expert_profiles` table (user id, profession, traditions, specialisms, years, organisation, country, register body, register number, institutional URL, ORCID, links, declared interests, interest buckets, verification status, verified by, verified at, verification notes, public-credit consent) and `user_profiles.pilot_role = 'expert'`. A `partner_enquiries` table for institutions. Migration, row-level security (experts see only their own row; admins see all).
-2. **Onboarding.** Step 0 fork in `PilotOnboardingFlow`; expert steps 2 to 4 as new step components; `/join/experts` preselects the fork; server action writes both tables. Reader flow untouched.
+1. **Data.** A new `expert_profiles` table (user id, profession as written, profession family assigned by the dashboard, organisation, traditions, interest buckets, check status, notes, public-credit consent) and `user_profiles.pilot_role = 'expert'`. A `partner_enquiries` table for institutions. Migration, row-level security (experts see only their own row; admins see all).
+2. **Onboarding.** Step 0 fork in `PilotOnboardingFlow`; expert steps 2 and 3 as new step components; `/join/experts` preselects the fork; server action writes both tables. Reader flow untouched.
 3. **Invites.** Expert invitation email and landing copy (no Sundays, no cadence promises, not an endorsement).
-4. **Admin.** An "Experts" tab on `/admin`: queue by verification status, a checklist per expert, bucket filters, CSV export for the copilot CRM.
+4. **Admin.** An "Experts" tab on `/admin`: professions grouped into families with counts, organisation list, bucket counts and filters, the unplaced answers to group by hand, CSV export for the copilot CRM.
 5. **Tasks.** An `expert` cohort in the pilot tables with the four weekly tasks and a structured review form that stores per-remedy verdicts against remedy ids.
-6. **Counsel.** Privacy notice updated for professional data and verification checks; consent text; no public use of names without the second opt-in.
-7. **Verification.** Copilot Experts seat works the queue; results written back to `expert_profiles`.
+6. **Counsel.** Privacy notice updated for profession and organisation data; consent text; no public use of names without the second opt-in.
+7. **Sorting.** Copilot Experts seat reviews the dashboard weekly, fixes unplaced professions and hands each bucket to its owner.
 
-Roughly three to four days of build, one day of copy and legal text. Sequence: data and onboarding first, admin second, tasks third. The reader pilot ends 4 October, so the Expert Panel can open as the next wave on **Monday 12 October**.
+Roughly three days of build, one day of copy and legal text. Sequence: data and onboarding first, admin second, tasks third. The reader pilot ends 4 October, so the Expert Panel can open as the next wave on **Monday 12 October**.
 
 ---
 
@@ -285,14 +279,14 @@ Each has a default so it can be answered in one word.
 3. **Academics after the methodology page and first re-grounded traditions**, not before. Default: yes.
 4. **GWS Phuket**: apply now, travel only with 8 meetings booked by 2 November and a cost you approve. Default: yes.
 5. **NIHR i4i**: no-go this round unless an NHS or academic partner is secured by 30 October. Default: yes.
-6. **Public credit for reviewers** (name, register, date on the page) only with a second opt-in. Default: yes.
+6. **Public credit for reviewers** (name, profession, date on the page, plus a register check for clinical reviewers) only with a second opt-in. Default: yes.
 
 ## 7. How we will know it worked (19 December)
 
 | Measure | Target |
 |---|---|
 | Clinical advisor named | Yes |
-| Expert Panel members verified | 25 |
+| Expert Panel members joined | 25 |
 | Of which in the reviewer bucket, reviews completed | 10 experts, 15 conditions |
 | Pages showing a named reviewer and date | 15 |
 | Remedy cards citing a specific source location | 100% |
