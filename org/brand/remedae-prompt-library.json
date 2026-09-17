@@ -1,5 +1,5 @@
 {
- "version": "1.4",
+ "version": "1.5",
  "updated": "2026-09-17",
  "source": "docs/imagery-styleguide.md | 1.3: rebuilt from the founder's Figma moodboard 'Traditional remedies meet modern vibrant lifestyle' (file Z3EfpRcsUWV40K0cpR60ZS, Imagery Styleguide page, node 361:2).",
  "order": [
@@ -202,9 +202,9 @@
   "note": "Generate four, keep one, checklist the rest. Prefer the tool's negative-prompt field for negatives."
  },
  "light": {
-  "name": "One warm window key",
-  "text": "Light it with one warm key and nothing else: late-afternoon sun through a window just out of frame, low and raking across the scene, colour temperature around 3200K. Highlights land on skin, steam and the top edge of every object; shadows fall deep and amber but keep their detail. The only fill is what bounces off warm wood, walls and worktop, never from the camera side. A little atmospheric haze, and soft halation around the brightest edges. Rich saturated warm palette: terracotta, rust, ochre, olive and sun-warmed cream, true to life, never a filter, never HDR.",
-  "camera": "Full-frame, 85mm, f/2. The subject sharp, the room falling away into soft warm blur. Fine natural grain.",
-  "note": "Approved by the founder on 17 September 2026 from the Soul batch (ginger tea, Kampo kitchen, family dinner, two friends cooking). Every image uses this unless the surface asks for daylight outdoors, and outdoors keeps the same low warm sun."
+  "name": "Warm window daylight",
+  "text": "Warm natural window light, late afternoon, coming in from the side and filling the room: skin, steam and surfaces are clearly lit, shadows are soft and warm with plenty of detail, and the picture reads bright and open. Warm palette of terracotta, rust, ochre, olive and sun-warmed cream, true to life, never a filter. Nobody and nothing in silhouette.",
+  "camera": "Full-frame, 85mm at f/2, or a 100mm macro for close work. Subject sharp, room softly out of focus.",
+  "note": "Taken from the four frames the founder approved on 17 September 2026 (ginger tea, Kampo kitchen, family dinner, two friends cooking). Keep it plain: a stronger single-source recipe was tried the same day and made everything dim and strange."
  }
 }
