@@ -1,203 +1,210 @@
 {
-  "version": "1.3",
-  "updated": "2026-09-17",
-  "source": "docs/imagery-styleguide.md | 1.3: rebuilt from the founder's Figma moodboard 'Traditional remedies meet modern vibrant lifestyle' (file Z3EfpRcsUWV40K0cpR60ZS, Imagery Styleguide page, node 361:2).",
-  "order": [
-    "subject",
-    "master",
-    "module",
-    "surface",
-    "negatives"
-  ],
-  "master": {
-    "image": "Premium editorial lifestyle photograph, campaign quality, photorealistic. Full-frame camera, 50mm to 85mm, shallow depth of field, a soft background with real depth. Warm directional natural light: late-afternoon sun raking through a window or across an open space, golden highlights on skin, long soft shadows with detail; at night, one warm lamp and deep shadow that still holds detail. Rich warm palette: terracotta, rust, sage, olive, ochre and sun-warmed cream, true to life and vibrant, never a filter. Lived-in modern homes with plants, warm wood, linen and colourful art on the walls; or bright contemporary outdoor places. Candid moment, nobody performing for the camera. Every person carries their own expression: calm, absorbed, thoughtful, amused, eyes closed; never everyone smiling at once. Real skin with texture, hair with flyaways, fabric with weave and crease. Today's clothes, people of every age and heritage.",
-    "video": "Professional lifestyle video clip, photorealistic, 4 to 8 seconds, loopable, 24 fps. 85mm or macro, shallow focus, bright natural daylight, neutral white balance. One subject, one slow action: steam rising, pouring, stirring, breathing, a curtain moving. Camera static or a slow push. Real skin and fabric texture. No colour cast, no speech, no music, no text, no transitions."
+ "version": "1.4",
+ "updated": "2026-09-17",
+ "source": "docs/imagery-styleguide.md | 1.3: rebuilt from the founder's Figma moodboard 'Traditional remedies meet modern vibrant lifestyle' (file Z3EfpRcsUWV40K0cpR60ZS, Imagery Styleguide page, node 361:2).",
+ "order": [
+  "subject",
+  "light",
+  "master",
+  "module",
+  "surface",
+  "negatives"
+ ],
+ "master": {
+  "image": "Premium editorial lifestyle photograph, campaign quality, photorealistic. Full-frame camera, 50mm to 85mm, shallow depth of field, a soft background with real depth. Warm directional natural light: late-afternoon sun raking through a window or across an open space, golden highlights on skin, long soft shadows with detail; at night, one warm lamp and deep shadow that still holds detail. Rich warm palette: terracotta, rust, sage, olive, ochre and sun-warmed cream, true to life and vibrant, never a filter. Lived-in modern homes with plants, warm wood, linen and colourful art on the walls; or bright contemporary outdoor places. Candid moment, nobody performing for the camera. Every person carries their own expression: calm, absorbed, thoughtful, amused, eyes closed; never everyone smiling at once. Real skin with texture, hair with flyaways, fabric with weave and crease. Today's clothes, people of every age and heritage.",
+  "video": "Professional lifestyle video clip, photorealistic, 4 to 8 seconds, loopable, 24 fps. 85mm or macro, shallow focus, bright natural daylight, neutral white balance. One subject, one slow action: steam rising, pouring, stirring, breathing, a curtain moving. Camera static or a slow push. Real skin and fabric texture. No colour cast, no speech, no music, no text, no transitions."
+ },
+ "negatives": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, teal and orange, desaturated, grey, cold blue cast, flat light, wide-angle distortion, crowd, looking into the lens, posed, everyone smiling, matching smiles, identical expressions, forced grin, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, another era, extra fingers, deformed hands, clinical, stock photo, snapshot, phone photo",
+ "modules": {
+  "tradition": {
+   "modern": "Modern medicine: a GP's consulting room that looks like a room, a high-street pharmacy counter, a blister pack and a glass of water on a kitchen table, a physiotherapist's hands on a shoulder, a sleep diary on a bedside table. Warmth and eye contact between people. No white coats, corridors or monitors.",
+   "ayurveda": "Ayurveda: a kitchen at morning, warm water with lemon in a steel or copper cup, ghee in a small pan, ashwagandha powder stirred into warm milk, sesame oil warmed in the palms, a spice tin with cumin, coriander and fennel. Indian and non-Indian households alike. No temples, statues or yoga poses.",
+   "tcm": "Traditional Chinese Medicine: a pulse taken at a wrist, a decoction simmering in a clay pot, jujube and goji on a chopping board, a practitioner's hands at an acupuncture point, congee steaming. Everyday clinic rooms and kitchens. No dragons or calligraphy walls.",
+   "kampo": "Kampo: granule sachets torn open into a cup, a Japanese pharmacy counter, ginger and jujube on a wooden board, a small ceramic cup on a lacquer tray. Precise, quiet, domestic. No kimono, no temple.",
+   "unani": "Unani: honey and black seed on a spoon, a glass of rose-water, almonds soaking overnight, a practitioner feeling a pulse, warm oil in a small bottle. Middle-Eastern and South Asian kitchens rendered as homes, not sets.",
+   "siddha": "Siddha: nilavembu decoction in a steel tumbler, fresh herbs on a banana leaf, a mortar and pestle, a Tamil kitchen with morning light. No shrines.",
+   "naturopathy": "Naturopathy: hot and cold water at a basin, a steam bowl under a towel, whole vegetables mid-prep, a morning walk in a coat. The practitioner is in ordinary clothes at an ordinary desk.",
+   "homeopathy": "Homeopathy: a small brown glass vial and pellets on a palm, a pharmacy shelf of small bottles, a practitioner listening. Restrained; the image must not promise more than the page does.",
+   "african": "African traditional medicine: plants, hands and landscape. Rooibos or moringa leaves, a market table of dried herbs, a clay pot on a stove, a grandmother's kitchen. Never ceremony, masks or tribal styling. When in doubt photograph the plant and the pot.",
+   "indigenous": "Indigenous healing: plants, water, land, hands, sweetgrass or eucalyptus on a table. No regalia, no sacred objects, no ceremony. Where no honest everyday image exists, use a brand texture instead.",
+   "functional": "Functional medicine: a kitchen table with a food diary and a fibre-rich breakfast, blood-test paperwork beside a coffee, a consultation over a laptop in a bright room. Systems thinking as ordinary organisation.",
+   "lifestyle": "Lifestyle medicine: morning daylight on a doorstep, a post-meal walk, a cool dark bedroom with the phone outside the door, a shared meal, a bike, a kettle switched off after noon.",
+   "mind-body": "Mind-body medicine: a hand on the chest and one on the belly, eyes closed at a window, a group course in a community hall with mismatched chairs, a pen and a worry list at night. Breath shown as a body, not a pose."
   },
-  "negatives": "text, captions, signage, logos, brands, watermark, UI, render, illustration, painting, CGI, 3D, cartoon, over-sharpened, halo edges, waxy skin, plastic skin, beauty filter, AI glow, HDR, vignette, teal and orange, desaturated, grey, cold blue cast, flat light, wide-angle distortion, crowd, looking into the lens, posed, everyone smiling, matching smiles, identical expressions, forced grin, symmetry, clutter, too many props, scrubs, stethoscope, white coat, exam table, crystals, incense, mandala, lotus pose, prayer hands, chakra, pills spilling, spa towels, orchids, traditional costume, ceremony, mask, regalia, period interior, farmhouse, rustic, another era, extra fingers, deformed hands, clinical, stock photo, snapshot, phone photo",
-  "modules": {
-    "tradition": {
-      "modern": "Modern medicine: a GP's consulting room that looks like a room, a high-street pharmacy counter, a blister pack and a glass of water on a kitchen table, a physiotherapist's hands on a shoulder, a sleep diary on a bedside table. Warmth and eye contact between people. No white coats, corridors or monitors.",
-      "ayurveda": "Ayurveda: a kitchen at morning, warm water with lemon in a steel or copper cup, ghee in a small pan, ashwagandha powder stirred into warm milk, sesame oil warmed in the palms, a spice tin with cumin, coriander and fennel. Indian and non-Indian households alike. No temples, statues or yoga poses.",
-      "tcm": "Traditional Chinese Medicine: a pulse taken at a wrist, a decoction simmering in a clay pot, jujube and goji on a chopping board, a practitioner's hands at an acupuncture point, congee steaming. Everyday clinic rooms and kitchens. No dragons or calligraphy walls.",
-      "kampo": "Kampo: granule sachets torn open into a cup, a Japanese pharmacy counter, ginger and jujube on a wooden board, a small ceramic cup on a lacquer tray. Precise, quiet, domestic. No kimono, no temple.",
-      "unani": "Unani: honey and black seed on a spoon, a glass of rose-water, almonds soaking overnight, a practitioner feeling a pulse, warm oil in a small bottle. Middle-Eastern and South Asian kitchens rendered as homes, not sets.",
-      "siddha": "Siddha: nilavembu decoction in a steel tumbler, fresh herbs on a banana leaf, a mortar and pestle, a Tamil kitchen with morning light. No shrines.",
-      "naturopathy": "Naturopathy: hot and cold water at a basin, a steam bowl under a towel, whole vegetables mid-prep, a morning walk in a coat. The practitioner is in ordinary clothes at an ordinary desk.",
-      "homeopathy": "Homeopathy: a small brown glass vial and pellets on a palm, a pharmacy shelf of small bottles, a practitioner listening. Restrained; the image must not promise more than the page does.",
-      "african": "African traditional medicine: plants, hands and landscape. Rooibos or moringa leaves, a market table of dried herbs, a clay pot on a stove, a grandmother's kitchen. Never ceremony, masks or tribal styling. When in doubt photograph the plant and the pot.",
-      "indigenous": "Indigenous healing: plants, water, land, hands, sweetgrass or eucalyptus on a table. No regalia, no sacred objects, no ceremony. Where no honest everyday image exists, use a brand texture instead.",
-      "functional": "Functional medicine: a kitchen table with a food diary and a fibre-rich breakfast, blood-test paperwork beside a coffee, a consultation over a laptop in a bright room. Systems thinking as ordinary organisation.",
-      "lifestyle": "Lifestyle medicine: morning daylight on a doorstep, a post-meal walk, a cool dark bedroom with the phone outside the door, a shared meal, a bike, a kettle switched off after noon.",
-      "mind-body": "Mind-body medicine: a hand on the chest and one on the belly, eyes closed at a window, a group course in a community hall with mismatched chairs, a pen and a worry list at night. Breath shown as a body, not a pose."
-    },
-    "condition": {
-      "felt": "Macro body or hands-and-object: the felt experience of the condition, honest and gentle, never theatrical. Hands pressed to a stomach, a palm on a temple, a wrist held, a tissue by a mug. No grimacing, no red-tinted pain, no face needed. Children with a parent's hand in frame.",
-      "remedy": "The remedy moment: the first thing on the page a reader can do tonight, mid-action, the steam bowl, the warm milk, the walk, the diary."
-    },
-    "lifestyle": {
-      "nutrition": "Real food mid-preparation in a warm home kitchen: hands, knives, a pot on the hob, a bowl that looks eaten from; one cook absorbed in the task, or two people cooking together. No smoothie-bowl styling.",
-      "movement": "Walking, stairs, a bike, stretching in ordinary clothes, outdoors where possible. No gym mirrors, no activewear campaign.",
-      "sleep": "Night and rest in intimate low light: a person lying awake in dark bedding with one warm lamp or the last blue of evening on their face, deep shadow that still holds detail; or soft morning light through a curtain. A phone charging in another room.",
-      "stress": "A pause in an ordinary place: a hand on the chest at a sunlit window, eyes closed, a kettle, a doorstep. Breath and stillness shown as a body in warm light, no meditation cushions.",
-      "connection": "Two to five people who share a life, in one warm lived-in room or around a table: a grandmother and daughter with tea, a family on a sofa, friends cooking. Each doing something slightly different, each with their own expression: one laughing, one listening, one looking away, one quiet.",
-      "substances": "Caffeine and alcohol as choices: the last coffee at noon, a glass of water where the wine was. Never moralising."
-    },
-    "brand": {
-      "texture": "Abstract ownable frame: steam over a dark cup, sunlight through leaves onto a wall, water poured into a glass, ginger sliced on oak, a linen curtain moving, condensation on a window. Shot close and bright, same grade as everything else; the site's overlay handles the canvas."
-    },
-    "ingredient": {
-      "study": "The ingredient in the form the reader will buy it (fresh, dried, powder, capsule), straight down or at 45 degrees, on a single neutral surface of oak, slate or unglazed clay, one soft directional light, no props beyond a spoon or a bowl, no packaging, no labels."
-    }
+  "condition": {
+   "felt": "Macro body or hands-and-object: the felt experience of the condition, honest and gentle, never theatrical. Hands pressed to a stomach, a palm on a temple, a wrist held, a tissue by a mug. No grimacing, no red-tinted pain, no face needed. Children with a parent's hand in frame.",
+   "remedy": "The remedy moment: the first thing on the page a reader can do tonight, mid-action, the steam bowl, the warm milk, the walk, the diary."
   },
-  "surfaces": {
-    "hero-card": {
-      "ratio": "3:4",
-      "min": "1200x1600",
-      "quiet": "top and bottom fifths",
-      "note": "search hero floating cards; overlays tradition name and remedy title"
-    },
-    "tile": {
-      "ratio": "4:5",
-      "min": "1200x1500",
-      "quiet": "lower third",
-      "note": "rails and tiles for conditions, journal, shelf"
-    },
-    "page-hero": {
-      "ratio": "3:2",
-      "min": "2400x1600",
-      "quiet": "right third",
-      "note": "condition and tradition page heroes"
-    },
-    "journal-inline": {
-      "ratio": "16:10",
-      "min": "2000 wide",
-      "quiet": "none",
-      "note": "landscape only; prefer the actual thing discussed"
-    },
-    "carousel": {
-      "ratio": "16:9",
-      "min": "2400 wide",
-      "quiet": "lower third",
-      "note": "featured carousel and promo cards"
-    },
-    "social-feed": {
-      "ratio": "4:5",
-      "min": "1080x1350",
-      "quiet": "lower third",
-      "note": "Instagram feed"
-    },
-    "social-story": {
-      "ratio": "9:16",
-      "min": "1080x1920",
-      "quiet": "top 250px and bottom 300px",
-      "note": "stories and reels"
-    },
-    "email": {
-      "ratio": "2:1",
-      "min": "1200x600",
-      "quiet": "lower third",
-      "note": "under 300 KB"
-    },
-    "video-vertical": {
-      "ratio": "9:16",
-      "min": "1080x1920",
-      "fps": 24,
-      "seconds": "4 to 8",
-      "note": "social and app"
-    },
-    "video-wide": {
-      "ratio": "16:9",
-      "min": "1920x1080",
-      "fps": 24,
-      "seconds": "4 to 8",
-      "note": "site and journal"
-    },
-    "social-cover": {
-      "ratio": "4:5",
-      "min": "1080x1350",
-      "quiet": "top half",
-      "composition": "The people sit in the lower half of the frame, with a wide calm stretch of sunlit wall, sky or soft room above them.",
-      "note": "Instagram carousel and post covers: generous negative space above the subject for the headline."
-    },
-    "social-story-cover": {
-      "ratio": "9:16",
-      "min": "1080x1920",
-      "quiet": "top half",
-      "composition": "The people sit in the lower third of the frame, with a tall calm stretch of sunlit wall, sky or soft room above them.",
-      "note": "Story and reel covers: generous negative space above the subject."
-    }
+  "lifestyle": {
+   "nutrition": "Real food mid-preparation in a warm home kitchen: hands, knives, a pot on the hob, a bowl that looks eaten from; one cook absorbed in the task, or two people cooking together. No smoothie-bowl styling.",
+   "movement": "Walking, stairs, a bike, stretching in ordinary clothes, outdoors where possible. No gym mirrors, no activewear campaign.",
+   "sleep": "Night and rest in intimate low light: a person lying awake in dark bedding with one warm lamp or the last blue of evening on their face, deep shadow that still holds detail; or soft morning light through a curtain. A phone charging in another room.",
+   "stress": "A pause in an ordinary place: a hand on the chest at a sunlit window, eyes closed, a kettle, a doorstep. Breath and stillness shown as a body in warm light, no meditation cushions.",
+   "connection": "Two to five people who share a life, in one warm lived-in room or around a table: a grandmother and daughter with tea, a family on a sofa, friends cooking. Each doing something slightly different, each with their own expression: one laughing, one listening, one looking away, one quiet.",
+   "substances": "Caffeine and alcohol as choices: the last coffee at noon, a glass of water where the wine was. Never moralising."
   },
-  "naming": "{category}-{subject}-{variant}.{ext}; category in tradition|condition|lifestyle|brand|ingredient; subject is the site slug; variant two digits; a .json sidecar with prompt, tool, model, seed, date, approver and surface beside every file",
-  "examples": [
-    {
-      "category": "condition",
-      "module": "felt",
-      "shotType": "macro-body",
-      "surface": "tile",
-      "subject": "Macro body shot: a woman's hands pressed flat to her stomach over a plain green sports top, outdoors in open morning daylight, hills soft in the background, no face."
-    },
-    {
-      "category": "tradition",
-      "module": "ayurveda",
-      "shotType": "hands-object",
-      "surface": "hero-card",
-      "subject": "Hands-and-object shot: a woman's hand stirs ashwagandha powder into a small pan of warming milk on a modern hob, bright window light from the left, one mug beside the pan, cropped at the shoulders."
-    },
-    {
-      "category": "lifestyle",
-      "module": "sleep",
-      "shotType": "portrait-task",
-      "surface": "social-story",
-      "subject": "Portrait mid-task: a man in his sixties in a plain white tee opens a bedroom curtain to bright morning light, in profile, eyes on the window, the room soft behind him."
-    }
-  ],
-  "principle": "Traditional remedies meet modern vibrant lifestyle: real people of every age and heritage using the world's healing traditions inside the lives they already live, alone or with the people they share those lives with. Warm, sunlit, lived-in modern homes and bright outdoor places, photographed like a premium lifestyle campaign. Candid, never posed, and every person has their own expression. Rich warm colour and directional light; intimate low light when the subject is night or sleep. Brand colour is applied at the UI level, never in the image.",
-  "shotTypes": {
-    "macro-body": "Macro body shot, 100mm macro: hands on a belly, a wrist held, fingers on a temple, a foot on a step; no face or a partial face out of focus. The default for conditions.",
-    "hands-object": "Hands-and-object shot: tearing a sachet, stirring a pan, pouring water, holding a mug; face optional, cropped at the chin or out of focus. The default for traditions and ingredients.",
-    "portrait-task": "Portrait mid-task, 85mm: head and shoulders, eyes on the task, closed, or in profile, background soft.",
-    "environmental-single": "Environmental single: one person, three-quarter or full length, in a real modern room or street, room soft behind them. Use sparingly.",
-    "pair": "Pair: two people who share a life, each with their own gesture and expression (one laughing, one listening), candid, in the same warm room.",
-    "family": "Family or friends: three to five people in one lived-in room, each doing something different with their own expression, candid, nobody looking into the lens. For the connection pillar and cover moments."
+  "brand": {
+   "texture": "Abstract ownable frame: steam over a dark cup, sunlight through leaves onto a wall, water poured into a glass, ginger sliced on oak, a linen curtain moving, condensation on a window. Shot close and bright, same grade as everything else; the site's overlay handles the canvas."
   },
-  "reference": {
-    "enabled": false,
-    "path": "public/assets/reference/",
-    "note": "Calibration frames from the founder's moodboard (Figma node 361:2). The composer sends the frame for the request's module first, then its category, then the default. Frames where everyone smiles at once are deliberately excluded. Disabled (enabled: false) until the production model is chosen: in the 17 Sep model test Higgsfield Soul copied the reference photo instead of following the brief, and the copilot's live endpoint is Soul. Re-enable when switching to GPT Image 2.5 or Nano Banana, ideally with two or three frames per request.",
-    "urls": [
-      "https://remedae.app/assets/reference/lifestyle-light.jpg"
-    ],
-    "byCategory": {
-      "condition": "https://remedae.app/assets/reference/condition-belly.jpg",
-      "lifestyle": "https://remedae.app/assets/reference/lifestyle-light.jpg",
-      "tradition": "https://remedae.app/assets/reference/tradition-hands.jpg",
-      "ingredient": "https://remedae.app/assets/reference/tradition-hands.jpg",
-      "brand": "https://remedae.app/assets/reference/lifestyle-light.jpg"
-    },
-    "byModule": {
-      "lifestyle.nutrition": "https://remedae.app/assets/reference/lifestyle-cooking.jpg",
-      "lifestyle.movement": "https://remedae.app/assets/reference/lifestyle-walk.jpg",
-      "lifestyle.sleep": "https://remedae.app/assets/reference/lifestyle-sleep.jpg",
-      "lifestyle.stress": "https://remedae.app/assets/reference/lifestyle-breath.jpg",
-      "lifestyle.connection": "https://remedae.app/assets/reference/lifestyle-connection.jpg",
-      "lifestyle.substances": "https://remedae.app/assets/reference/lifestyle-drink.jpg",
-      "condition.felt": "https://remedae.app/assets/reference/condition-belly.jpg",
-      "condition.remedy": "https://remedae.app/assets/reference/tradition-hands.jpg",
-      "tradition.mind-body": "https://remedae.app/assets/reference/lifestyle-breath.jpg",
-      "tradition.lifestyle": "https://remedae.app/assets/reference/lifestyle-cooking.jpg"
-    },
-    "byShot": {
-      "pair": "https://remedae.app/assets/reference/lifestyle-pair.jpg",
-      "family": "https://remedae.app/assets/reference/lifestyle-connection.jpg"
-    },
-    "bySurface": {
-      "social-cover": "https://remedae.app/assets/reference/lifestyle-connection.jpg",
-      "social-story-cover": "https://remedae.app/assets/reference/lifestyle-connection.jpg"
-    }
-  },
-  "generation": {
-    "batch": 4,
-    "pick": 1,
-    "note": "Generate four, keep one, checklist the rest. Prefer the tool's negative-prompt field for negatives."
+  "ingredient": {
+   "study": "The ingredient in the form the reader will buy it (fresh, dried, powder, capsule), straight down or at 45 degrees, on a single neutral surface of oak, slate or unglazed clay, one soft directional light, no props beyond a spoon or a bowl, no packaging, no labels."
   }
+ },
+ "surfaces": {
+  "hero-card": {
+   "ratio": "3:4",
+   "min": "1200x1600",
+   "quiet": "top and bottom fifths",
+   "note": "search hero floating cards; overlays tradition name and remedy title"
+  },
+  "tile": {
+   "ratio": "4:5",
+   "min": "1200x1500",
+   "quiet": "lower third",
+   "note": "rails and tiles for conditions, journal, shelf"
+  },
+  "page-hero": {
+   "ratio": "3:2",
+   "min": "2400x1600",
+   "quiet": "right third",
+   "note": "condition and tradition page heroes"
+  },
+  "journal-inline": {
+   "ratio": "16:10",
+   "min": "2000 wide",
+   "quiet": "none",
+   "note": "landscape only; prefer the actual thing discussed"
+  },
+  "carousel": {
+   "ratio": "16:9",
+   "min": "2400 wide",
+   "quiet": "lower third",
+   "note": "featured carousel and promo cards"
+  },
+  "social-feed": {
+   "ratio": "4:5",
+   "min": "1080x1350",
+   "quiet": "lower third",
+   "note": "Instagram feed"
+  },
+  "social-story": {
+   "ratio": "9:16",
+   "min": "1080x1920",
+   "quiet": "top 250px and bottom 300px",
+   "note": "stories and reels"
+  },
+  "email": {
+   "ratio": "2:1",
+   "min": "1200x600",
+   "quiet": "lower third",
+   "note": "under 300 KB"
+  },
+  "video-vertical": {
+   "ratio": "9:16",
+   "min": "1080x1920",
+   "fps": 24,
+   "seconds": "4 to 8",
+   "note": "social and app"
+  },
+  "video-wide": {
+   "ratio": "16:9",
+   "min": "1920x1080",
+   "fps": 24,
+   "seconds": "4 to 8",
+   "note": "site and journal"
+  },
+  "social-cover": {
+   "ratio": "4:5",
+   "min": "1080x1350",
+   "quiet": "top half",
+   "composition": "The people sit in the lower half of the frame, with a wide calm stretch of sunlit wall, sky or soft room above them.",
+   "note": "Instagram carousel and post covers: generous negative space above the subject for the headline."
+  },
+  "social-story-cover": {
+   "ratio": "9:16",
+   "min": "1080x1920",
+   "quiet": "top half",
+   "composition": "The people sit in the lower third of the frame, with a tall calm stretch of sunlit wall, sky or soft room above them.",
+   "note": "Story and reel covers: generous negative space above the subject."
+  }
+ },
+ "naming": "{category}-{subject}-{variant}.{ext}; category in tradition|condition|lifestyle|brand|ingredient; subject is the site slug; variant two digits; a .json sidecar with prompt, tool, model, seed, date, approver and surface beside every file",
+ "examples": [
+  {
+   "category": "condition",
+   "module": "felt",
+   "shotType": "macro-body",
+   "surface": "tile",
+   "subject": "Macro body shot: a woman's hands pressed flat to her stomach over a plain green sports top, outdoors in open morning daylight, hills soft in the background, no face."
+  },
+  {
+   "category": "tradition",
+   "module": "ayurveda",
+   "shotType": "hands-object",
+   "surface": "hero-card",
+   "subject": "Hands-and-object shot: a woman's hand stirs ashwagandha powder into a small pan of warming milk on a modern hob, bright window light from the left, one mug beside the pan, cropped at the shoulders."
+  },
+  {
+   "category": "lifestyle",
+   "module": "sleep",
+   "shotType": "portrait-task",
+   "surface": "social-story",
+   "subject": "Portrait mid-task: a man in his sixties in a plain white tee opens a bedroom curtain to bright morning light, in profile, eyes on the window, the room soft behind him."
+  }
+ ],
+ "principle": "Traditional remedies meet modern vibrant lifestyle: real people of every age and heritage using the world's healing traditions inside the lives they already live, alone or with the people they share those lives with. Warm, sunlit, lived-in modern homes and bright outdoor places, photographed like a premium lifestyle campaign. Candid, never posed, and every person has their own expression. Rich warm colour and directional light; intimate low light when the subject is night or sleep. Brand colour is applied at the UI level, never in the image.",
+ "shotTypes": {
+  "macro-body": "Macro body shot, 100mm macro: hands on a belly, a wrist held, fingers on a temple, a foot on a step; no face or a partial face out of focus. The default for conditions.",
+  "hands-object": "Hands-and-object shot: tearing a sachet, stirring a pan, pouring water, holding a mug; face optional, cropped at the chin or out of focus. The default for traditions and ingredients.",
+  "portrait-task": "Portrait mid-task, 85mm: head and shoulders, eyes on the task, closed, or in profile, background soft.",
+  "environmental-single": "Environmental single: one person, three-quarter or full length, in a real modern room or street, room soft behind them. Use sparingly.",
+  "pair": "Pair: two people who share a life, each with their own gesture and expression (one laughing, one listening), candid, in the same warm room.",
+  "family": "Family or friends: three to five people in one lived-in room, each doing something different with their own expression, candid, nobody looking into the lens. For the connection pillar and cover moments."
+ },
+ "reference": {
+  "enabled": false,
+  "path": "public/assets/reference/",
+  "note": "Calibration frames from the founder's moodboard (Figma node 361:2). The composer sends the frame for the request's module first, then its category, then the default. Frames where everyone smiles at once are deliberately excluded. Disabled (enabled: false) until the production model is chosen: in the 17 Sep model test Higgsfield Soul copied the reference photo instead of following the brief, and the copilot's live endpoint is Soul. Re-enable when switching to GPT Image 2.5 or Nano Banana, ideally with two or three frames per request.",
+  "urls": [
+   "https://remedae.app/assets/reference/lifestyle-light.jpg"
+  ],
+  "byCategory": {
+   "condition": "https://remedae.app/assets/reference/condition-belly.jpg",
+   "lifestyle": "https://remedae.app/assets/reference/lifestyle-light.jpg",
+   "tradition": "https://remedae.app/assets/reference/tradition-hands.jpg",
+   "ingredient": "https://remedae.app/assets/reference/tradition-hands.jpg",
+   "brand": "https://remedae.app/assets/reference/lifestyle-light.jpg"
+  },
+  "byModule": {
+   "lifestyle.nutrition": "https://remedae.app/assets/reference/lifestyle-cooking.jpg",
+   "lifestyle.movement": "https://remedae.app/assets/reference/lifestyle-walk.jpg",
+   "lifestyle.sleep": "https://remedae.app/assets/reference/lifestyle-sleep.jpg",
+   "lifestyle.stress": "https://remedae.app/assets/reference/lifestyle-breath.jpg",
+   "lifestyle.connection": "https://remedae.app/assets/reference/lifestyle-connection.jpg",
+   "lifestyle.substances": "https://remedae.app/assets/reference/lifestyle-drink.jpg",
+   "condition.felt": "https://remedae.app/assets/reference/condition-belly.jpg",
+   "condition.remedy": "https://remedae.app/assets/reference/tradition-hands.jpg",
+   "tradition.mind-body": "https://remedae.app/assets/reference/lifestyle-breath.jpg",
+   "tradition.lifestyle": "https://remedae.app/assets/reference/lifestyle-cooking.jpg"
+  },
+  "byShot": {
+   "pair": "https://remedae.app/assets/reference/lifestyle-pair.jpg",
+   "family": "https://remedae.app/assets/reference/lifestyle-connection.jpg"
+  },
+  "bySurface": {
+   "social-cover": "https://remedae.app/assets/reference/lifestyle-connection.jpg",
+   "social-story-cover": "https://remedae.app/assets/reference/lifestyle-connection.jpg"
+  }
+ },
+ "generation": {
+  "batch": 4,
+  "pick": 1,
+  "note": "Generate four, keep one, checklist the rest. Prefer the tool's negative-prompt field for negatives."
+ },
+ "light": {
+  "name": "One warm window key",
+  "text": "Light it with one warm key and nothing else: late-afternoon sun through a window just out of frame, low and raking across the scene, colour temperature around 3200K. Highlights land on skin, steam and the top edge of every object; shadows fall deep and amber but keep their detail. The only fill is what bounces off warm wood, walls and worktop, never from the camera side. A little atmospheric haze, and soft halation around the brightest edges. Rich saturated warm palette: terracotta, rust, ochre, olive and sun-warmed cream, true to life, never a filter, never HDR.",
+  "camera": "Full-frame, 85mm, f/2. The subject sharp, the room falling away into soft warm blur. Fine natural grain.",
+  "note": "Approved by the founder on 17 September 2026 from the Soul batch (ginger tea, Kampo kitchen, family dinner, two friends cooking). Every image uses this unless the surface asks for daylight outdoors, and outdoors keeps the same low warm sun."
+ }
 }
