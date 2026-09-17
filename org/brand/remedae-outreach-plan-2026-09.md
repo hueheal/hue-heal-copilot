@@ -77,9 +77,10 @@ Clinicians (GPs, pharmacists, nurses, midwives, dietitians, physiotherapists), r
 **Expert step 2, who you are.** Two questions, both required, both open text:
 - **Profession**: "What do you do?" Free text, so a doula, a sleep coach, a pharmacognosist and a GP can all answer in their own words. No fixed list at this stage.
 - **Organisation**: "Where do you work or study?" Company, clinic, university or "independent practice".
+- Optional: LinkedIn and any social handles where they apply (Instagram, TikTok, YouTube, podcast, website). These help us see who someone is and how they share their work; reach is never a reason to accept or decline.
 - Optional, one tap: the traditions you know best (the thirteen plus "conventional clinical practice").
 
-Nothing else is asked at sign-up: no register numbers, profile links, handles or declared interests. The panel is a pilot, and the lighter the ask, the more of the field joins. Those details are collected later, only from people who move into a role that needs them (a named reviewer, an advisor, a directory listing).
+Nothing else is asked at sign-up: no register numbers or declared interests. The panel is a pilot, and the lighter the ask, the more of the field joins. Those details are collected later, only from people who move into a role that needs them (a named reviewer, an advisor, a directory listing).
 
 Consent line under the button: "Remedae may contact you about the Expert Panel."
 
@@ -110,7 +111,7 @@ Week 1 uses a structured form (per remedy: correct / needs change / unsafe, plus
 ### Checking and sorting
 
 Status on every expert: **new**, **looks right**, **needs a look**.
-1. A quick sense check: does the organisation exist, and does the profession fit it. No register lookups at pilot stage.
+1. A quick sense check: does the organisation exist, does the profession fit it, and do LinkedIn or the handles (where given) match. No register lookups at pilot stage.
 2. Professions stay as people wrote them. The admin dashboard groups them into families (for example clinical, traditional practice, nutrition and movement, mental health, research, education and media), shows counts per family, per organisation type and per interest bucket, and flags answers it could not place so they can be grouped by hand.
 3. Deeper verification (register, practice page, declared interests) happens only when someone moves into a role that is visible or trusted: a named reviewer on a page, an advisor, a directory listing.
 4. Nothing public (name, credit, directory listing, badge) appears without a second, explicit opt-in.
@@ -136,12 +137,12 @@ People join the panel as individuals. Institutions (a university department, a r
 
 ### Implementation (Remedae repo)
 
-1. **Data.** A new `expert_profiles` table (user id, profession as written, profession family assigned by the dashboard, organisation, traditions, interest buckets, check status, notes, public-credit consent) and `user_profiles.pilot_role = 'expert'`. A `partner_enquiries` table for institutions. Migration, row-level security (experts see only their own row; admins see all).
+1. **Data.** A new `expert_profiles` table (user id, profession as written, profession family assigned by the dashboard, organisation, LinkedIn, social handles, traditions, interest buckets, check status, notes, public-credit consent) and `user_profiles.pilot_role = 'expert'`. A `partner_enquiries` table for institutions. Migration, row-level security (experts see only their own row; admins see all).
 2. **Onboarding.** Step 0 fork in `PilotOnboardingFlow`; expert steps 2 and 3 as new step components; `/join/experts` preselects the fork; server action writes both tables. Reader flow untouched.
 3. **Invites.** Expert invitation email and landing copy (no Sundays, no cadence promises, not an endorsement).
-4. **Admin.** An "Experts" tab on `/admin`: professions grouped into families with counts, organisation list, bucket counts and filters, the unplaced answers to group by hand, CSV export for the copilot CRM.
+4. **Admin.** An "Experts" tab on `/admin`: professions grouped into families with counts, organisation list, how many gave LinkedIn or handles (and which platforms), bucket counts and filters, the unplaced answers to group by hand, CSV export for the copilot CRM.
 5. **Tasks.** An `expert` cohort in the pilot tables with the four weekly tasks and a structured review form that stores per-remedy verdicts against remedy ids.
-6. **Counsel.** Privacy notice updated for profession and organisation data; consent text; no public use of names without the second opt-in.
+6. **Counsel.** Privacy notice updated for profession, organisation and handle data; consent text; no public use of names without the second opt-in.
 7. **Sorting.** Copilot Experts seat reviews the dashboard weekly, fixes unplaced professions and hands each bucket to its owner.
 
 Roughly three days of build, one day of copy and legal text. Sequence: data and onboarding first, admin second, tasks third. The reader pilot ends 4 October, so the Expert Panel can open as the next wave on **Monday 12 October**.
