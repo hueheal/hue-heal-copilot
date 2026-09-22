@@ -34,6 +34,7 @@ import { BrandProvider } from './lib/brandContext'
 import ComingSoon from './pages/ComingSoon'
 import Subscribe from './pages/Subscribe'
 import Unsubscribe from './pages/Unsubscribe'
+import OsHome from './pages/OsHome'
 
 export default function App() {
   return (
@@ -44,6 +45,9 @@ export default function App() {
       {/* Template contact sheet: signed-in, but outside the workspace picker so it can be
           opened directly with ?brand=… (used to review a whole family at once). */}
       <Route path="/templates" element={<AuthGate><BrandProvider><TemplateGallery /></BrandProvider></AuthGate>} />
+
+      {/* Company OS draft home (September 2026): its own shell, so it does not inherit the top bar. */}
+      <Route path="/os" element={<AuthGate><BrandProvider><OsHome /></BrandProvider></AuthGate>} />
 
       <Route element={<StudioLayout />}>
         <Route index element={<Home />} />
