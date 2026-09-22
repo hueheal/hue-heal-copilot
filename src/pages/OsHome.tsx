@@ -18,7 +18,7 @@ import '../styles/os.css'
 
 /* Until profiles carry a display name. */
 const FOUNDER = 'Maria'
-const GREET_HOLD_MS = 3400
+const GREET_HOLD_MS = 3600
 
 interface Line { text: string; tag?: string }
 interface Desk { runId: string; now: Line[]; next: Line[]; parked: Line[]; decisions: Line[]; at: string }
@@ -68,6 +68,11 @@ const DEMO = {
   } as Desk,
 }
 
+const DEMO_BRIEFS: Record<string, string> = {
+  'd-j1': 'I have two Instagram posts for the sleep ritual launch ready. They go out when you approve them.',
+  'd-j2': 'I have drafted the email titled "Funding for 2027" to the three advisors. Take a look before it goes.',
+}
+
 /* ---- Icons ---- */
 const I = {
   menu: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>,
@@ -95,7 +100,6 @@ function deskOf(run: RoleRun): Desk {
 }
 
 const greetingWord = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' }
-const dayLabel = () => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 const n = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`
 const lower = (s: string) => (s ? s[0].toLowerCase() + s.slice(1) : s)
 const stripPrefix = (task: string) => task.replace(/^(ROUTE|DESK|MEETING|IMAGES):\s*/, '').split('\n')[0]
@@ -110,6 +114,7 @@ export default function OsHome() {
   const [jobs, setJobs] = useState<RoleJob[]>([])
   const [priorities, setPriorities] = useState<Priority[]>([])
   const [desk, setDesk] = useState<Desk | null>(null)
+  const [briefs, setBriefs] = useState<Record<string, string>>({})
   const [ready, setReady] = useState(false)
   const [phase, setPhase] = useState<'idle' | 'greet' | 'list'>('idle')
   const [menu, setMenu] = useState(false)
@@ -129,6 +134,14 @@ export default function OsHome() {
     if (demo) { setRoles(DEMO.roles); setJobs((j) => (j.length ? j : DEMO.jobs)); setPriorities(DEMO.priorities); setDesk(DEMO.desk); return }
     const [rs, js, ps, b] = await Promise.all([listRoles(), listWorkspaceJobs(), listPriorities(), latestBriefing()])
     setRoles(rs); setJobs(js); setPriorities(ps)
+    /* The two-line brief each seat wrote for the founder, by run. */
+    const waiting = js.filter((j) => j.status === 'done' && j.approval === 'pending' && j.run_id)
+    if (waiting.length) {
+      const runs = await listRunsFor([...new Set(waiting.map((j) => j.role_id))])
+      const map: Record<string, string> = {}
+      for (const r of runs) { const b = (r.output?.brief || '').trim(); if (b) map[r.id] = b }
+      setBriefs(map)
+    }
     const chief = rs.find((r) => r.key === 'chief')
     if (chief && b) {
       const bj = await briefingJobs(b.id)
@@ -209,7 +222,8 @@ export default function OsHome() {
     const stop = (fn: () => void) => (e: React.MouseEvent) => { e.stopPropagation(); fn() }
     for (const j of approvals) {
       const r = roleOf(j); if (!r) continue
-      out.push({ key: `a${j.id}`, role: r, text: <>I have <b>{stripPrefix(j.task)}</b> ready. It goes out when you approve it.</>,
+      const brief = (j.run_id && briefs[j.run_id]) || (demo && DEMO_BRIEFS[j.id])
+      out.push({ key: `a${j.id}`, role: r, text: brief ? brief : <>I have <b>{stripPrefix(j.task)}</b> ready. It goes out when you approve it.</>,
         chips: <><button className="os-chip" data-primary="1" onClick={stop(() => void decide(j, 'approved'))}>Approve</button><button className="os-chip" onClick={stop(() => void decide(j, 'declined'))}>Decline</button></> })
     }
     if (desk && chief) {
@@ -224,7 +238,7 @@ export default function OsHome() {
     for (const j of working) { const r = roleOf(j); if (r) out.push({ key: `w${j.id}`, role: r, quiet: true, text: <>I'm working on <b>{lower(stripPrefix(j.task))}</b> and will bring it to you when it's ready.</> }) }
     if (desk && chief && desk.parked.length) out.push({ key: 'park', role: chief, quiet: true, text: <>Parked for now: {desk.parked.map((l) => lower(l.text)).join('; ')}.</> })
     return out
-  }, [approvals, working, active, desk, chief, roles, ticked])
+  }, [approvals, working, active, desk, chief, roles, ticked, briefs])
 
   const menuItems = [
     { label: 'Marketing', go: () => nav('/create') },
@@ -277,10 +291,6 @@ export default function OsHome() {
             <MemberChat key={member.id} role={member} jobs={jobs} avatar={avatarFor(member.dept)} demoRuns={demo ? DEMO.runs[member.id] ?? [] : undefined} onClose={closeChat} />
           ) : (
             <div className="os-list" aria-hidden={phase !== 'list'}>
-              <div className="os-day">
-                <span><b>{greetingWord()}, {FOUNDER}.</b> {dayLabel()}</span>
-                <span>{working.length ? `${n(working.length, 'piece', 'pieces')} of work in flight` : ''}</span>
-              </div>
               {cards.map((c) => (
                 <article key={c.key} className="os-msg" data-quiet={c.quiet ? '1' : undefined} onClick={(e) => { e.stopPropagation(); openChat(c.role) }}>
                   <img className="os-msg-avatar" src={avatarFor(c.role.dept)} alt="" />

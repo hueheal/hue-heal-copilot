@@ -146,6 +146,8 @@ export interface RoleLedgerDraft { title: string; detail: string }
 export interface RoleHandoff { to: string; subject: string; body: string }
 export interface RoleDeliverable {
   title: string
+  /** Two lines at most: what the seat says to the founder on the home page. */
+  brief?: string
   summary: string
   sections: { heading: string; body: string }[]
   actions: RoleAction[]

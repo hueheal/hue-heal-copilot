@@ -55,6 +55,7 @@ export const DELIVERABLE_TOOL = {
     type: 'object',
     properties: {
       title: { type: 'string', description: 'Short name for this deliverable, e.g. "September content plan".' },
+      brief: { type: 'string', description: 'What you would say to the founder in a chat: two lines at most, under 140 characters, first person, plain words. It is the only thing they see on their home page, so say what you did and what you need from them. Example: "I have two Instagram posts for the sleep launch ready. They go out when you approve them."' },
       summary: { type: 'string', description: '2-3 sentences: the headline of what you concluded or produced.' },
       sections: {
         type: 'array',
@@ -127,7 +128,7 @@ export const DELIVERABLE_TOOL = {
         description: 'True if acting on this deliverable would put something in front of the public or a third party, or commit money: publishing, posting, sending, outreach, a price or offer change, spend. Such deliverables wait for the founder\'s approval. Internal plans, research and drafts are false.',
       },
     },
-    required: ['title', 'summary', 'sections', 'actions', 'needs', 'experiments', 'handoffs', 'external'],
+    required: ['title', 'brief', 'summary', 'sections', 'actions', 'needs', 'experiments', 'handoffs', 'external'],
   },
 }
 
