@@ -35,6 +35,7 @@ import ComingSoon from './pages/ComingSoon'
 import Subscribe from './pages/Subscribe'
 import Unsubscribe from './pages/Unsubscribe'
 import OsHome from './pages/OsHome'
+import OsNewsletter from './pages/OsNewsletter'
 
 export default function App() {
   return (
@@ -48,6 +49,7 @@ export default function App() {
 
       {/* Company OS draft home (September 2026): its own shell, so it does not inherit the top bar. */}
       <Route path="/os" element={<AuthGate><BrandProvider><OsHome /></BrandProvider></AuthGate>} />
+      <Route path="/os/newsletter" element={<AuthGate><BrandProvider><OsNewsletter /></BrandProvider></AuthGate>} />
 
       <Route element={<StudioLayout />}>
         <Route index element={<Home />} />

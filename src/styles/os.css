@@ -293,3 +293,40 @@
   .os::before { animation: none; }
   .os-greet, .os-list, .os-compose, .os-ground, .os-list > *, .os-menu button, .os-chat { transition-duration: 1ms !important; transition-delay: 0ms !important; animation-duration: 1ms !important; animation-delay: 0ms !important; }
 }
+
+/* ---- Newsletter: the email as it will land, and what to settle before it goes ---- */
+.os-nl-preview {
+  border-radius: 40px; padding: 18px; box-sizing: border-box;
+  background: var(--os-card); box-shadow: var(--os-card-shadow);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+}
+.os-nl-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 8px 14px; font-size: 14px; letter-spacing: -0.56px; color: var(--os-ink-60); }
+.os-nl-toolbar .os-chip { padding: 8px 12px; }
+.os-nl-toolbar .os-chip svg { width: 16px; height: 16px; display: block; }
+.os-nl-email {
+  margin: 0 auto; background: #FBFAF6; border-radius: 22px; padding: 34px 38px 30px; box-sizing: border-box; color: #1E1B18;
+  font-family: var(--ck-font); transition: max-width 500ms var(--os-ease), padding 500ms var(--os-ease);
+}
+.os-nl-preview[data-view='phone'] .os-nl-email { max-width: 380px; padding: 26px 22px 24px; }
+.os-nl-mast { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #6E6257; margin-bottom: 18px; font-weight: 500; }
+.os-nl-hero { height: 220px; border-radius: 14px; background: linear-gradient(160deg, #E9D2BC 0%, #C9A98B 55%, #8F6B4F 100%); margin-bottom: 18px; }
+.os-nl-preview[data-view='phone'] .os-nl-hero { height: 160px; }
+.os-nl-cat { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #2F5D46; font-weight: 500; margin-bottom: 6px; }
+.os-nl-email h2 { margin: 0 0 8px; font-family: 'HHSerif', Georgia, serif; font-weight: 400; font-size: 30px; line-height: 1.15; letter-spacing: -0.01em; color: #1E1B18; }
+.os-nl-dek { margin: 0 0 16px; font-size: 16px; line-height: 1.5; color: #6E6257; }
+.os-nl-p { margin: 0 0 22px; font-size: 15px; line-height: 1.65; color: #1E1B18; }
+.os-nl-card { display: grid; grid-template-columns: 84px 1fr; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid rgba(30, 27, 24, 0.08); }
+.os-nl-card b { display: block; font-size: 15px; font-weight: 500; line-height: 1.3; margin-bottom: 2px; }
+.os-nl-card span { font-size: 13px; line-height: 1.45; color: #6E6257; }
+.os-nl-thumb { width: 84px; height: 64px; border-radius: 10px; background: linear-gradient(150deg, #DCE3D2 0%, #9DAE8E 100%); }
+.os-nl-btn { margin: 22px 0 18px; display: inline-block; padding: 12px 20px; border-radius: 999px; background: #1E1B18; color: #F5F1E8; font-size: 13.5px; font-weight: 500; }
+.os-nl-foot { font-size: 11.5px; color: #9A8D7E; line-height: 1.5; }
+.os-nl-input {
+  width: 100%; box-sizing: border-box; border: none; border-bottom: 1px solid rgba(44, 43, 43, 0.15); background: none; outline: none; padding: 4px 0;
+  font-family: var(--ck-font); font-size: 15px; font-weight: 400; letter-spacing: -0.4px; color: var(--os-ink);
+}
+.os-nl-input:focus { border-bottom-color: var(--os-accent); }
+@media (max-width: 900px) {
+  .os-nl-preview { border-radius: 28px; padding: 10px; }
+  .os-nl-email { padding: 22px 18px; }
+}
