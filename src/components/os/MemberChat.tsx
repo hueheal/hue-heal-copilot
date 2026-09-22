@@ -34,7 +34,8 @@ export default function MemberChat({ role, jobs, avatar, demoRuns, onClose }: {
     return () => { live = false; clearInterval(t) }
   }, [role.id, demoRuns])
 
-  const mine = useMemo(() => jobs.filter((j) => j.role_id === role.id), [jobs, role.id])
+  /* DESK: jobs are the system asking the chief to write the desk, not the founder's words. */
+  const mine = useMemo(() => jobs.filter((j) => j.role_id === role.id && !j.task.startsWith('DESK:')), [jobs, role.id])
   const thread = useMemo<ChatMessage[]>(() => {
     const out: ChatMessage[] = []
     for (const j of mine) out.push({ id: `j${j.id}`, me: true, text: stripPrefix(j.task), at: j.created_at })
@@ -63,7 +64,7 @@ export default function MemberChat({ role, jobs, avatar, demoRuns, onClose }: {
           {thread.length === 0 && <div className="os-empty">Nothing between you yet. Say what you need below.</div>}
           {thread.map((m) => (
             <div key={m.id} className="os-bubble" data-me={m.me ? '1' : undefined}>
-              {m.title && <b>{m.title}. </b>}{m.text}
+              {m.title && <b>{/[.!?]$/.test(m.title) ? m.title : `${m.title}.`} </b>}{m.text}
               <small>{m.me ? 'You' : role.name} · {when(m.at)}{m.open ? <> · <a href={`${roomPath}?run=${m.open}`} onClick={(e) => { e.preventDefault(); nav(`${roomPath}?run=${m.open}`) }} style={{ color: 'inherit' }}>open</a></> : null}</small>
             </div>
           ))}
