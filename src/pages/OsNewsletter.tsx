@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
+import { readSkin } from '../lib/osSkin'
 import '../styles/os.css'
 
 /* ============================================================
@@ -52,7 +53,7 @@ export default function OsNewsletter() {
   const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').replace('&', '').slice(0, 2).toUpperCase()
 
   return (
-    <div className="os" data-phase="list" onClick={() => setMenu(false)}>
+    <div className="os" data-phase="list" data-skin={readSkin()} onClick={() => setMenu(false)}>
       <div className="os-sky" aria-hidden />
       <header className="os-top">
         <div className="os-top-left">

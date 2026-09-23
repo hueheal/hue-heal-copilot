@@ -4,6 +4,7 @@ import { useBrand } from '../lib/brandContext'
 import { listRoles, listWorkspaceJobs, decideJob, latestBriefing, briefingJobs, sendBriefing, assignJob, listRunsFor, type Role, type RoleJob, type RoleRun, type Briefing } from '../lib/roles'
 import { listPriorities, type Priority } from '../lib/priorities'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { readSkin, saveSkin, type Skin } from '../lib/osSkin'
 import MemberLayer, { GROUP_SLT, type LayerDemo } from '../components/os/MemberLayer'
 import '../styles/os.css'
 
@@ -129,6 +130,8 @@ export default function OsHome() {
   const [ready, setReady] = useState(false)
   const [phase, setPhase] = useState<'idle' | 'greet' | 'list'>('idle')
   const [menu, setMenu] = useState(false)
+  const [skin, setSkin] = useState<Skin>(() => readSkin())
+  const toggleSkin = () => setSkin((s) => { const n = s === 'graphite' ? 'sand' : 'graphite'; saveSkin(n); return n })
   const [ticked, setTicked] = useState<Record<string, boolean>>({})
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -283,11 +286,12 @@ export default function OsHome() {
     { label: 'Clients', go: () => nav('/clients') },
     { label: 'Approvals', go: () => { closeChat(); setMenu(false); window.scrollTo({ top: 0, behavior: 'smooth' }) } },
     { label: 'Settings', go: () => nav('/settings') },
+    { label: skin === 'graphite' ? 'Sand skin' : 'Graphite skin', go: toggleSkin },
   ]
   const initials = (name: string) => name.split(/\s+/).map((w) => w[0]).join('').replace('&', '').slice(0, 2).toUpperCase()
 
   return (
-    <div className="os" data-phase={phase} onClick={() => { skip(); setMenu(false) }}>
+    <div className="os" data-phase={phase} data-skin={skin} onClick={() => { skip(); setMenu(false) }}>
       <div className="os-sky" aria-hidden />
       <header className="os-top">
         <div className="os-top-left">
@@ -325,10 +329,23 @@ export default function OsHome() {
           )}
 
           {layerOpen ? (
-            <MemberLayer key={withId ?? ''} role={member} group={group} roles={roles} jobs={jobs} avatarFor={avatarFor} demo={layerDemo}
+            <MemberLayer key={withId ?? ''} role={member} group={group} roles={roles} jobs={jobs} avatarFor={avatarFor} demo={layerDemo} skin={skin}
               onSelect={openChat} onClose={closeChat} onDecide={(j, a) => void decide(j, a)} onRetry={(j) => void retry(j)} onSend={sendTo} />
           ) : (
             <div className="os-list" aria-hidden={phase !== 'list'}>
+              {skin === 'graphite' && leads.length > 0 && (
+                <div className="os-bots">
+                  {leads.map((r) => {
+                    const st = jobs.some((j) => j.role_id === r.id && j.status === 'done' && j.approval === 'pending') ? 'approval' : jobs.some((j) => j.role_id === r.id && (j.status === 'queued' || j.status === 'running')) ? 'working' : 'idle'
+                    return (
+                      <button key={r.id} className="os-bot" onClick={(e) => { e.stopPropagation(); openChat(r) }}>
+                        <img src={avatarFor(r.dept)} alt="" /><i data-state={st} />
+                        <span>{r.name}<small>{st === 'approval' ? 'Needs you' : st === 'working' ? 'Working' : r.title}</small></span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
               {cards.map((c) => (
                 <article key={c.key} className="os-msg" data-quiet={c.quiet ? '1' : undefined} onClick={(e) => { e.stopPropagation(); openChat(c.role) }}>
                   <img className="os-msg-avatar" src={avatarFor(c.role.dept)} alt="" />

@@ -36,8 +36,8 @@ const TAB_KINDS: Record<string, string[]> = { Socials: ['carousel', 'portrait', 
 
 interface Bubble { id: string; at: string; node: ReactNode }
 
-export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo, onSelect, onClose, onDecide, onRetry, onSend }: {
-  role: Role | null; group?: string; roles: Role[]; jobs: RoleJob[]; avatarFor: (dept: string | null | undefined) => string
+export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo, skin = 'sand', onSelect, onClose, onDecide, onRetry, onSend }: {
+  role: Role | null; group?: string; roles: Role[]; jobs: RoleJob[]; avatarFor: (dept: string | null | undefined) => string; skin?: 'sand' | 'graphite'
   demo?: LayerDemo; onSelect: (id: string) => void; onClose: () => void
   onDecide: (j: RoleJob, approval: 'approved' | 'declined') => void; onRetry: (j: RoleJob) => void; onSend: (text: string) => Promise<string | null>
 }) {
@@ -226,6 +226,20 @@ export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo,
       <div className="os-layer-grid">
         <aside className="os-rooms">
           <div className="os-col-label">Teams &amp; Rooms</div>
+          {skin === 'graphite' ? (
+            <>
+              <div className="os-portrait">
+                {role ? <img src={avatarFor(role.dept)} alt="" /> : <img src={avatarFor(leads[0]?.dept)} alt="" />}
+                <div><b>{name}</b><span>{group ? `${leads.length} leads · one briefing` : `${role?.title ?? ''}${dept ? ` · ${dept.name}` : ''}`}</span></div>
+              </div>
+              <div className="os-portrait-strip">
+                <button title="SLT Team" data-on={group ? '1' : undefined} onClick={() => onSelect(GROUP_SLT)}><img src={avatarFor('founder')} alt="" /></button>
+                {leads.map((l) => <button key={l.id} title={l.name} data-on={role?.id === l.id ? '1' : undefined} onClick={() => onSelect(l.id)}><img src={avatarFor(l.dept)} alt="" /></button>)}
+                {members.map((m) => <button key={m.id} title={m.name} data-on={role?.id === m.id ? '1' : undefined} onClick={() => onSelect(m.id)}><img src={avatarFor(m.dept)} alt="" /></button>)}
+              </div>
+            </>
+          ) : (
+          <>
           <button className="os-room" data-on={group ? '1' : undefined} onClick={() => onSelect(GROUP_SLT)}>
             <span className="os-room-avatar" data-group="1">{leads.slice(0, 4).map((l) => <img key={l.id} src={avatarFor(l.dept)} alt="" />)}</span><span>SLT Team</span>
           </button>
@@ -241,6 +255,8 @@ export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo,
               ))}
             </div>
           ))}
+          </>
+          )}
         </aside>
 
         <section className="os-chatbox" data-tab={tab}>

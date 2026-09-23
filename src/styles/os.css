@@ -462,3 +462,93 @@
   .os-b { max-width: 92%; padding: 14px 16px; }
   .os-compose2 { height: 64px; margin: 0 8px 8px; padding: 8px 8px 8px 18px; }
 }
+
+/* ============================================================
+   Graphite skin: the same bones in the Grok manner. Near-black
+   ground, monochrome glass with hairline rims, white as the one
+   accent, bots as portraits. Switch with ?skin=graphite (kept in
+   localStorage) or from the menu.
+   ============================================================ */
+.os[data-skin='graphite'] {
+  --os-accent: #FFFFFF; --os-ink: #F2F2F0; --os-ink-60: rgba(242, 242, 240, 0.58);
+  --os-card: rgba(255, 255, 255, 0.055);
+  --os-card-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.10), 0 16px 48px rgba(0, 0, 0, 0.45);
+  background: #0B0B0D; color: var(--os-ink); color-scheme: dark;
+}
+.os[data-skin='graphite']::before {
+  background:
+    radial-gradient(1100px 600px at 50% -10%, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0) 60%),
+    radial-gradient(800px 500px at 92% 100%, rgba(150, 140, 255, 0.10) 0%, rgba(150, 140, 255, 0) 60%),
+    radial-gradient(700px 400px at 5% 80%, rgba(254, 140, 46, 0.06) 0%, rgba(254, 140, 46, 0) 60%),
+    linear-gradient(180deg, #141416 0%, #0E0E10 55%, #0B0B0D 100%);
+}
+.os[data-skin='graphite'] .os-sky { background: linear-gradient(to bottom, rgba(12, 12, 14, 0.95) 0%, rgba(12, 12, 14, 0.6) 45%, rgba(12, 12, 14, 0) 100%); }
+.os[data-skin='graphite'] .os-ground { background: linear-gradient(to top, rgba(11, 11, 13, 0.98) 0%, rgba(11, 11, 13, 0.8) 40%, rgba(11, 11, 13, 0) 100%); }
+.os[data-skin='graphite'] .os-icon { background: rgba(255, 255, 255, 0.08); color: var(--os-ink); }
+.os[data-skin='graphite'] .os-icon:hover { background: rgba(255, 255, 255, 0.14); }
+.os[data-skin='graphite'] .os-badge { background: #fff; color: #0B0B0D; }
+.os[data-skin='graphite'] .os-ws-tile[data-on='1'] { box-shadow: var(--os-tile-shadow), 0 0 0 2px rgba(255, 255, 255, 0.6); }
+.os[data-skin='graphite'] .os-menu button { color: var(--os-ink-60); }
+.os[data-skin='graphite'] .os-menu button:hover { color: #fff; }
+.os[data-skin='graphite'] .os-greet h1 { color: var(--os-ink-60); }
+.os[data-skin='graphite'] .os-greet h1 b { color: #fff; }
+.os[data-skin='graphite'] .os-msg h3, .os[data-skin='graphite'] .os-msg p b, .os[data-skin='graphite'] .os-layer-title, .os[data-skin='graphite'] .os-room, .os[data-skin='graphite'] .os-card2 b, .os[data-skin='graphite'] .os-chat-head h2, .os[data-skin='graphite'] .os-b b { color: #fff; }
+.os[data-skin='graphite'] .os-msg:hover { background: rgba(255, 255, 255, 0.09); }
+.os[data-skin='graphite'] .os-chip { background: rgba(255, 255, 255, 0.10); color: var(--os-ink); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.os[data-skin='graphite'] .os-chip:hover { background: rgba(255, 255, 255, 0.16); }
+.os[data-skin='graphite'] .os-chip[data-primary='1'] { background: #fff; color: #0B0B0D; }
+.os[data-skin='graphite'] .os-compose, .os[data-skin='graphite'] .os-compose2 { background: rgba(24, 24, 27, 0.85); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 16px 48px rgba(0, 0, 0, 0.5); }
+.os[data-skin='graphite'] .os-compose:focus-within { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28), 0 16px 48px rgba(0, 0, 0, 0.5); }
+.os[data-skin='graphite'] .os-send { background: #fff; color: #0B0B0D; filter: none; }
+.os[data-skin='graphite'] .os-compose-note, .os[data-skin='graphite'] .os-b-note { background: rgba(30, 30, 33, 0.95); color: var(--os-ink); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.os[data-skin='graphite'] .os-pill { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.10); filter: none; }
+.os[data-skin='graphite'] .os-pill button[data-on='1'], .os[data-skin='graphite'] .os-pill button:hover { color: #fff; }
+.os[data-skin='graphite'] .os-room[data-on='1'] { border-color: rgba(255, 255, 255, 0.7); }
+.os[data-skin='graphite'] .os-room:hover { background: rgba(255, 255, 255, 0.09); }
+.os[data-skin='graphite'] .os-b { background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.os[data-skin='graphite'] .os-b[data-me='1'] { background: #F2F2F0; color: #0B0B0D; }
+.os[data-skin='graphite'] .os-b[data-me='1'] small { color: rgba(11, 11, 13, 0.5); }
+.os[data-skin='graphite'] .os-b[data-failed='1'] { background: rgba(254, 140, 46, 0.16); }
+.os[data-skin='graphite'] .os-dots i { background: #fff; }
+.os[data-skin='graphite'] .os-hist-row[data-state='approval'] i, .os[data-skin='graphite'] .os-hist-row[data-state='working'] i { background: #fff; }
+.os[data-skin='graphite'] .os-hist-row i { background: rgba(242, 242, 240, 0.35); }
+.os[data-skin='graphite'] .os-hist-row, .os[data-skin='graphite'] .os-hist-spend, .os[data-skin='graphite'] .os-task { border-color: rgba(255, 255, 255, 0.08); }
+.os[data-skin='graphite'] .os-card2 { background: rgba(255, 255, 255, 0.06); }
+.os[data-skin='graphite'] .os-card2:hover { background: rgba(255, 255, 255, 0.10); }
+.os[data-skin='graphite'] .os-nl-input { border-bottom-color: rgba(255, 255, 255, 0.2); color: var(--os-ink); }
+
+/* Bots as portraits: the strip on home, the portrait card in a chat. */
+.os-bots { display: flex; gap: 12px; overflow-x: auto; padding: 4px 4px 14px; margin: 0 -4px 10px; scrollbar-width: none; }
+.os-bots::-webkit-scrollbar { display: none; }
+.os-bot {
+  flex: 0 0 132px; height: 168px; position: relative; border: none; padding: 0; cursor: pointer; border-radius: 26px; overflow: hidden;
+  background: var(--os-card); box-shadow: var(--os-card-shadow); text-align: left; font-family: var(--ck-font);
+  transition: transform 200ms var(--os-ease);
+}
+.os-bot:hover { transform: translateY(-3px); }
+.os-bot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.06); }
+.os-bot::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.1) 55%, rgba(0, 0, 0, 0) 100%); }
+.os-bot span { position: absolute; left: 12px; right: 12px; bottom: 10px; z-index: 1; color: #fff; font-size: 13px; font-weight: 500; letter-spacing: -0.4px; line-height: 1.25; }
+.os-bot small { display: block; font-size: 10.5px; font-weight: 400; color: rgba(255, 255, 255, 0.7); margin-top: 2px; letter-spacing: -0.2px; }
+.os-bot i { position: absolute; top: 10px; right: 10px; z-index: 1; width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.5); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.35); }
+.os-bot i[data-state='working'] { background: #fff; animation: os-pulse 1.4s ease-in-out infinite; }
+.os-bot i[data-state='approval'] { background: var(--os-accent); }
+.os[data-skin='sand'] .os-bot i[data-state='approval'] { background: #FE8C2E; }
+.os-portrait {
+  position: relative; height: 340px; border-radius: 28px; overflow: hidden; margin-bottom: 12px;
+  background: var(--os-card); box-shadow: var(--os-card-shadow);
+}
+.os-portrait img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.08); }
+.os-portrait::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0) 100%); }
+.os-portrait div { position: absolute; left: 18px; right: 18px; bottom: 16px; z-index: 1; color: #fff; }
+.os-portrait b { display: block; font-size: 22px; font-weight: 500; letter-spacing: -0.8px; line-height: 1.15; }
+.os-portrait span { display: block; font-size: 13px; color: rgba(255, 255, 255, 0.72); margin-top: 3px; letter-spacing: -0.3px; }
+.os-portrait-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.os-portrait-strip button { width: 52px; height: 52px; border-radius: 14px; border: none; padding: 0; overflow: hidden; cursor: pointer; opacity: 0.55; box-shadow: var(--os-avatar-shadow); transition: opacity 160ms var(--os-ease), transform 160ms var(--os-ease); }
+.os-portrait-strip button:hover, .os-portrait-strip button[data-on='1'] { opacity: 1; transform: translateY(-2px); }
+.os-portrait-strip button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 900px) {
+  .os-portrait { height: 200px; }
+}
+
+.os-rooms > .os-portrait-strip { flex-direction: row; flex-wrap: wrap; }
