@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
-import { listRoles, listWorkspaceJobs, decideJob, latestBriefing, briefingJobs, sendBriefing, assignJob, listRunsFor, type Role, type RoleJob, type RoleRun } from '../lib/roles'
+import { listRoles, listWorkspaceJobs, decideJob, latestBriefing, briefingJobs, sendBriefing, assignJob, listRunsFor, type Role, type RoleJob, type RoleRun, type Briefing } from '../lib/roles'
 import { listPriorities, type Priority } from '../lib/priorities'
 import { isSupabaseConfigured } from '../lib/supabase'
-import MemberChat from '../components/os/MemberChat'
+import MemberLayer, { GROUP_SLT, type LayerDemo } from '../components/os/MemberLayer'
 import '../styles/os.css'
 
 /* ============================================================
@@ -34,16 +34,21 @@ const DEMO = {
     { id: 'd-finance', key: 'finance', name: 'Head of Finance', title: 'Cash, forecasts and funding', seat: 'lead', enabled: true, dept: 'finance' },
     { id: 'd-partner', key: 'partnerships', name: 'Head of Partnerships', title: 'Universities, practitioners, distribution', seat: 'lead', enabled: true, dept: 'partnerships' },
     { id: 'd-counsel', key: 'counsel', name: 'Counsel', title: 'Legal and compliance', seat: 'lead', enabled: true, dept: 'counsel' },
+    { id: 'd-editor', key: 'editor', name: 'Editor-in-chief', title: 'Journal, newsletters, voice', seat: 'member', enabled: true, dept: 'growth' },
+    { id: 'd-social', key: 'social', name: 'Social strategist', title: 'Instagram and short form', seat: 'member', enabled: true, dept: 'growth' },
   ] as unknown as Role[],
   jobs: [
     { id: 'd-j1', role_id: 'd-growth', dept: 'growth', task: 'Two Instagram posts for the sleep ritual launch', status: 'done', approval: 'pending', created_at: ago(3) },
     { id: 'd-j2', role_id: 'd-finance', dept: 'finance', task: 'Funding for 2027: investor update email', status: 'done', approval: 'pending', created_at: ago(5) },
     { id: 'd-j3', role_id: 'd-partner', dept: 'partnerships', task: 'Pilot tester outreach: universities shortlist', status: 'running', approval: 'none', created_at: ago(1) },
     { id: 'd-j4', role_id: 'd-growth', dept: 'growth', task: 'Freemium to premium pricing outline', status: 'done', approval: 'approved', created_at: ago(30) },
-    { id: 'd-j5', role_id: 'd-growth', dept: 'growth', task: 'Sleep ritual hero images in the premium editorial style', status: 'done', approval: 'approved', created_at: ago(52) },
+    { id: 'd-j5', role_id: 'd-growth', dept: 'growth', task: 'Sleep ritual hero images in the premium editorial style', status: 'done', approval: 'approved', created_at: ago(52), run_id: 'd-r5' },
+    { id: 'd-j6', role_id: 'd-growth', dept: 'growth', task: 'Draft the October content calendar', status: 'running', approval: 'none', created_at: ago(0.4), plan: { approach: 'team', assignments: [{ to: 'Editor-in-chief', brief: 'Journal pieces' }, { to: 'Social strategist', brief: 'Posts' }] } },
+    { id: 'd-j7', role_id: 'd-finance', dept: 'finance', task: 'Reconcile September card spend', status: 'failed', approval: 'none', error: 'Xero is not connected yet', created_at: ago(9), finished_at: ago(8.8) },
   ] as unknown as RoleJob[],
   runs: {
     'd-growth': [
+      { id: 'd-r5', role_id: 'd-growth', task: 'Sleep ritual hero images', output: { title: 'Sleep ritual hero images', brief: 'Four candidates rendered in the editorial style; two are strong. Keep the ones you like and I file them to the site.', summary: '', sections: [], actions: [], needs: [{ title: 'Higgsfield credits topped up to 500', detail: '' }] }, created_at: ago(50) },
       { id: 'd-r1', role_id: 'd-growth', task: 'Freemium to premium pricing outline', output: { title: 'Pricing outline', summary: 'Free tier keeps the library and one ritual; Remedae+ at £6.99 a month unlocks all rituals, practitioner Shorts and reminders. A founding rate of £4.99 for the first 100 pilot testers.', sections: [], actions: [] }, created_at: ago(28) },
       { id: 'd-r2', role_id: 'd-growth', task: 'Two Instagram posts for the sleep ritual launch', output: { title: 'Sleep ritual launch posts', summary: 'Two carousels: one on the evening tea ritual, one on the 4-7-8 breath. Both use our own renders, captions in the plain voice, no claims Counsel has flagged.', sections: [], actions: [] }, created_at: ago(3) },
     ],
@@ -54,6 +59,12 @@ const DEMO = {
       { id: 'd-r4', role_id: 'd-chief', task: 'DESK: today', output: { title: 'Your desk', summary: 'One thing first: approve the pricing outline so Growth can write the paywall copy. Then Counsel\'s rewrites and the reference frames. Two items parked.', sections: [], actions: [] }, created_at: ago(2) },
     ],
   } as Record<string, RoleRun[]>,
+  briefing: { id: 'd-b1', text: 'Remedae is at pilot stage. Coverage first so testers stop hitting a search wall, then the universities list, then pricing. Counsel\'s rewrites still outrank everything.', source: 'studio', created_at: ago(26) } as Briefing,
+  briefingJobs: [
+    { id: 'd-bj1', role_id: 'd-chief', dept: 'founder', task: 'ROUTE: Remedae is at pilot stage…', status: 'done', approval: 'none', created_at: ago(26), run_id: 'd-r4', briefing_id: 'd-b1' },
+    { id: 'd-bj2', role_id: 'd-growth', dept: 'growth', task: 'Coverage and pricing', status: 'done', approval: 'none', created_at: ago(25.5), run_id: 'd-r1', briefing_id: 'd-b1' },
+    { id: 'd-bj3', role_id: 'd-partner', dept: 'partnerships', task: 'Universities list', status: 'running', approval: 'none', created_at: ago(25.5), briefing_id: 'd-b1' },
+  ] as unknown as RoleJob[],
   priorities: [
     { id: 'd-p1', position: 1, title: 'Answer Counsel\'s ten rewrites', detail: 'Ten claims on the site need softer wording before pilot week 6.', dept: 'counsel', status: 'active', due: null },
     { id: 'd-p2', position: 2, title: 'Original imagery live on the site', detail: 'Replace every stock frame with our own renders.', dept: 'growth', status: 'active', due: null },
@@ -126,8 +137,10 @@ export default function OsHome() {
 
   const demo = !isSupabaseConfigured || params.has('demo')
   const withId = params.get('with')
-  const member = withId ? roles.find((r) => r.id === withId) ?? null : null
-  const openChat = (r: Role) => { params.set('with', r.id); setParams(params); setPhase('list'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const group = withId === GROUP_SLT ? GROUP_SLT : undefined
+  const member = withId && !group ? roles.find((r) => r.id === withId) ?? null : null
+  const layerOpen = !!group || !!member
+  const openChat = (r: Role | string) => { params.set('with', typeof r === 'string' ? r : r.id); setParams(params); setPhase('list'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
   const closeChat = () => { params.delete('with'); setParams(params) }
 
   async function pull() {
@@ -190,6 +203,30 @@ export default function OsHome() {
     if (!demo) await decideJob(j.id, approval)
     setJobs((l) => l.map((x) => (x.id === j.id ? { ...x, approval, reviewed_at: new Date().toISOString() } : x)))
   }
+  /* The layer's composer: to one member, or to every lead at once. */
+  async function sendTo(t: string): Promise<string | null> {
+    if (group) {
+      if (demo) return 'Sample day: in the live app every lead answers this.'
+      if (!leads.length) return 'Hire a department first, there is no one to brief.'
+      const r = await sendBriefing(t, leads)
+      if (r.error) return r.error
+      pull().catch(() => {})
+      return chief ? `With ${chief.name}. Replies land here as they come.` : `Sent to ${leads.length} leads.`
+    }
+    if (!member) return null
+    if (demo) { setJobs((l) => [{ id: `d-${Date.now()}`, role_id: member.id, dept: member.dept, task: t, status: 'running', approval: 'none', created_at: new Date().toISOString() } as unknown as RoleJob, ...l]); return `${member.name} has it.` }
+    const r = await assignJob(member, t)
+    if (r.error) return r.error
+    if (r.job) setJobs((l) => [r.job as RoleJob, ...l])
+    return `${member.name} has it.`
+  }
+  async function retry(j: RoleJob) {
+    const r = roles.find((x) => x.id === j.role_id); if (!r) return
+    if (demo) { setJobs((l) => l.map((x) => (x.id === j.id ? { ...x, status: 'running', error: null } : x))); return }
+    const res = await assignJob(r, stripPrefix(j.task))
+    if (res.job) setJobs((l) => [res.job as RoleJob, ...l])
+  }
+  const layerDemo: LayerDemo | undefined = demo ? { runs: DEMO.runs, briefing: DEMO.briefing, briefingJobs: DEMO.briefingJobs, images: [] } : undefined
   async function send() {
     const t = text.trim()
     if (!t || busy) return
@@ -281,14 +318,15 @@ export default function OsHome() {
 
       <div className="os-stage">
         <div className="os-col">
-          {!member && (
+          {!layerOpen && (
             <div className="os-greet" aria-hidden={phase === 'list'}>
               <h1>{greetingWord()} <b>{FOUNDER}</b>, you have {n(tasks, 'task', 'tasks')} and {n(approvals.length, 'approval', 'approvals')} today</h1>
             </div>
           )}
 
-          {member ? (
-            <MemberChat key={member.id} role={member} jobs={jobs} avatar={avatarFor(member.dept)} demoRuns={demo ? DEMO.runs[member.id] ?? [] : undefined} onClose={closeChat} />
+          {layerOpen ? (
+            <MemberLayer key={withId ?? ''} role={member} group={group} roles={roles} jobs={jobs} avatarFor={avatarFor} demo={layerDemo}
+              onSelect={openChat} onClose={closeChat} onDecide={(j, a) => void decide(j, a)} onRetry={(j) => void retry(j)} onSend={sendTo} />
           ) : (
             <div className="os-list" aria-hidden={phase !== 'list'}>
               {cards.map((c) => (
@@ -307,15 +345,15 @@ export default function OsHome() {
         </div>
       </div>
 
-      <div className="os-ground" aria-hidden />
+      {!layerOpen && <div className="os-ground" aria-hidden />}
       {note && <div className="os-compose-note" role="status">{note}</div>}
-      <form className="os-compose" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); void send() }}>
+      {!layerOpen && <form className="os-compose" onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); void send() }}>
         <label className="os-compose-copy">
-          <small>{member ? `Chat with ${member.name}` : 'Ask me anything'}</small>
-          <input ref={inputRef} value={text} onChange={(e) => setText(e.target.value)} placeholder={member ? `Message ${member.name.split(' ').slice(-1)[0] === 'staff' ? 'your chief of staff' : member.name}` : 'What can I help you with today?'} />
+          <small>Ask me anything</small>
+          <input ref={inputRef} value={text} onChange={(e) => setText(e.target.value)} placeholder="What can I help you with today?" />
         </label>
         <button type="submit" className="os-send" disabled={busy || !text.trim()} aria-label="Send">{I.arrow}</button>
-      </form>
+      </form>}
     </div>
   )
 }
