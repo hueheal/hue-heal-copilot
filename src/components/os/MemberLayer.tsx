@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { listRuns, listRunsFor, latestBriefing, briefingJobs, deptSpend, getDeptState, type Role, type RoleJob, type RoleRun, type Briefing } from '../../lib/roles'
 import { listImageAssets, decideImage, type ImageAsset } from '../../lib/imageAssets'
@@ -52,6 +52,7 @@ export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo,
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
   const [compact, setCompact] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const leads = roles.filter((r) => r.seat === 'lead' && r.enabled)
   const members = role ? roles.filter((r) => r.dept === role.dept && r.seat === 'member') : []
@@ -61,10 +62,8 @@ export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo,
   const tabs = group ? ['Chat', 'Meetings'] : ['Chat', ...(TABS[role?.dept ?? ''] ?? [])]
 
   useEffect(() => { setTab('Chat'); setNote(null) }, [role?.id, group])
-  useEffect(() => {
-    const onScroll = () => setCompact(window.scrollY > 40)
-    window.addEventListener('scroll', onScroll, { passive: true }); return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  /* The title settles once the thread has been scrolled. */
+  const onThreadScroll = () => { const el = scrollRef.current; if (!el) return; setCompact(el.scrollTop > 40); stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80 }
 
   /* The member's own history, images, and spend. */
   useEffect(() => {
@@ -182,6 +181,23 @@ export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo,
     return out.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime())
   }, [role, group, mine, runs, images, bJobs, briefing, roles])
 
+  /* The newest message is always in view: on open, when a message lands,
+     and when the content grows, unless the founder has scrolled up to read. */
+  const stick = useRef(true)
+  useEffect(() => {
+    const el = scrollRef.current; if (!el) return
+    stick.current = true
+    const toBottom = () => { el.scrollTop = el.scrollHeight }
+    toBottom(); const r = requestAnimationFrame(toBottom); const t = setTimeout(toBottom, 120)
+    return () => { cancelAnimationFrame(r); clearTimeout(t) }
+  }, [thread.length, tab, role?.id, group])
+  useEffect(() => {
+    const el = scrollRef.current; const inner = el?.firstElementChild
+    if (!el || !inner || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight })
+    ro.observe(inner); return () => ro.disconnect()
+  }, [tab, role?.id, group])
+
   async function send() {
     const t = text.trim(); if (!t || busy) return
     setBusy(true); setNote(null)
@@ -228,24 +244,26 @@ export default function MemberLayer({ role, group, roles, jobs, avatarFor, demo,
         </aside>
 
         <section className="os-chatbox" data-tab={tab}>
-          {tab === 'Chat' && (
-            <div className="os-thread2">
-              {thread.length === 0 && <div className="os-empty">{group ? 'No briefing yet. Say what matters today and every lead answers here.' : `Nothing between you and ${name} yet. Say what you need.`}</div>}
-              {thread.map((b) => <div key={b.id}>{b.node}</div>)}
-            </div>
-          )}
-          {tab !== 'Chat' && tab !== 'Tasks' && (
-            <div className="os-cards">
-              {tabCards.length === 0 && <div className="os-empty">Nothing here yet. Ask {name.split(' ').slice(-1)[0] === 'Team' ? 'the team' : name} for one.</div>}
-              {tabCards.map((c) => (
-                <button key={c.id} className="os-card2" onClick={c.go}>
-                  {c.image ? <img src={c.image} alt="" /> : null}
-                  <span><b>{c.title}</b><span>{c.sub}</span></span>
-                </button>
-              ))}
-            </div>
-          )}
-          {tab === 'Tasks' && <History history={history} roles={roles} group={!!group} spend={spend} />}
+          <div className="os-scroll" ref={scrollRef} onScroll={onThreadScroll}>
+            {tab === 'Chat' && (
+              <div className="os-thread2">
+                {thread.length === 0 && <div className="os-empty">{group ? 'No briefing yet. Say what matters today and every lead answers here.' : `Nothing between you and ${name} yet. Say what you need.`}</div>}
+                {thread.map((b) => <div key={b.id}>{b.node}</div>)}
+              </div>
+            )}
+            {tab !== 'Chat' && tab !== 'Tasks' && (
+              <div className="os-cards">
+                {tabCards.length === 0 && <div className="os-empty">Nothing here yet. Ask {name.split(' ').slice(-1)[0] === 'Team' ? 'the team' : name} for one.</div>}
+                {tabCards.map((c) => (
+                  <button key={c.id} className="os-card2" onClick={c.go}>
+                    {c.image ? <img src={c.image} alt="" /> : null}
+                    <span><b>{c.title}</b><span>{c.sub}</span></span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {tab === 'Tasks' && <History history={history} roles={roles} group={!!group} spend={spend} />}
+          </div>
           {note && <div className="os-b-note" role="status">{note}</div>}
           <form className="os-compose2" onSubmit={(e) => { e.preventDefault(); void send() }}>
             <label className="os-compose-copy">
