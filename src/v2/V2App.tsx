@@ -118,7 +118,7 @@ function Shell() {
           <div className="v2-lens" role="tablist" aria-label="Lens">
             <button role="tab" aria-selected={lens === 'all'} title="Your whole life" className="v2-tile v2-tile-all" data-on={lens === 'all' ? '1' : undefined} onClick={() => setLens('all')}>All</button>
             {brands.map((b) => {
-              const src = b.logo_url || TILE[b.name.trim().toLowerCase()] || ''
+              const src = TILE[b.name.trim().toLowerCase()] || b.logo_url || ''
               return (
                 <button key={b.id} role="tab" aria-selected={lens === b.id} title={b.name} className="v2-tile" data-on={lens === b.id ? '1' : undefined}
                   style={src ? undefined : { background: b.accent_color || undefined }} onClick={() => setLens(b.id)}>

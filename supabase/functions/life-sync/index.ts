@@ -29,12 +29,14 @@ async function tenders(db: SupabaseClient, uid: string) {
   if (!phrases.length) return { added: 0, scanned: 0, note: 'Add tender keywords in Plan first.' }
   const rows: Json[] = []
   const seen = new Set<string>()
+  const failures: string[] = []
   for (const phrase of phrases.slice(0, 10)) {
     const res = await fetch('https://www.contractsfinder.service.gov.uk/api/rest/2/search_notices/json', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ searchCriteria: { keyword: phrase, statuses: ['Open'], types: ['Contract', 'Tender', 'EarlyEngagement'] }, size: 40 }),
-    }).catch(() => null)
-    if (!res?.ok) continue
+      method: 'POST', headers: { 'content-type': 'application/json', 'user-agent': 'HueHealCopilot/2.0 (+https://copilotadmin.hueandheal.com)', accept: 'application/json' },
+      body: JSON.stringify({ searchCriteria: { keyword: `"${phrase}"`, statuses: ['Open'], types: ['Contract', 'Tender', 'EarlyEngagement'] }, size: 40 }),
+    }).catch((e) => { failures.push(`${phrase}: ${(e as Error).message}`); return null })
+    if (!res) continue
+    if (!res.ok) { failures.push(`${phrase}: HTTP ${res.status}`); continue }
     const d = await res.json().catch(() => ({})) as { noticeList?: { item: Json }[] }
     const needle = phrase.toLowerCase()
     for (const n of d.noticeList ?? []) {
@@ -52,6 +54,10 @@ async function tenders(db: SupabaseClient, uid: string) {
         notes: `Matched “${phrase}”. ${String(i.description ?? '').replace(/\s+/g, ' ').slice(0, 700)}`,
       })
     }
+  }
+  if (failures.length) console.error('tender radar', failures.join('; '))
+  if (!rows.length && failures.length === phrases.length && failures.every((f) => f.endsWith('403'))) {
+    return { added: 0, scanned: phrases.length, note: 'The government feed only answers ordinary connections, so the radar runs from your Mac twice a day.' }
   }
   if (!rows.length) return { added: 0, scanned: phrases.length }
   // Existing notices keep their stage: only genuinely new ones are inserted.
@@ -186,14 +192,24 @@ async function decide(db: SupabaseClient, actionId: string, approve: boolean) {
   return { status: 'approved' }
 }
 
+/* The user id from the JWT. The database checks the token's signature on
+   every query, so a forged token fails at the first read below. */
+function subOf(jwt: string): string | null {
+  try {
+    const p = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof p.sub === 'string' && Number(p.exp) * 1000 > Date.now() ? p.sub : null
+  } catch { return null }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   const auth = req.headers.get('authorization') ?? ''
   if (!auth.startsWith('Bearer ')) return json({ error: 'Unauthorized' }, 401)
   const db = createClient(SUPABASE_URL, ANON, { global: { headers: { authorization: auth } } })
-  const { data: userData } = await db.auth.getUser()
-  const uid = userData.user?.id
-  if (!uid) return json({ error: 'Unauthorized' }, 401)
+  const uid = subOf(auth.slice(7))
+  if (!uid) return json({ error: 'Your session has expired. Sign in again.' }, 401)
+  const { error: authErr } = await db.from('life_profile').select('owner').limit(1)
+  if (authErr) return json({ error: 'Your session has expired. Sign in again.' }, 401)
   const body = await req.json().catch(() => ({})) as { op?: string; actionId?: string; approve?: boolean }
   try {
     if (body.op === 'tenders') return json(await tenders(db, uid))
