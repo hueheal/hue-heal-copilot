@@ -44,6 +44,7 @@ export default function Radar() {
 
   const setTab = (t: Tab) => { params.set('tab', t); setParams(params, { replace: true }) }
   const scan = async () => {
+    if (!window.confirm('Run an extra scan in the cloud now? It costs about $1.30. The daily scan runs free on your Mac at 6.30.')) return
     setNote('Starting the engine…')
     const r = await runRadar()
     setNote(r.error ?? r.note ?? 'Scanning the four pipelines. This takes a few minutes; you can leave the page.')
@@ -80,7 +81,7 @@ export default function Radar() {
         <h1 className="v2-h-page">Radar</h1>
         <div className="v2-radar-status">
           <RunLine latest={runs.latest} />
-          <button className="v2-chip" onClick={() => void scan()} disabled={scanning}><ArrowsClockwise size={15} className={scanning ? 'v2-spin' : undefined} />{scanning ? 'Scanning' : 'Scan now'}</button>
+          <button className="v2-chip" onClick={() => void scan()} disabled={scanning} title="An extra scan in the cloud now, about $1.30. The daily scan runs free on your Mac at 6.30."><ArrowsClockwise size={15} className={scanning ? 'v2-spin' : undefined} />{scanning ? 'Scanning' : 'Scan now'}</button>
         </div>
       </div>
       <p className="v2-radar-sub">
@@ -114,7 +115,7 @@ export default function Radar() {
             {brief.insight && <p className="v2-insight">{brief.insight}</p>}
           </section>
         ) : opps && !scanning && (
-          <div className="v2-empty"><p>The engine writes a brief after each scan, at 6.30 and 13.30.</p><button className="v2-chip" data-primary="1" onClick={() => void scan()}>Run the first scan</button></div>
+          <div className="v2-empty"><p>The engine writes a brief after each scan. The daily scan runs on your Mac at 6.30.</p><button className="v2-chip" data-primary="1" onClick={() => void scan()}>Run the first scan</button></div>
         )
       )}
 
@@ -155,6 +156,8 @@ export default function Radar() {
 
 function RunLine({ latest }: { latest: RadarRun | null }) {
   if (!latest) return <span className="v2-quiet">Not scanned yet</span>
+  const onMac = latest.trigger === 'local'
+  if (latest.status === 'running' && onMac) return <span className="v2-quiet" role="status">Scanning on your Mac</span>
   if (latest.status === 'running') {
     const done = (latest.lanes ?? []).filter((j) => j.lane !== 'brief' && (j.status === 'done' || j.status === 'failed')).length
     const briefing = (latest.lanes ?? []).some((j) => j.lane === 'brief')
@@ -165,7 +168,7 @@ function RunLine({ latest }: { latest: RadarRun | null }) {
   return (
     <span className="v2-quiet" title={latest.error ?? undefined}>
       {latest.status === 'failed' ? 'Last scan failed' : 'Scanned'} {today ? timeOf(when) : shortDate(when)}
-      {latest.usage?.usd ? ` · $${latest.usage.usd.toFixed(2)}` : ''}
+      {onMac ? ' on your Mac' : latest.usage?.usd ? ` in the cloud · $${latest.usage.usd.toFixed(2)}` : ''}
     </span>
   )
 }
@@ -309,7 +312,7 @@ function LensEditor() {
   const ventures = lens.ventures ?? []
   return (
     <div className="v2-lens-edit">
-      <p className="v2-quiet v2-lens-intro">This is how the engine reads Hue & Heal. It searches with these words twice a day and scores everything against them. Your pursue, watch and pass decisions sharpen it further.</p>
+      <p className="v2-quiet v2-lens-intro">This is how the engine reads Hue & Heal. It searches with these words every morning and scores everything against them. Your pursue, watch and pass decisions sharpen it further.</p>
       <div className="v2-lens-grid">
         <Editable label="What Hue & Heal is" value={lens.identity ?? ''} placeholder="The studio in two or three sentences." onSave={(v) => save({ identity: v })} />
         <Editable label="Look hardest for" value={lens.look_for ?? ''} placeholder="The work that should score highest." onSave={(v) => save({ look_for: v })} />

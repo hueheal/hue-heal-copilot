@@ -30,7 +30,7 @@ export interface Opportunity {
   first_seen: string; changed_at: string | null; last_checked: string
 }
 export interface RadarBrief { priorities: { text: string; opportunity_id: string | null }[]; verdict: { label: string; text: string; opportunity_id: string | null }[]; insight: string }
-export interface RadarRun { id: string; status: 'running' | 'done' | 'failed'; brief: RadarBrief | null; usage: { usd?: number; searches?: number }; started_at: string; finished_at: string | null; error: string | null; lanes?: { lane: string; status: string }[] }
+export interface RadarRun { id: string; trigger?: string; status: 'running' | 'done' | 'failed'; brief: RadarBrief | null; usage: { usd?: number; searches?: number }; started_at: string; finished_at: string | null; error: string | null; lanes?: { lane: string; status: string }[] }
 export interface Milestone { id: string; brand_id: string | null; title: string; detail: string; horizon: Horizon; due: string | null; status: 'planned' | 'active' | 'done' | 'dropped'; position: number }
 export type Horizon = 'week' | 'quarter' | 'year' | 'someday'
 export interface LifeTask { id: string; brand_id: string | null; title: string; due: string | null; status: 'open' | 'done'; is_now: boolean; created_at: string }
@@ -191,6 +191,10 @@ export async function decideAction(id: string, approve: boolean, edits?: EmailEd
   if (!live) { const a = demo.actions.find((x) => x.id === id); if (a) { Object.assign(a.payload, edits ?? {}); a.status = approve ? (a.kind === 'email' ? 'sent' : 'approved') : 'declined' } return { status: a?.status } }
   return call('life-sync', { op: 'decide', actionId: id, approve, edits })
 }
+export async function testAction(id: string, edits?: EmailEdits): Promise<{ sentTo?: string; error?: string }> {
+  if (!live) return { sentTo: 'you (sample mode sends nothing)' }
+  return call('life-sync', { op: 'test', actionId: id, edits })
+}
 export async function syncCalendar(): Promise<{ imported?: number; note?: string; error?: string }> {
   if (!live) return { imported: 0, note: 'Sample mode: the live app imports your published calendar.' }
   return call('life-sync', { op: 'calendar' })
@@ -237,7 +241,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
 }
 export async function latestRuns(): Promise<{ latest: RadarRun | null; briefed: RadarRun | null }> {
   if (!live) return { latest: demoRun, briefed: demoRun }
-  const { data } = await db().from('radar_runs' as never).select('id, status, brief, usage, started_at, finished_at, error').order('started_at', { ascending: false }).limit(8)
+  const { data } = await db().from('radar_runs' as never).select('id, status, trigger, brief, usage, started_at, finished_at, error').order('started_at', { ascending: false }).limit(8)
   const runs = (data ?? []) as RadarRun[]
   const latest = runs[0] ?? null
   if (latest?.status === 'running') {

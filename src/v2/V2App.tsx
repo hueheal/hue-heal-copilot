@@ -3,7 +3,7 @@ import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-d
 import { ArrowUp, Bell, Check, EnvelopeSimple, List, Microphone, SpeakerHigh, SpeakerSlash, Sparkle, Stop, X } from '@phosphor-icons/react'
 import AuthGate from '../components/AuthGate'
 import { BrandProvider, useBrand } from '../lib/brandContext'
-import { ask, decideAction, getProfile, listActions, listMessages, listTeamApprovals, live, saveProfile, EMPTY_PROFILE, type EmailEdits, type LifeAction, type LifeMessage, type LifeProfile } from './life'
+import { ask, decideAction, testAction, getProfile, listActions, listMessages, listTeamApprovals, live, saveProfile, EMPTY_PROFILE, type EmailEdits, type LifeAction, type LifeMessage, type LifeProfile } from './life'
 import { speak, useVoice, voiceSupported } from './voice'
 import { useIsMobile } from '../lib/useIsMobile'
 import Today from './Today'
@@ -239,10 +239,17 @@ export function ApprovalCard({ a, onDecide }: { a: LifeAction; onDecide: (a: Lif
   const [busy, setBusy] = useState(false)
   const [editing, setEditing] = useState(a.kind === 'email' && !p.to)
   const [draft, setDraft] = useState({ to: p.to ?? '', subject: p.subject ?? '', body: p.body ?? '' })
+  const [test, setTest] = useState<string | null>(null)
   const changed = draft.to !== (p.to ?? '') || draft.subject !== (p.subject ?? '') || draft.body !== (p.body ?? '')
   const validTo = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(draft.to.trim())
   const go = async (approve: boolean) => { setBusy(true); await onDecide(a, approve, approve && changed ? { to: draft.to.trim(), subject: draft.subject, body: draft.body } : undefined); setBusy(false) }
   const from = p.from ? p.from.replace(/<.*>/, '').trim() || p.from : ''
+  const sendTest = async () => {
+    setBusy(true); setTest('Sending you a test…')
+    const r = await testAction(a.id, changed ? { to: draft.to.trim(), subject: draft.subject, body: draft.body } : undefined)
+    setTest(r.error ?? `Test sent to ${r.sentTo}. It's marked [Test] and says who it would go to.`)
+    setBusy(false)
+  }
   return (
     <article className="v2-approval">
       <div className="v2-approval-head">
@@ -263,9 +270,11 @@ export function ApprovalCard({ a, onDecide }: { a: LifeAction; onDecide: (a: Lif
       ) : null}
       <div className="v2-chips">
         <button className="v2-chip" data-primary="1" disabled={busy || (a.kind === 'email' && !validTo)} onClick={() => void go(true)}>{a.kind === 'email' ? 'Approve and send' : 'Approve'}</button>
+        {a.kind === 'email' && <button className="v2-chip" disabled={busy || !draft.body.trim()} onClick={() => void sendTest()}>Send me a test</button>}
         {a.kind === 'email' && !editing && <button className="v2-chip" disabled={busy} onClick={() => setEditing(true)}>Edit</button>}
         <button className="v2-chip" disabled={busy} onClick={() => void go(false)}>Decline</button>
       </div>
+      {test && <p className="v2-fine" role="status">{test}</p>}
     </article>
   )
 }

@@ -11,3 +11,6 @@ supabase/.temp
 
 # Local data backups (never commit client data)
 backup-*/
+
+# Commercial Engine scratch files from the Mac runner
+.radar/

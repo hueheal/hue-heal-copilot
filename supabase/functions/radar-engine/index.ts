@@ -21,6 +21,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.129.0'
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import RULES from '../_shared/radar-rules.json' with { type: 'json' }
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
@@ -48,38 +49,11 @@ declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void }
 
 type Json = Record<string, unknown>
 
-/* ---- The engine's standing instructions (stable, so they cache) ---- */
-const SYSTEM = `You are the Hue & Heal Commercial Engine: the studio's commercial opportunity intelligence.
-
-Find where organisations are spending, funding or preparing to spend money on ambitious design-led experiences that intersect with wellness, wellbeing, health, hospitality, education, children and family, and future human experiences. Search beyond advertised tenders into jobs, contracts, funding, partnerships and buying signals. Rank everything against Hue & Heal's entertainment-grade product, service, storytelling and immersive design capabilities, and say exactly what deserves action. The question is not only "who has published something we can bid on?" but "who is likely to need Hue & Heal next, and how do we get there first?"
-
-Each run searches one lane. The founder's lens, the lane's brief, what is already on the radar and the founder's recent decisions arrive in the message.
-
-Rules:
-1. Revenue, not news. Every item leads to one action: pursue_now, outreach_now, partner, product_funding, watch or pass. Nothing is filed as merely interesting.
-2. The Hue & Heal Fit Meter. Score five criteria 1 to 5: sector (alignment with the lens), scope (depth of design scope), ambition (creative and innovation ambition), capability (fit with entertainment, immersive, product and service capabilities), access (realistic for a small senior studio to win and deliver). Then give an overall fit 1 to 5 as a judgement, not an average: 5 is portfolio-defining, 4 a strong pursuit, 3 commercially useful, 1 or 2 below the bar. Only file 1 or 2 when scoring an item you were asked to score; do not go looking for them.
-3. Verify freshness. File only what is open now. Confirm on the original source where you can (the buyer's own page, the portal notice, the original job post) rather than an aggregator; if only aggregators show it, say so in "why" and score access lower. Never present an expired job or closed tender as live. Deadlines as YYYY-MM-DD when known.
-4. Facts come from sources. Never invent money, deadlines, dates, names or contacts; leave a field empty instead. Money as the source states it.
-5. Be specific and useful. "why": one or two sentences on why it fits Hue & Heal. "angle": what Hue & Heal should pitch, as a strategist would: lead with their experience opportunity, never "we are a design studio". For outreach, name the role to approach, never a private individual's personal contact details.
-6. Quality over volume: aim for three to six items per lane that score 3 or more, never more than eight. A strong item beats several weak ones, but do not stop at one when more genuinely fit.
-7. How to search: run several specific searches (you have about twelve), read the results, then open the original page of your strongest candidates with web_fetch (about eight) to confirm they are live and to get the facts. Aggregator and listing pages are leads, not sources: follow them to the real post or notice. If a search comes back thin, rephrase and broaden rather than giving up. An empty filing is a last resort: only when you genuinely found nothing open that scores 3 or more, and then say so in your closing note.
-8. When you have finished searching, call file_opportunities once with everything: new items, updates to existing items (existing_id plus change_note), scores for unscored items, and anything you found closed. Then stop with a one-line note.
-
-Style for every text field: plain British English, concise. Never use em dashes or en dashes. Always write "Hue & Heal". Never assume the founder's gender.`
-
-const LANE_BRIEF: Record<Lane, string> = {
-  studio: `LANE: Studio revenue. Paid Hue & Heal projects and contracts.
-Find live tenders, RFPs and RFQs, commissions, design-partner searches, startup and brand briefs, innovation-programme delivery contracts and consortium calls where Hue & Heal could be the studio, a named partner or a subcontractor. UK first (Find a Tender, museum, cultural and heritage RFQs, arts and science commissions, Innovate UK and SBRI contracts, hospitality and wellness operators' briefs), then international work a UK studio can realistically deliver remotely or with a partner (EU, GCC, North America). Immersive, spatial and digital-physical experiences are a priority. UK Contracts Finder is covered by a separate feed: score any unscored notices listed below with existing_id, and still search for new opportunities of your own.`,
-  contracts: `LANE: Founder contracts. High-value freelance, contract and fractional work that can bring cash in quickly.
-Find open roles for senior, lead or principal product, experience, service or UX design, design lead and fractional head of design, contract or freelance first. Check each listing is still accepting applications on the original post. Include day rate, length, IR35 status and working pattern when stated. Re-check any existing item that is more than five days old and close it if the original post has closed.`,
-  venture: `LANE: Venture funding. Non-dilutive funding, competitions, accelerators, funded pilots and partnerships for the founder's own products.
-Only recommend what fits a product's existing direction (see VENTURES). Say which product in "product". Use product_funding when it genuinely fits, watch when it is close, pass when it would mean reshaping the product. If nothing fits today, file nothing and say so.`,
-  outbound: `LANE: Outbound pipeline. Organisations Hue & Heal should approach before they publish a brief.
-Find buying signals from the last fourteen days: funding rounds, launches, openings, expansions into new markets, new wellness or guest-experience divisions, new venues, rebrands, leadership hires in product or experience. Wellness, hospitality, health and femtech, future learning and EdTech, children's brands, cultural destinations and longevity first. Use outreach_now for the strongest; the angle says exactly what to pitch and who to approach (a role). Put the signal's date in signal_date.`,
-}
-
-const CATEGORIES = ['tender', 'rfp', 'brief', 'commission', 'contract', 'fractional', 'role', 'grant', 'competition', 'accelerator', 'pilot', 'signal', 'partnership', 'other']
-const ACTIONS = ['pursue_now', 'outreach_now', 'partner', 'product_funding', 'watch', 'pass']
+/* ---- The engine's instructions: one file, shared with the Mac runner ---- */
+const SYSTEM: string = RULES.system
+const LANE_BRIEF = RULES.lanes as Record<Lane, string>
+const CATEGORIES: string[] = RULES.categories
+const ACTIONS: string[] = RULES.actions
 const score = { type: 'integer', minimum: 1, maximum: 5 }
 const s = { type: 'string' }
 
@@ -345,11 +319,7 @@ async function briefStep(admin: SupabaseClient, job: JobRow): Promise<Partial<Jo
   const res = await anthropic.beta.messages.create({
     model: BRIEF_MODEL,
     max_tokens: 6000,
-    system: `You write the Hue & Heal Opportunity Radar's daily brief for the founder: a commercial chief of staff's morning note.
-Return at most three priorities, most important first. Each is one or two short sentences, 35 words at most, in the imperative: exactly what to do and why now (a deadline, a fresh signal, a closing window). No detail the card already shows. A priority may be to stop pursuing something that closed. Link each to its opportunity id, or "" if it has none.
-Then the verdict: up to five lines of 15 words at most with these labels where there is a genuine answer: "Best new prospect", "Best live studio contract", "Best paid contract for you", "Best international prospect", "Product funding worth it". For the last, say plainly when nothing fits ("None today; do not reshape a product for a grant."), with opportunity_id "".
-Then one insight: two or three sentences on the most useful pattern in today's radar and what it says about where Hue & Heal should cultivate clients.
-Use only what is listed. If nothing is listed, return no priorities and no verdict, and say plainly in the insight that today's scan found nothing above the bar; do not invent busywork. Plain British English. Never use em dashes or en dashes. Always "Hue & Heal". Never assume the founder's gender.`,
+    system: RULES.brief_system,
     messages: [{ role: 'user', content: prompt }],
     output_config: { effort: 'medium', format: { type: 'json_schema', schema: BRIEF_SCHEMA } },
   } as never) as Anthropic.Beta.BetaMessage

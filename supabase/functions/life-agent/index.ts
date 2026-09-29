@@ -25,7 +25,7 @@ const SYSTEM = `You are Copilot, the founder's life OS: their personal assistant
 
 As PA: keep their tasks, milestones, calendar and pipeline true. When they mention something to do, a date, a meeting, a lead or a tender, record it with the tools without being asked twice. Check the calendar before suggesting a time.
 As coach: you hold their mission, purpose and weekly focus. When the week drifts from them, say so plainly and briefly. Ask at most one question per reply, and only when the answer changes what you do.
-As commercial partner: the Opportunity Radar (in CURRENT STATE) is the Commercial Engine's scored view of tenders, contracts, funding and outbound targets. Talk about it plainly: fit out of 5, the action, the angle, the deadline. When the founder decides on an opportunity ("pursue", "watch", "pass on that, too generic"), record it with radar_decide and keep their reason; reasons teach the engine. run_radar starts a fresh scan (it takes a few minutes).
+As commercial partner: the Opportunity Radar (in CURRENT STATE) is the Commercial Engine's scored view of tenders, contracts, funding and outbound targets. Talk about it plainly: fit out of 5, the action, the angle, the deadline. When the founder decides on an opportunity ("pursue", "watch", "pass on that, too generic"), record it with radar_decide and keep their reason; reasons teach the engine. The radar scans every morning at 6.30 on the founder's Mac; run_radar is an extra paid cloud scan, only when they ask for one now.
 Outreach emails: lead with the organisation's experience opportunity, never with "we are a design studio". One short paragraph on who the founder is and why Hue & Heal. Invite a conversation rather than selling a project. Under 180 words, signed with the founder's first name and "Founder, Hue & Heal". If you do not know the recipient's address, leave "to" empty; the founder adds it on the card.
 As operating system: work for a business's team (content, research, outreach, finance, legal review) goes to that team with brief_team. Their approvals come back to the founder in the app.
 
@@ -66,7 +66,7 @@ const TOOLS: Anthropic.Beta.BetaTool[] = [
     input_schema: { type: 'object', properties: { brand: brandProp, text: { type: 'string', description: 'The brief, in the founder\'s words plus any context they gave.' } }, required: ['brand', 'text'] } },
   { name: 'radar_decide', description: 'Record the founder\'s decision on a radar opportunity from OPPORTUNITY RADAR. pursue files it in the pipeline with a first next step; watch keeps an eye on it; pass removes it; reopen puts it back. Include their reason in note.',
     input_schema: { type: 'object', properties: { id: str, decision: { type: 'string', enum: ['pursue', 'watch', 'pass', 'reopen'] }, note: str }, required: ['id', 'decision'] } },
-  { name: 'run_radar', description: 'Start a fresh Commercial Engine scan across all four pipelines. Results arrive in a few minutes on the Radar.',
+  { name: 'run_radar', description: 'Start an extra Commercial Engine scan in the cloud now (about $1.30; the daily scan already runs free on the founder\'s Mac at 06:30). Only when the founder explicitly asks for a fresh scan now. Results arrive in a few minutes on the Radar.',
     input_schema: { type: 'object', properties: {}, required: [] } },
 ]
 

@@ -148,7 +148,7 @@ export default function Today() {
                   {brief.priorities.slice(0, 2).map((p, i) => <li key={i}><span><b>{p.text}</b></span></li>)}
                 </ol>
               </>
-            ) : <p className="v2-quiet">{liveOpps.length ? `${liveOpps.length} live opportunities.` : 'Nothing above the bar yet.'} The engine scans at 6.30 and 13.30.</p>}
+            ) : <p className="v2-quiet">{liveOpps.length ? `${liveOpps.length} live opportunities.` : 'Nothing above the bar yet.'} The engine scans every morning at 6.30.</p>}
           </Section>
         </div>
       </div>

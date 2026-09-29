@@ -4,6 +4,9 @@
 // servers, so its notices come from scripts/tender-radar.mjs on the Mac.)
 //   { op: 'calendar' }            import the published ICS feed (Outlook or
 //                                 Google) into life_events for the next 60 days.
+//   { op: 'test', actionId, edits? }
+//                                 send a copy of a drafted email to the founder
+//                                 only, marked as a test; the draft stays pending.
 //   { op: 'decide', actionId, approve, edits? }
 //                                 the founder's yes or no on a pending action;
 //                                 edits (to, subject, body) are their changes.
@@ -119,8 +122,44 @@ async function calendar(db: SupabaseClient, uid: string) {
   return { imported: rows.length }
 }
 
+/* ---- Sending ---- */
+async function sendEmail(p: { to: string; subject: string; body: string; from?: string }): Promise<{ id?: string; error?: string }> {
+  const from = p.from || FALLBACK_FROM
+  const replyTo = from.match(/<([^>]+)>/)?.[1] ?? from
+  const html = `<div style="font-family:-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.6;color:#1e1b18">${p.body.split(/\n{2,}/).map((para) => `<p style="margin:0 0 14px">${para.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')}</p>`).join('')}</div>`
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST', headers: { authorization: `Bearer ${RESEND_API_KEY}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ from, to: [p.to], subject: p.subject, text: p.body, html, reply_to: replyTo }),
+  })
+  const out = await res.json().catch(() => ({})) as { id?: string; message?: string }
+  return res.ok && out.id ? { id: out.id } : { error: out.message ?? `Resend ${res.status}` }
+}
+const EMAIL_RE = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/
+type Edits = { to?: string; subject?: string; body?: string }
+function applyEdits(p: { to: string; subject: string; body: string; from?: string }, edits?: Edits) {
+  const out = { ...p }
+  if (!edits) return out
+  if (typeof edits.to === 'string') out.to = edits.to.trim()
+  if (typeof edits.subject === 'string' && edits.subject.trim()) out.subject = edits.subject.trim().slice(0, 300)
+  if (typeof edits.body === 'string' && edits.body.trim()) out.body = edits.body.slice(0, 20000)
+  return out
+}
+
+/* A test goes to the founder alone, exactly as the recipient would see it,
+   with the intended recipient noted at the top. The draft stays pending. */
+async function testSend(db: SupabaseClient, actionId: string, me: string, edits?: Edits) {
+  if (!RESEND_API_KEY) return { error: 'Email is not configured on the server (RESEND_API_KEY).' }
+  if (!EMAIL_RE.test(me)) return { error: 'Your account has no email address to send a test to.' }
+  const { data: a } = await db.from('life_actions').select('kind, status, payload').eq('id', actionId).maybeSingle()
+  if (!a || a.kind !== 'email') return { error: 'Not found.' }
+  if (a.status !== 'pending') return { error: 'That email has already been decided.' }
+  const p = applyEdits(a.payload as { to: string; subject: string; body: string; from?: string }, edits)
+  const r = await sendEmail({ ...p, to: me, subject: `[Test] ${p.subject}`, body: `Test copy. This would go to: ${p.to || '(no recipient yet)'}\n\n${p.body}` })
+  return r.error ? { error: r.error } : { sentTo: me }
+}
+
 /* ---- Approvals ---- */
-async function decide(db: SupabaseClient, actionId: string, approve: boolean, edits?: { to?: string; subject?: string; body?: string }) {
+async function decide(db: SupabaseClient, actionId: string, approve: boolean, edits?: Edits) {
   const { data: a } = await db.from('life_actions').select('*').eq('id', actionId).maybeSingle()
   if (!a) return { error: 'Not found.' }
   if (a.status !== 'pending') return { status: a.status }
@@ -128,26 +167,13 @@ async function decide(db: SupabaseClient, actionId: string, approve: boolean, ed
   if (!approve) { await db.from('life_actions').update({ status: 'declined', decided_at: stamp }).eq('id', actionId); return { status: 'declined' } }
   if (a.kind === 'email') {
     if (!RESEND_API_KEY) return { error: 'Email is not configured on the server (RESEND_API_KEY).' }
-    const p = { ...(a.payload as { to: string; subject: string; body: string; from?: string }) }
     // The founder's own changes on the card win, and are kept on the record.
-    if (edits) {
-      if (typeof edits.to === 'string') p.to = edits.to.trim()
-      if (typeof edits.subject === 'string' && edits.subject.trim()) p.subject = edits.subject.trim().slice(0, 300)
-      if (typeof edits.body === 'string' && edits.body.trim()) p.body = edits.body.slice(0, 20000)
-      await db.from('life_actions').update({ payload: p }).eq('id', actionId)
-    }
-    if (!/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(p.to ?? '')) return { error: 'Add a valid address for who it goes to.' }
-    const from = p.from || FALLBACK_FROM
-    const replyTo = from.match(/<([^>]+)>/)?.[1] ?? from
-    const html = `<div style="font-family:-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.6;color:#1e1b18">${p.body.split(/\n{2,}/).map((para) => `<p style="margin:0 0 14px">${para.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')}</p>`).join('')}</div>`
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST', headers: { authorization: `Bearer ${RESEND_API_KEY}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ from, to: [p.to], subject: p.subject, text: p.body, html, reply_to: replyTo }),
-    })
-    const out = await res.json().catch(() => ({})) as { id?: string; message?: string }
-    const ok = res.ok && !!out.id
-    await db.from('life_actions').update({ status: ok ? 'sent' : 'failed', decided_at: stamp, result: ok ? `Sent (${out.id})` : (out.message ?? `Resend ${res.status}`) }).eq('id', actionId)
-    return ok ? { status: 'sent' } : { status: 'failed', error: out.message ?? `Resend ${res.status}` }
+    const p = applyEdits(a.payload as { to: string; subject: string; body: string; from?: string }, edits)
+    if (edits) await db.from('life_actions').update({ payload: p }).eq('id', actionId)
+    if (!EMAIL_RE.test(p.to ?? '')) return { error: 'Add a valid address for who it goes to.' }
+    const r = await sendEmail(p)
+    await db.from('life_actions').update({ status: r.id ? 'sent' : 'failed', decided_at: stamp, result: r.id ? `Sent (${r.id})` : r.error }).eq('id', actionId)
+    return r.id ? { status: 'sent' } : { status: 'failed', error: r.error }
   }
   // Bookings cannot be made directly yet: approving turns it into the next task.
   const p = a.payload as { what?: string; when?: string; where?: string }
@@ -158,6 +184,9 @@ async function decide(db: SupabaseClient, actionId: string, approve: boolean, ed
 
 /* The user id from the JWT. The database checks the token's signature on
    every query, so a forged token fails at the first read below. */
+function emailOf(jwt: string): string {
+  try { return String(JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email ?? '') } catch { return '' }
+}
 function subOf(jwt: string): string | null {
   try {
     const p = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
@@ -174,9 +203,10 @@ Deno.serve(async (req) => {
   if (!uid) return json({ error: 'Your session has expired. Sign in again.' }, 401)
   const { error: authErr } = await db.from('life_profile').select('owner').limit(1)
   if (authErr) return json({ error: 'Your session has expired. Sign in again.' }, 401)
-  const body = await req.json().catch(() => ({})) as { op?: string; actionId?: string; approve?: boolean; edits?: { to?: string; subject?: string; body?: string } }
+  const body = await req.json().catch(() => ({})) as { op?: string; actionId?: string; approve?: boolean; edits?: Edits }
   try {
     if (body.op === 'calendar') return json(await calendar(db, uid))
+    if (body.op === 'test' && body.actionId) return json(await testSend(db, body.actionId, emailOf(auth.slice(7)), body.edits))
     if (body.op === 'decide' && body.actionId) return json(await decide(db, body.actionId, !!body.approve, body.edits))
     return json({ error: 'Unknown op' }, 400)
   } catch (e) {
