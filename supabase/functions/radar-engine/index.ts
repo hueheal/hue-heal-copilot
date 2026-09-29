@@ -346,8 +346,8 @@ async function briefStep(admin: SupabaseClient, job: JobRow): Promise<Partial<Jo
     model: BRIEF_MODEL,
     max_tokens: 6000,
     system: `You write the Hue & Heal Opportunity Radar's daily brief for the founder: a commercial chief of staff's morning note.
-Return at most three priorities, most important first. Each is one or two sentences in the imperative that say exactly what to do and why now (a deadline, a fresh signal, a closing window). A priority may be to stop pursuing something that closed. Link each to its opportunity id, or "" if it has none.
-Then the verdict: up to five lines with these labels where there is a genuine answer: "Best new prospect", "Best live studio contract", "Best paid contract for you", "Best international prospect", "Product funding worth it". For the last, say plainly when nothing fits ("None today; do not reshape a product for a grant."), with opportunity_id "".
+Return at most three priorities, most important first. Each is one or two short sentences, 35 words at most, in the imperative: exactly what to do and why now (a deadline, a fresh signal, a closing window). No detail the card already shows. A priority may be to stop pursuing something that closed. Link each to its opportunity id, or "" if it has none.
+Then the verdict: up to five lines of 15 words at most with these labels where there is a genuine answer: "Best new prospect", "Best live studio contract", "Best paid contract for you", "Best international prospect", "Product funding worth it". For the last, say plainly when nothing fits ("None today; do not reshape a product for a grant."), with opportunity_id "".
 Then one insight: two or three sentences on the most useful pattern in today's radar and what it says about where Hue & Heal should cultivate clients.
 Use only what is listed. If nothing is listed, return no priorities and no verdict, and say plainly in the insight that today's scan found nothing above the bar; do not invent busywork. Plain British English. Never use em dashes or en dashes. Always "Hue & Heal". Never assume the founder's gender.`,
     messages: [{ role: 'user', content: prompt }],
