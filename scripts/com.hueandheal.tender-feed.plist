@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The Opportunity Radar's UK Contracts Finder feed, run on the founder's Mac
+  at 06:00 and 13:00 (the government feed refuses cloud servers). A missed run
+  (Mac asleep) runs when it wakes. The engine scores what it files at 06:30
+  and 13:30. Install: copy to ~/Library/LaunchAgents and `launchctl load` it.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.hueandheal.tender-feed</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/node</string>
+    <string>/Users/maria/Claude/hue-heal-copilot/scripts/tender-radar.mjs</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>13</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>/Users/maria/Library/Logs/hueheal-tender-feed.log</string>
+  <key>StandardErrorPath</key><string>/Users/maria/Library/Logs/hueheal-tender-feed.log</string>
+</dict>
+</plist>

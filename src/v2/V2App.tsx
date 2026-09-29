@@ -3,13 +3,14 @@ import { NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-d
 import { ArrowUp, Bell, Check, EnvelopeSimple, List, Microphone, SpeakerHigh, SpeakerSlash, Sparkle, Stop, X } from '@phosphor-icons/react'
 import AuthGate from '../components/AuthGate'
 import { BrandProvider, useBrand } from '../lib/brandContext'
-import { ask, decideAction, getProfile, listActions, listMessages, listTeamApprovals, live, saveProfile, EMPTY_PROFILE, type LifeAction, type LifeMessage, type LifeProfile } from './life'
+import { ask, decideAction, getProfile, listActions, listMessages, listTeamApprovals, live, saveProfile, EMPTY_PROFILE, type EmailEdits, type LifeAction, type LifeMessage, type LifeProfile } from './life'
 import { speak, useVoice, voiceSupported } from './voice'
 import { useIsMobile } from '../lib/useIsMobile'
 import Today from './Today'
 import Plan from './Plan'
 import Pipeline from './Pipeline'
 import Calendar from './Calendar'
+import Radar from './Radar'
 import './v2.css'
 
 /* ============================================================
@@ -30,7 +31,7 @@ interface LifeCtx {
   version: number; bump: () => void
   send: (text: string, via?: 'chat' | 'voice') => void
   prefill: (text: string) => void
-  pending: LifeAction[]; decide: (a: LifeAction, approve: boolean) => Promise<void>
+  pending: LifeAction[]; decide: (a: LifeAction, approve: boolean, edits?: EmailEdits) => Promise<void>
 }
 const Ctx = createContext<LifeCtx | null>(null)
 export const useLife = () => { const c = useContext(Ctx); if (!c) throw new Error('useLife outside V2'); return c }
@@ -91,9 +92,9 @@ function Shell() {
   const voice = useVoice((t) => void send(t, 'voice'))
   const prefill = (t: string) => { setText(t); window.setTimeout(() => inputRef.current?.focus(), 30) }
 
-  const decide = async (a: LifeAction, approve: boolean) => {
+  const decide = async (a: LifeAction, approve: boolean, edits?: EmailEdits) => {
     setPending((l) => l.filter((x) => x.id !== a.id))
-    const r = await decideAction(a.id, approve)
+    const r = await decideAction(a.id, approve, edits)
     if (r.error) { flash(r.error); setPending((l) => [a, ...l]); return }
     flash(!approve ? 'Declined. Nothing was sent.' : r.status === 'sent' ? 'Sent.' : 'Approved and added to your tasks.')
     bump()
@@ -101,7 +102,7 @@ function Shell() {
 
   const ctx: LifeCtx = { profile, setProfile, lens, setLens, brands, colorOf, nameOf, inLens, version, bump, send: (t, v) => void send(t, v), prefill, pending, decide }
   const isChat = loc.pathname.startsWith('/v2/chat')
-  const menuItems: [string, string][] = [['Today', '/v2'], ['Plan', '/v2/plan'], ['Pipeline', '/v2/pipeline'], ['Calendar', '/v2/calendar'], ['Chat', '/v2/chat'], ['Team', '/os?with=slt'], ['Studio', '/create'], ['Settings', '/settings']]
+  const menuItems: [string, string][] = [['Today', '/v2'], ['Plan', '/v2/plan'], ['Pipeline', '/v2/pipeline'], ['Radar', '/v2/radar'], ['Calendar', '/v2/calendar'], ['Chat', '/v2/chat'], ['Team', '/os?with=slt'], ['Studio', '/create'], ['Settings', '/settings']]
   const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).join('').replace('&', '').slice(0, 2).toUpperCase()
 
   return (
@@ -146,6 +147,7 @@ function Shell() {
             <Route index element={<Today />} />
             <Route path="plan" element={<Plan />} />
             <Route path="pipeline" element={<Pipeline />} />
+            <Route path="radar" element={<Radar />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="chat" element={<Chat messages={messages} thinking={thinking} />} />
           </Routes>
@@ -192,7 +194,7 @@ function Chat({ messages, thinking }: { messages: LifeMessage[]; thinking: boole
         <div className="v2-empty">
           <p>Tell me what's on your mind, or try one of these.</p>
           <div className="v2-chips">
-            {['What should I focus on today?', 'Add a meeting with the Hackney team on Thursday at 11', 'Find tenders for service design', 'Draft a follow-up to King\'s College'].map((s) => (
+            {['What should I focus on today?', 'Add a meeting with the Hackney team on Thursday at 11', 'What\'s on the radar today?', 'Draft a follow-up to King\'s College'].map((s) => (
               <SuggestChip key={s} text={s} />
             ))}
           </div>
@@ -231,25 +233,37 @@ function SuggestChip({ text }: { text: string }) {
   return <button className="v2-chip" onClick={() => send(text)}>{text}</button>
 }
 
-export function ApprovalCard({ a, onDecide }: { a: LifeAction; onDecide: (a: LifeAction, approve: boolean) => Promise<void> }) {
+export function ApprovalCard({ a, onDecide }: { a: LifeAction; onDecide: (a: LifeAction, approve: boolean, edits?: EmailEdits) => Promise<void> }) {
+  const p = a.payload ?? {}
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
-  const p = a.payload ?? {}
-  const go = async (approve: boolean) => { setBusy(true); await onDecide(a, approve); setBusy(false) }
+  const [editing, setEditing] = useState(a.kind === 'email' && !p.to)
+  const [draft, setDraft] = useState({ to: p.to ?? '', subject: p.subject ?? '', body: p.body ?? '' })
+  const changed = draft.to !== (p.to ?? '') || draft.subject !== (p.subject ?? '') || draft.body !== (p.body ?? '')
+  const validTo = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(draft.to.trim())
+  const go = async (approve: boolean) => { setBusy(true); await onDecide(a, approve, approve && changed ? { to: draft.to.trim(), subject: draft.subject, body: draft.body } : undefined); setBusy(false) }
+  const from = p.from ? p.from.replace(/<.*>/, '').trim() || p.from : ''
   return (
     <article className="v2-approval">
       <div className="v2-approval-head">
         <span className="v2-approval-icon" aria-hidden><EnvelopeSimple size={18} /></span>
         <div>
-          <b>{a.kind === 'email' ? p.subject || 'Email' : p.what || 'Booking'}</b>
-          <span>{a.kind === 'email' ? `To ${p.to}${p.from ? `, from ${p.from.replace(/<.*>/, '').trim() || p.from}` : ''}` : [p.when, p.where].filter(Boolean).join(', ') || 'A booking to make'}</span>
+          <b>{a.kind === 'email' ? draft.subject || 'Email' : p.what || 'Booking'}</b>
+          <span>{a.kind === 'email' ? (draft.to ? `To ${draft.to}${from ? `, from ${from}` : ''}` : 'Add who it goes to') : [p.when, p.where].filter(Boolean).join(', ') || 'A booking to make'}</span>
         </div>
       </div>
-      {a.kind === 'email' && p.body && (
-        <button className="v2-approval-body" data-open={open ? '1' : undefined} onClick={() => setOpen((v) => !v)} aria-expanded={open}>{p.body}</button>
-      )}
+      {a.kind === 'email' && editing ? (
+        <div className="v2-approval-edit">
+          <label><span>To</span><input type="email" name="to" autoComplete="off" spellCheck={false} value={draft.to} placeholder="name@organisation.com" onChange={(e) => setDraft({ ...draft, to: e.target.value })} /></label>
+          <label><span>Subject</span><input name="subject" autoComplete="off" value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} /></label>
+          <textarea name="body" aria-label="Email" rows={9} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
+        </div>
+      ) : a.kind === 'email' && p.body ? (
+        <button className="v2-approval-body" data-open={open ? '1' : undefined} onClick={() => setOpen((v) => !v)} aria-expanded={open}>{draft.body}</button>
+      ) : null}
       <div className="v2-chips">
-        <button className="v2-chip" data-primary="1" disabled={busy} onClick={() => void go(true)}>{a.kind === 'email' ? 'Approve and send' : 'Approve'}</button>
+        <button className="v2-chip" data-primary="1" disabled={busy || (a.kind === 'email' && !validTo)} onClick={() => void go(true)}>{a.kind === 'email' ? 'Approve and send' : 'Approve'}</button>
+        {a.kind === 'email' && !editing && <button className="v2-chip" disabled={busy} onClick={() => setEditing(true)}>Edit</button>}
         <button className="v2-chip" disabled={busy} onClick={() => void go(false)}>Decline</button>
       </div>
     </article>

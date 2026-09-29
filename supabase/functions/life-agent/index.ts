@@ -25,6 +25,8 @@ const SYSTEM = `You are Copilot, the founder's life OS: their personal assistant
 
 As PA: keep their tasks, milestones, calendar and pipeline true. When they mention something to do, a date, a meeting, a lead or a tender, record it with the tools without being asked twice. Check the calendar before suggesting a time.
 As coach: you hold their mission, purpose and weekly focus. When the week drifts from them, say so plainly and briefly. Ask at most one question per reply, and only when the answer changes what you do.
+As commercial partner: the Opportunity Radar (in CURRENT STATE) is the Commercial Engine's scored view of tenders, contracts, funding and outbound targets. Talk about it plainly: fit out of 5, the action, the angle, the deadline. When the founder decides on an opportunity ("pursue", "watch", "pass on that, too generic"), record it with radar_decide and keep their reason; reasons teach the engine. run_radar starts a fresh scan (it takes a few minutes).
+Outreach emails: lead with the organisation's experience opportunity, never with "we are a design studio". One short paragraph on who the founder is and why Hue & Heal. Invite a conversation rather than selling a project. Under 180 words, signed with the founder's first name and "Founder, Hue & Heal". If you do not know the recipient's address, leave "to" empty; the founder adds it on the card.
 As operating system: work for a business's team (content, research, outreach, finance, legal review) goes to that team with brief_team. Their approvals come back to the founder in the app.
 
 Act without asking on anything internal and reversible (tasks, milestones, events, pipeline, focus). Anything that leaves the building (sending an email, making a booking, publishing, spending) is drafted with draft_email or request_booking and waits for the founder's approval; say that it is waiting. Never claim an email was sent or a booking made. Never invent facts about people, organisations or money; ask, or leave the field empty.
@@ -56,14 +58,16 @@ const TOOLS: Anthropic.Beta.BetaTool[] = [
     input_schema: { type: 'object', properties: { title: str, starts_at: { type: 'string', description: 'ISO 8601 with offset, founder\'s time zone.' }, ends_at: { type: 'string' }, location: str, brand: brandProp }, required: ['title', 'starts_at'] } },
   { name: 'set_focus', description: 'Set the weekly focus, or (only when explicitly asked) the mission or purpose.',
     input_schema: { type: 'object', properties: { weekly_focus: str, mission: str, purpose: str }, required: [] } },
-  { name: 'draft_email', description: 'Draft an email for the founder to approve. Nothing is sent until they approve it in the app.',
-    input_schema: { type: 'object', properties: { to: { type: 'string', description: 'Email address.' }, subject: str, body: { type: 'string', description: 'Plain text, signed as the founder.' }, brand: brandProp }, required: ['to', 'subject', 'body'] } },
+  { name: 'draft_email', description: 'Draft an email for the founder to approve. Nothing is sent until they approve it in the app, where they can edit it.',
+    input_schema: { type: 'object', properties: { to: { type: 'string', description: 'Email address, if known. Leave empty rather than guess.' }, subject: str, body: { type: 'string', description: 'Plain text, signed as the founder.' }, brand: brandProp }, required: ['subject', 'body'] } },
   { name: 'request_booking', description: 'File a booking for the founder to approve (travel, venue, appointment). Copilot cannot pay or book directly.',
     input_schema: { type: 'object', properties: { what: str, when: str, where: str, notes: str, brand: brandProp }, required: ['what'] } },
   { name: 'brief_team', description: 'Send work to a business\'s team through its chief of staff. Use for content, research, outreach, finance or legal work in that business.',
     input_schema: { type: 'object', properties: { brand: brandProp, text: { type: 'string', description: 'The brief, in the founder\'s words plus any context they gave.' } }, required: ['brand', 'text'] } },
-  { name: 'search_tenders', description: 'Search open UK public-sector tenders (Contracts Finder). Returns candidates; add the good ones with add_pipeline kind tender.',
-    input_schema: { type: 'object', properties: { phrases: { type: 'array', items: str, description: 'Exact phrases, e.g. "service design".' } }, required: ['phrases'] } },
+  { name: 'radar_decide', description: 'Record the founder\'s decision on a radar opportunity from OPPORTUNITY RADAR. pursue files it in the pipeline with a first next step; watch keeps an eye on it; pass removes it; reopen puts it back. Include their reason in note.',
+    input_schema: { type: 'object', properties: { id: str, decision: { type: 'string', enum: ['pursue', 'watch', 'pass', 'reopen'] }, note: str }, required: ['id', 'decision'] } },
+  { name: 'run_radar', description: 'Start a fresh Commercial Engine scan across all four pipelines. Results arrive in a few minutes on the Radar.',
+    input_schema: { type: 'object', properties: {}, required: [] } },
 ]
 
 function londonNow(): string {
@@ -83,7 +87,7 @@ function brandId(ctx: Ctx, name: unknown): string | null {
 async function state(ctx: Ctx): Promise<string> {
   const now = new Date().toISOString()
   const in14 = new Date(Date.now() + 14 * 86400000).toISOString()
-  const [prof, tasks, ms, pipe, evs, pend, appr, prios] = await Promise.all([
+  const [prof, tasks, ms, pipe, evs, pend, appr, prios, opps, run] = await Promise.all([
     ctx.db.from('life_profile').select('*').maybeSingle(),
     ctx.db.from('life_tasks').select('id, title, due, brand_id, is_now').eq('status', 'open').order('is_now', { ascending: false }).order('due', { ascending: true, nullsFirst: false }).limit(40),
     ctx.db.from('life_milestones').select('id, title, horizon, due, status, brand_id').in('status', ['planned', 'active']).order('due', { ascending: true, nullsFirst: false }).limit(40),
@@ -92,6 +96,8 @@ async function state(ctx: Ctx): Promise<string> {
     ctx.db.from('life_actions').select('kind, summary').eq('status', 'pending').limit(10),
     ctx.db.from('role_jobs').select('task, dept, brand_id').eq('status', 'done').eq('approval', 'pending').limit(15),
     ctx.db.from('priorities').select('title, brand_id, position').eq('status', 'active').order('position').limit(20),
+    ctx.db.from('radar_opportunities').select('id, lane, title, org, fit, action, angle, money, deadline, location, status, url').in('status', ['open', 'watching']).gte('fit', 3).order('fit', { ascending: false }).limit(30),
+    ctx.db.from('radar_runs').select('brief, finished_at').not('brief', 'is', null).order('started_at', { ascending: false }).limit(1).maybeSingle(),
   ])
   const bn = (id: unknown) => (id ? ctx.brands.find((b) => b.id === id)?.name ?? '' : 'life')
   const p = (prof.data ?? {}) as Json
@@ -110,33 +116,11 @@ async function state(ctx: Ctx): Promise<string> {
     '', 'CALENDAR, NEXT 14 DAYS:', ...((evs.data ?? []) as Json[]).map((e) => `- ${fmtTime(String(e.starts_at))}: ${cut(e.title, 90)}${e.location ? ` @ ${cut(e.location, 40)}` : ''}`),
     '', `WAITING FOR THE FOUNDER'S APPROVAL: ${((pend.data ?? []) as Json[]).map((a) => `${a.kind}: ${cut(a.summary, 80)}`).join('; ') || 'nothing from you'}; team: ${((appr.data ?? []) as Json[]).map((j) => `${cut(String(j.task).replace(/^[A-Z]+:\s*/, ''), 70)} (${bn(j.brand_id)})`).join('; ') || 'nothing'}`,
     '', 'BUSINESS PRIORITIES:', ...((prios.data ?? []) as Json[]).map((x) => `- ${cut(x.title)} (${bn(x.brand_id)})`),
+    '', `OPPORTUNITY RADAR${run.data?.finished_at ? ` (scanned ${fmtTime(String(run.data.finished_at))})` : ''}:`,
+    ...(((run.data?.brief as { priorities?: { text: string }[] } | null)?.priorities ?? []).map((p, i) => `Priority ${i + 1}: ${cut(p.text, 220)}`)),
+    ...((opps.data ?? []) as Json[]).map((o) => `- [${o.id}] ${o.lane}, fit ${o.fit}/5, ${String(o.action).replace('_', ' ')}${o.status === 'watching' ? ' (watching)' : ''}: ${cut(o.title, 90)} / ${cut(o.org, 50)}${o.money ? `, ${cut(o.money, 40)}` : ''}${o.deadline ? `, closes ${String(o.deadline).slice(0, 10)}` : ''}${o.location ? `, ${cut(o.location, 30)}` : ''}. Angle: ${cut(o.angle, 160)}`),
   ]
   return lines.join('\n')
-}
-
-async function searchTenders(phrases: string[]): Promise<Json[]> {
-  const seen = new Map<string, Json>()
-  for (const phrase of phrases.slice(0, 6)) {
-    const res = await fetch('https://www.contractsfinder.service.gov.uk/api/rest/2/search_notices/json', {
-      method: 'POST', headers: { 'content-type': 'application/json', 'user-agent': 'HueHealCopilot/2.0 (+https://copilotadmin.hueandheal.com)', accept: 'application/json' },
-      body: JSON.stringify({ searchCriteria: { keyword: `"${phrase}"`, statuses: ['Open'], types: ['Contract', 'Tender', 'EarlyEngagement'] }, size: 25 }),
-    }).catch(() => null)
-    if (!res?.ok) continue
-    const d = await res.json().catch(() => ({})) as { noticeList?: { item: Json }[] }
-    const needle = phrase.toLowerCase()
-    for (const n of d.noticeList ?? []) {
-      const i = n.item
-      const hay = `${i.title ?? ''} ${i.description ?? ''}`.toLowerCase()
-      if (!hay.includes(needle) || seen.has(String(i.id))) continue
-      seen.set(String(i.id), {
-        ref: i.id, title: cut(i.title, 160), org: cut(i.organisationName, 100), phrase,
-        value_gbp: Math.max(Number(i.valueLow ?? 0), Number(i.valueHigh ?? 0)) || null,
-        closes: i.deadlineDate ?? null, url: `https://www.contractsfinder.service.gov.uk/Notice/${i.id}`,
-        summary: cut(i.description, 300), region: i.regionText ?? '',
-      })
-    }
-  }
-  return [...seen.values()].slice(0, 15)
 }
 
 async function runTool(ctx: Ctx, name: string, input: Json): Promise<string> {
@@ -191,8 +175,9 @@ async function runTool(ctx: Ctx, name: string, input: Json): Promise<string> {
       const bid = brandId(ctx, input.brand)
       const b = ctx.brands.find((x) => x.id === bid) ?? ctx.brands.find((x) => /hue\s*&\s*heal/i.test(x.name))
       const from = b?.sender_personal || b?.sender_email || ''
-      const summary = `Email to ${cut(input.to, 60)}: ${cut(input.subject, 70)}`
-      const { data, error } = await db.from('life_actions').insert({ kind: 'email', summary, brand_id: bid, payload: { to: String(input.to), subject: String(input.subject), body: String(input.body), from }, message_id: ctx.messageId ?? null }).select('id').single()
+      const to = String(input.to ?? '').trim()
+      const summary = `Email${to ? ` to ${cut(to, 60)}` : ''}: ${cut(input.subject, 70)}`
+      const { data, error } = await db.from('life_actions').insert({ kind: 'email', summary, brand_id: bid, payload: { to, subject: String(input.subject), body: String(input.body), from }, message_id: ctx.messageId ?? null }).select('id').single()
       return error ? fail(error) : did('approval', `${summary} (waiting for you)`, data.id)
     }
     case 'request_booking': {
@@ -215,9 +200,19 @@ async function runTool(ctx: Ctx, name: string, input: Json): Promise<string> {
       const b = ctx.brands.find((x) => x.id === bid)
       return did('team', `Briefed the ${b?.name ?? ''} team`, job.id)
     }
-    case 'search_tenders': {
-      const found = await searchTenders(((input.phrases as string[]) ?? []).map(String))
-      return JSON.stringify({ ok: true, tenders: found })
+    case 'radar_decide': {
+      const decision = String(input.decision)
+      const { data, error } = await db.rpc('radar_decide', { opp: String(input.id), decision, note: String(input.note ?? '') })
+      if (error) return fail(error)
+      const { data: o } = await db.from('radar_opportunities').select('title, org').eq('id', String(input.id)).maybeSingle()
+      const name = cut(o?.org || o?.title, 60)
+      return did('radar', decision === 'pursue' ? `In your pipeline: ${name}` : decision === 'pass' ? `Passed on ${name}` : decision === 'watch' ? `Watching ${name}` : `Back on the radar: ${name}`, (data as string | null) ?? String(input.id))
+    }
+    case 'run_radar': {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/radar-engine`, { method: 'POST', headers: { authorization: `Bearer ${ctx.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ op: 'run' }) }).catch(() => null)
+      const out = res ? await res.json().catch(() => ({})) as { note?: string; error?: string } : { error: 'The engine did not answer.' }
+      if (out.error) return JSON.stringify({ ok: false, error: out.error })
+      return did('radar', out.note === 'Already scanning.' ? 'The radar is already scanning' : 'Started a radar scan')
     }
   }
   return JSON.stringify({ ok: false, error: `Unknown tool ${name}` })

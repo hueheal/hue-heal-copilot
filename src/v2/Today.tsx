@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ArrowRight, Check, Circle } from '@phosphor-icons/react'
 import { useLife, ApprovalCard, Section } from './V2App'
-import { doneTask, listEvents, listPipeline, listTasks, listTeamApprovals, makeNow, money, scanTenders, shortDate, timeOf, daysUntil, type LifeEvent, type LifeTask, type PipelineItem, type TeamApproval } from './life'
+import { doneTask, isNew, isUrgent, latestRuns, listEvents, listOpportunities, listPipeline, listTasks, listTeamApprovals, makeNow, shortDate, timeOf, daysUntil, type LifeEvent, type LifeTask, type Opportunity, type PipelineItem, type RadarBrief, type TeamApproval } from './life'
 
 /* Today: the greeting frosts in and settles into the headline, then the
    day in the order you would act on it. One column, one thing at a time. */
 
 const GREET_MS = 3200
 const hello = () => { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening' }
-const RADAR_KEY = 'v2.radar.at'
 
 export default function Today() {
   const { profile, inLens, colorOf, nameOf, version, bump, pending, decide, prefill, lens } = useLife()
@@ -18,22 +17,16 @@ export default function Today() {
   const [events, setEvents] = useState<LifeEvent[]>([])
   const [pipe, setPipe] = useState<PipelineItem[]>([])
   const [team, setTeam] = useState<TeamApproval[]>([])
+  const [opps, setOpps] = useState<Opportunity[]>([])
+  const [brief, setBrief] = useState<RadarBrief | null>(null)
   const [phase, setPhase] = useState<'in' | 'settled'>(() => (sessionStorage.getItem('v2.greeted') ? 'settled' : 'in'))
 
   useEffect(() => {
     const start = new Date(); start.setHours(0, 0, 0, 0)
     const end = new Date(); end.setHours(23, 59, 59, 999)
-    void Promise.all([listTasks(), listEvents(start.toISOString(), end.toISOString()), listPipeline(), listTeamApprovals()])
-      .then(([t, e, p, j]) => { setTasks(t); setEvents(e); setPipe(p); setTeam(j) })
+    void Promise.all([listTasks(), listEvents(start.toISOString(), end.toISOString()), listPipeline(), listTeamApprovals(), listOpportunities(), latestRuns()])
+      .then(([t, e, p, j, o, r]) => { setTasks(t); setEvents(e); setPipe(p); setTeam(j); setOpps(o); setBrief(r.briefed?.brief ?? null) })
   }, [version])
-
-  /* The radar scans itself at most twice a day. */
-  useEffect(() => {
-    const last = Number(localStorage.getItem(RADAR_KEY) ?? 0)
-    if (Date.now() - last < 12 * 3600000) return
-    localStorage.setItem(RADAR_KEY, String(Date.now()))
-    void scanTenders().then((r) => { if (r.added) bump() })
-  }, [bump])
 
   useEffect(() => {
     if (phase === 'settled') return
@@ -49,7 +42,9 @@ export default function Today() {
   const approvals = pending.filter((a) => inLens(a.brand_id))
   const teamHere = team.filter((j) => inLens(j.brand_id))
   const due = pipe.filter((p) => inLens(p.brand_id) && p.kind !== 'tender' && p.next_step && (daysUntil(p.next_due) ?? 99) <= 7).slice(0, 4)
-  const radar = pipe.filter((p) => inLens(p.brand_id) && p.kind === 'tender' && p.stage === 'new')
+  const liveOpps = opps.filter((o) => (o.status === 'open' || o.status === 'watching') && (o.fit ?? 0) >= 3)
+  const fresh = liveOpps.filter(isNew).length
+  const urgent = liveOpps.filter(isUrgent).length
   const waiting = approvals.length + teamHere.length
   const things = (now ? 1 : 0) + next.length
 
@@ -145,17 +140,15 @@ export default function Today() {
               </ul>
             ) : <p className="v2-quiet">No follow-ups due. {lens === 'all' ? 'The pipeline is quiet this week.' : ''}</p>}
           </Section>
-          <Section label="Tender radar" aside={<Link className="v2-link" to="/v2/pipeline?lens=tender">Review <ArrowRight size={13} /></Link>}>
-            {radar.length ? (
+          <Section label="Opportunity radar" aside={<Link className="v2-link" to="/v2/radar">Open <ArrowRight size={13} /></Link>}>
+            {brief?.priorities.length ? (
               <>
-                <p className="v2-big-number">{radar.length}<span>{radar.length === 1 ? 'new notice matches you' : 'new notices match you'}</span></p>
-                <ul className="v2-rows">
-                  {radar.slice(0, 2).map((p) => (
-                    <li key={p.id}><span><b>{p.title}</b><small>{p.org}{p.value_pence ? `, ${money(p.value_pence)}` : ''}{p.deadline ? `, closes ${shortDate(p.deadline)}` : ''}</small></span></li>
-                  ))}
-                </ul>
+                <p className="v2-big-number">{liveOpps.length}<span>live{fresh ? `, ${fresh} new` : ''}{urgent ? `, ${urgent} closing this week` : ''}</span></p>
+                <ol className="v2-rows v2-today-pri">
+                  {brief.priorities.slice(0, 2).map((p, i) => <li key={i}><span><b>{p.text}</b></span></li>)}
+                </ol>
               </>
-            ) : <p className="v2-quiet">No new notices. The radar checks Contracts Finder twice a day.</p>}
+            ) : <p className="v2-quiet">{liveOpps.length ? `${liveOpps.length} live opportunities.` : 'Nothing above the bar yet.'} The engine scans at 6.30 and 13.30.</p>}
           </Section>
         </div>
       </div>

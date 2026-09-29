@@ -55,3 +55,15 @@ Not yet: two-way calendar writes (needs a Microsoft Graph app registration), rea
 ## Retiring V1
 
 V2 runs at `/v2` beside V1. When the founder has lived in it for a week and nothing is missing, `/` points at V2 and the V1 routes (Home, Team, the OS draft) are removed; Create, Clients and Settings stay as the studio under V2's menu.
+
+## The Commercial Engine (added 29 September 2026)
+
+The business-development system behind the **Radar** (`/v2/radar`). It replaces the tender radar.
+
+- **Four pipelines, searched twice a day** (06:30 and 13:30 UK summer time) by `radar-engine`, each with live web search and page reading: Studio revenue (tenders, RFPs, briefs, commissions), Founder contracts (freelance, contract, fractional), Venture funding (grants, pilots and partnerships for Remedae and Summer Showdown, only when they fit the product), Outbound (buying signals before any brief exists).
+- **Every item is scored** on the Hue & Heal Fit Meter (sector, design scope, ambition, capability, access; 1 to 5) and given one action: pursue now, outreach now, partner, product funding, watch or pass. 1 and 2 are suppressed. New, updated and urgent (under seven days) are flagged; closed and expired items leave the radar with the reason.
+- **The daily brief**: at most three priorities, the verdict (best new prospect, best studio contract, best paid contract, best international prospect, product funding worth it) and one insight.
+- **The lens** (Radar, Lens tab) is the founder's own description of Hue & Heal that the engine searches and scores against. Pursue, watch and pass decisions, with reasons, are fed back into every scan.
+- **Actions**: Pursue files the item in the pipeline with a first next step. Draft outreach asks Copilot for an email in the founder's outreach style; it waits on an editable approval card. Everything also works by voice ("pass on that one, too generic").
+- **UK Contracts Finder** refuses cloud servers, so `scripts/tender-radar.mjs` runs on the Mac at 06:00 and 13:00 (launchd, `scripts/com.hueandheal.tender-feed.plist`) and files notices unscored; the engine scores them.
+- **Runs** are jobs advanced one model call at a time (the free Supabase plan limits a function to 150 seconds), chained, with an every-minute cron as a safety net. Each run records its cost.

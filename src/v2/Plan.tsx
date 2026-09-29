@@ -70,7 +70,7 @@ export default function Plan() {
   )
 }
 
-function Editable({ label, value, placeholder, onSave, big }: { label: string; value: string; placeholder: string; onSave: (v: string) => void; big?: boolean }) {
+export function Editable({ label, value, placeholder, onSave, big }: { label: string; value: string; placeholder: string; onSave: (v: string) => void; big?: boolean }) {
   const [v, setV] = useState(value)
   const ref = useRef<HTMLTextAreaElement>(null)
   useEffect(() => setV(value), [value])

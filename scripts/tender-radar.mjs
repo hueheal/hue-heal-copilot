@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 // ============================================================================
-// Tender radar, run from the founder's own machine.
+// Contracts Finder feed for the Opportunity Radar, run from the founder's Mac.
 // UK Contracts Finder (and Find a Tender) refuse requests from cloud data
-// centres, so the Supabase function cannot reach them. This script can: it
-// reads each founder's tender phrases from life_profile, searches open
-// notices for each phrase (quoted, so the feed returns only real matches),
-// and files new ones into life_pipeline as kind 'tender', stage 'new'.
-// Existing notices are left alone, so a tracked or dismissed tender stays so.
+// centres, so the Commercial Engine cannot reach them. This script can: it
+// reads each founder's phrases from life_profile.tender_keywords, searches
+// open notices for each phrase (quoted, so the feed returns only real
+// matches), and files new ones onto the radar unscored (studio lane). The
+// engine scores them against the Hue & Heal lens at its next scan. Notices
+// already on the radar are left alone, so a passed one stays passed.
 //
 // Usage:  node scripts/tender-radar.mjs            (scan and file)
 //         node scripts/tender-radar.mjs --dry-run  (scan and print only)
 // Auth:   the Supabase CLI token from the macOS keychain, used in-process only.
+// Schedule: launchd, 06:00 and 13:00 (scripts/com.hueandheal.tender-feed.plist).
 // ============================================================================
 import { execSync } from 'node:child_process'
 
@@ -54,22 +56,23 @@ for (const { owner, tender_keywords } of profiles) {
   const rows = [...seen.values()].map(({ i, phrase }) => {
     const value = Math.max(Number(i.valueLow ?? 0), Number(i.valueHigh ?? 0))
     return {
-      owner, kind: 'tender', source: 'tender_radar', source_ref: String(i.id), stage: 'new',
+      owner, lane: 'studio', category: 'tender', source: 'contracts_finder', source_ref: String(i.id), source_name: 'Contracts Finder',
       title: decode(i.title || 'Untitled notice').slice(0, 300), org: decode(i.organisationName).slice(0, 200),
-      value_pence: value ? Math.round(value * 100) : null, deadline: i.deadlineDate ?? null,
+      money: value ? `£${Math.round(value).toLocaleString('en-GB')}` : '', value_pence: value ? Math.round(value * 100) : null, deadline: i.deadlineDate ?? null,
+      location: decode(i.regionText || 'UK').slice(0, 120),
       url: `https://www.contractsfinder.service.gov.uk/Notice/${i.id}`,
-      notes: `Matched “${phrase}”. ${decode(i.description).replace(/\s+/g, ' ').slice(0, 700)}`,
+      summary: `Matched “${phrase}”. ${decode(i.description).replace(/\s+/g, ' ').slice(0, 700)}`,
     }
   })
   console.log(`${rows.length} matching open notices for ${tender_keywords.length} phrases`)
   if (DRY || !rows.length) { rows.slice(0, 10).forEach((r) => console.log(' -', r.title.slice(0, 80), '|', r.org.slice(0, 40))); continue }
   const tag = `r${Date.now().toString(36)}`
   const payload = JSON.stringify(rows)
-  const out = await sql(`insert into public.life_pipeline (owner, kind, source, source_ref, stage, title, org, value_pence, deadline, url, notes)
-    select owner, kind, source, source_ref, stage, title, org, value_pence, deadline, url, notes
-    from jsonb_to_recordset($${tag}$${payload}$${tag}$::jsonb) as x(owner uuid, kind text, source text, source_ref text, stage text, title text, org text, value_pence bigint, deadline timestamptz, url text, notes text)
+  const out = await sql(`insert into public.radar_opportunities (owner, lane, category, source, source_ref, source_name, title, org, money, value_pence, deadline, location, url, summary)
+    select owner, lane, category, source, source_ref, source_name, title, org, money, value_pence, deadline, location, url, summary
+    from jsonb_to_recordset($${tag}$${payload}$${tag}$::jsonb) as x(owner uuid, lane text, category text, source text, source_ref text, source_name text, title text, org text, money text, value_pence bigint, deadline timestamptz, location text, url text, summary text)
     on conflict (owner, source, source_ref) do nothing returning id`)
   filed += out.length
-  console.log(`${out.length} new on the radar`)
+  console.log(`${out.length} new on the radar, to be scored at the next scan`)
 }
-console.log(DRY ? 'Dry run: nothing filed.' : `Done: ${filed} new notices filed.`)
+console.log(`${new Date().toISOString()} ${DRY ? 'Dry run: nothing filed.' : `Done: ${filed} new notices filed.`}`)

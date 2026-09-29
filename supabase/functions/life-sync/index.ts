@@ -1,12 +1,12 @@
 // ============================================================================
-// life-sync: the life OS's outside world, three operations, all as the user.
-//   { op: 'tenders' }             scan UK Contracts Finder for the founder's
-//                                 tender keywords; new notices land in the
-//                                 pipeline as kind 'tender', stage 'new'.
+// life-sync: the life OS's outside world, two operations, all as the user.
+// (Opportunities are found by radar-engine; UK Contracts Finder refuses cloud
+// servers, so its notices come from scripts/tender-radar.mjs on the Mac.)
 //   { op: 'calendar' }            import the published ICS feed (Outlook or
 //                                 Google) into life_events for the next 60 days.
-//   { op: 'decide', actionId, approve }
-//                                 the founder's yes or no on a pending action.
+//   { op: 'decide', actionId, approve, edits? }
+//                                 the founder's yes or no on a pending action;
+//                                 edits (to, subject, body) are their changes.
 //                                 An approved email is sent through Resend
 //                                 from the business's personal sender.
 // Secrets: RESEND_API_KEY (already set for newsletters).
@@ -21,50 +21,6 @@ const FALLBACK_FROM = 'Maria <maria@hueandheal.com>'
 const TZ = 'Europe/London'
 
 type Json = Record<string, unknown>
-
-/* ---- Tender radar ---- */
-async function tenders(db: SupabaseClient, uid: string) {
-  const { data: prof } = await db.from('life_profile').select('tender_keywords').maybeSingle()
-  const phrases = ((prof?.tender_keywords as string[] | undefined) ?? []).map((s) => s.trim()).filter(Boolean)
-  if (!phrases.length) return { added: 0, scanned: 0, note: 'Add tender keywords in Plan first.' }
-  const rows: Json[] = []
-  const seen = new Set<string>()
-  const failures: string[] = []
-  for (const phrase of phrases.slice(0, 10)) {
-    const res = await fetch('https://www.contractsfinder.service.gov.uk/api/rest/2/search_notices/json', {
-      method: 'POST', headers: { 'content-type': 'application/json', 'user-agent': 'HueHealCopilot/2.0 (+https://copilotadmin.hueandheal.com)', accept: 'application/json' },
-      body: JSON.stringify({ searchCriteria: { keyword: `"${phrase}"`, statuses: ['Open'], types: ['Contract', 'Tender', 'EarlyEngagement'] }, size: 40 }),
-    }).catch((e) => { failures.push(`${phrase}: ${(e as Error).message}`); return null })
-    if (!res) continue
-    if (!res.ok) { failures.push(`${phrase}: HTTP ${res.status}`); continue }
-    const d = await res.json().catch(() => ({})) as { noticeList?: { item: Json }[] }
-    const needle = phrase.toLowerCase()
-    for (const n of d.noticeList ?? []) {
-      const i = n.item
-      const id = String(i.id)
-      const hay = `${i.title ?? ''} ${i.description ?? ''}`.toLowerCase()
-      if (seen.has(id) || !hay.includes(needle)) continue
-      seen.add(id)
-      const value = Math.max(Number(i.valueLow ?? 0), Number(i.valueHigh ?? 0))
-      rows.push({
-        owner: uid, kind: 'tender', source: 'tender_radar', source_ref: id, stage: 'new',
-        title: String(i.title ?? 'Untitled notice').slice(0, 300), org: String(i.organisationName ?? '').slice(0, 200),
-        value_pence: value ? Math.round(value * 100) : null, deadline: i.deadlineDate ?? null,
-        url: `https://www.contractsfinder.service.gov.uk/Notice/${id}`,
-        notes: `Matched “${phrase}”. ${String(i.description ?? '').replace(/\s+/g, ' ').slice(0, 700)}`,
-      })
-    }
-  }
-  if (failures.length) console.error('tender radar', failures.join('; '))
-  if (!rows.length && failures.length === phrases.length && failures.every((f) => f.endsWith('403'))) {
-    return { added: 0, scanned: phrases.length, note: 'The government feed only answers ordinary connections, so the radar runs from your Mac twice a day.' }
-  }
-  if (!rows.length) return { added: 0, scanned: phrases.length }
-  // Existing notices keep their stage: only genuinely new ones are inserted.
-  const { data, error } = await db.from('life_pipeline').upsert(rows, { onConflict: 'owner,source,source_ref', ignoreDuplicates: true }).select('id')
-  if (error) return { added: 0, scanned: phrases.length, error: error.message }
-  return { added: (data ?? []).length, scanned: phrases.length }
-}
 
 /* ---- Calendar (ICS) ---- */
 function londonToUtc(y: number, mo: number, d: number, h: number, mi: number, s: number): Date {
@@ -164,7 +120,7 @@ async function calendar(db: SupabaseClient, uid: string) {
 }
 
 /* ---- Approvals ---- */
-async function decide(db: SupabaseClient, actionId: string, approve: boolean) {
+async function decide(db: SupabaseClient, actionId: string, approve: boolean, edits?: { to?: string; subject?: string; body?: string }) {
   const { data: a } = await db.from('life_actions').select('*').eq('id', actionId).maybeSingle()
   if (!a) return { error: 'Not found.' }
   if (a.status !== 'pending') return { status: a.status }
@@ -172,7 +128,15 @@ async function decide(db: SupabaseClient, actionId: string, approve: boolean) {
   if (!approve) { await db.from('life_actions').update({ status: 'declined', decided_at: stamp }).eq('id', actionId); return { status: 'declined' } }
   if (a.kind === 'email') {
     if (!RESEND_API_KEY) return { error: 'Email is not configured on the server (RESEND_API_KEY).' }
-    const p = a.payload as { to: string; subject: string; body: string; from?: string }
+    const p = { ...(a.payload as { to: string; subject: string; body: string; from?: string }) }
+    // The founder's own changes on the card win, and are kept on the record.
+    if (edits) {
+      if (typeof edits.to === 'string') p.to = edits.to.trim()
+      if (typeof edits.subject === 'string' && edits.subject.trim()) p.subject = edits.subject.trim().slice(0, 300)
+      if (typeof edits.body === 'string' && edits.body.trim()) p.body = edits.body.slice(0, 20000)
+      await db.from('life_actions').update({ payload: p }).eq('id', actionId)
+    }
+    if (!/^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/.test(p.to ?? '')) return { error: 'Add a valid address for who it goes to.' }
     const from = p.from || FALLBACK_FROM
     const replyTo = from.match(/<([^>]+)>/)?.[1] ?? from
     const html = `<div style="font-family:-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.6;color:#1e1b18">${p.body.split(/\n{2,}/).map((para) => `<p style="margin:0 0 14px">${para.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')}</p>`).join('')}</div>`
@@ -210,11 +174,10 @@ Deno.serve(async (req) => {
   if (!uid) return json({ error: 'Your session has expired. Sign in again.' }, 401)
   const { error: authErr } = await db.from('life_profile').select('owner').limit(1)
   if (authErr) return json({ error: 'Your session has expired. Sign in again.' }, 401)
-  const body = await req.json().catch(() => ({})) as { op?: string; actionId?: string; approve?: boolean }
+  const body = await req.json().catch(() => ({})) as { op?: string; actionId?: string; approve?: boolean; edits?: { to?: string; subject?: string; body?: string } }
   try {
-    if (body.op === 'tenders') return json(await tenders(db, uid))
     if (body.op === 'calendar') return json(await calendar(db, uid))
-    if (body.op === 'decide' && body.actionId) return json(await decide(db, body.actionId, !!body.approve))
+    if (body.op === 'decide' && body.actionId) return json(await decide(db, body.actionId, !!body.approve, body.edits))
     return json({ error: 'Unknown op' }, 400)
   } catch (e) {
     console.error('life-sync', body.op, (e as Error).message)
