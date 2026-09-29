@@ -35,6 +35,7 @@ import ComingSoon from './pages/ComingSoon'
 import Subscribe from './pages/Subscribe'
 import Unsubscribe from './pages/Unsubscribe'
 import OsHome from './pages/OsHome'
+import V2App from './v2/V2App'
 import OsNewsletter from './pages/OsNewsletter'
 
 export default function App() {
@@ -48,6 +49,8 @@ export default function App() {
       <Route path="/templates" element={<AuthGate><BrandProvider><TemplateGallery /></BrandProvider></AuthGate>} />
 
       {/* Company OS draft home (September 2026): its own shell, so it does not inherit the top bar. */}
+      {/* Copilot V2, the life OS (docs/copilot-v2-life-os.md). Runs beside V1 until V1 is retired. */}
+      <Route path="/v2/*" element={<V2App />} />
       <Route path="/os" element={<AuthGate><BrandProvider><OsHome /></BrandProvider></AuthGate>} />
       <Route path="/os/newsletter" element={<AuthGate><BrandProvider><OsNewsletter /></BrandProvider></AuthGate>} />
 
