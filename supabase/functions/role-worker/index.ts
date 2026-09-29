@@ -120,6 +120,15 @@ async function maybeQueueDesk(admin: SupabaseClient, job: Job): Promise<void> {
   })
 }
 
+/* The user id from the JWT. The database checks the token's signature on
+   every query, so a forged token fails at the first read below. */
+function subOf(jwt: string): string | null {
+  try {
+    const p = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof p.sub === 'string' && Number(p.exp) * 1000 > Date.now() ? p.sub : null
+  } catch { return null }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405)
@@ -150,9 +159,10 @@ Deno.serve(async (req) => {
   const auth = req.headers.get('authorization') ?? ''
   if (!auth.startsWith('Bearer ') || !(body.jobId || body.retro)) return json({ error: 'Unauthorized' }, 401)
   const asUser = createClient(SUPABASE_URL, ANON, { global: { headers: { authorization: auth } } })
-  const { data: userData } = await asUser.auth.getUser()
-  const uid = userData.user?.id
-  if (!uid) return json({ error: 'Unauthorized' }, 401)
+  const uid = subOf(auth.slice(7))
+  if (!uid) return json({ error: 'Your session has expired. Sign in again.' }, 401)
+  const { error: authErr } = await asUser.from('roles').select('id').limit(1)
+  if (authErr) return json({ error: 'Your session has expired. Sign in again.' }, 401)
 
   /* ---- the Friday learning, on demand ---- */
   if (body.retro) {

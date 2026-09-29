@@ -23,6 +23,16 @@ interface Asset {
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
+/* The user id and email from the JWT. The database checks the token's
+   signature on every query, so a forged token fails at the first read below. */
+function claimsOf(jwt: string): { id: string; email?: string } | null {
+  try {
+    const p = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    if (typeof p.sub !== 'string' || Number(p.exp) * 1000 <= Date.now()) return null
+    return { id: p.sub, email: typeof p.email === 'string' ? p.email : undefined }
+  } catch { return null }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405)
@@ -30,9 +40,10 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({})) as { assetId?: string }
   if (!auth.startsWith('Bearer ') || !body.assetId) return json({ error: 'Unauthorized' }, 401)
   const asUser = createClient(SUPABASE_URL, ANON, { global: { headers: { authorization: auth } } })
-  const { data: userData } = await asUser.auth.getUser()
-  const user = userData.user
-  if (!user) return json({ error: 'Unauthorized' }, 401)
+  const user = claimsOf(auth.slice(7))
+  if (!user) return json({ error: 'Your session has expired. Sign in again.' }, 401)
+  const { error: authErr } = await asUser.from('image_assets').select('id').limit(1)
+  if (authErr) return json({ error: 'Your session has expired. Sign in again.' }, 401)
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE)
   const { data } = await admin.from('image_assets').select('*').eq('id', body.assetId).maybeSingle()

@@ -100,6 +100,15 @@ async function generatePng(b: Body): Promise<{ bytes: Uint8Array; contentType: s
   throw new Error(`Unsupported image provider "${provider}"`)
 }
 
+/* The user id from the JWT. The database checks the token's signature on
+   every query, so a forged token fails at the first read below. */
+function subOf(jwt: string): string | null {
+  try {
+    const p = JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
+    return typeof p.sub === 'string' && Number(p.exp) * 1000 > Date.now() ? p.sub : null
+  } catch { return null }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405)
@@ -119,9 +128,10 @@ Deno.serve(async (req) => {
   const userClient = createClient(SUPABASE_URL, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
     global: { headers: { Authorization: authHeader } },
   })
-  const { data: userData, error: userErr } = await userClient.auth.getUser()
-  if (userErr || !userData.user) return json({ error: 'Not authenticated' }, 401)
-  const userId = userData.user.id
+  const userId = subOf(authHeader.replace(/^Bearer /i, ''))
+  if (!userId) return json({ error: 'Your session has expired. Sign in again.' }, 401)
+  const { error: authErr } = await userClient.from('social_posts').select('id').limit(1)
+  if (authErr) return json({ error: 'Your session has expired. Sign in again.' }, 401)
 
   let png: { bytes: Uint8Array; contentType: string }
   try {
