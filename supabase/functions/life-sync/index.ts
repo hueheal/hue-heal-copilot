@@ -12,14 +12,14 @@
 //                                 edits (to, subject, body) are their changes.
 //                                 An approved email is sent through Resend
 //                                 from the business's personal sender.
-// Secrets: RESEND_API_KEY (already set for newsletters).
+// Secrets: RESEND_API_KEY (studio), RESEND_API_KEY_REMEDAE (see _shared/resend.ts).
 // ============================================================================
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { corsHeaders, json } from '../_shared/cors.ts'
+import { resendKeyFor } from '../_shared/resend.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FALLBACK_FROM = 'Maria <maria@hueandheal.com>'
 const TZ = 'Europe/London'
 
@@ -125,10 +125,12 @@ async function calendar(db: SupabaseClient, uid: string) {
 /* ---- Sending ---- */
 async function sendEmail(p: { to: string; subject: string; body: string; from?: string }): Promise<{ id?: string; error?: string }> {
   const from = p.from || FALLBACK_FROM
+  const { key, missing } = resendKeyFor(from)
+  if (!key) return { error: missing }
   const replyTo = from.match(/<([^>]+)>/)?.[1] ?? from
   const html = `<div style="font-family:-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.6;color:#1e1b18">${p.body.split(/\n{2,}/).map((para) => `<p style="margin:0 0 14px">${para.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\n/g, '<br>')}</p>`).join('')}</div>`
   const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST', headers: { authorization: `Bearer ${RESEND_API_KEY}`, 'content-type': 'application/json' },
+    method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
     body: JSON.stringify({ from, to: [p.to], subject: p.subject, text: p.body, html, reply_to: replyTo }),
   })
   const out = await res.json().catch(() => ({})) as { id?: string; message?: string }
@@ -148,7 +150,6 @@ function applyEdits(p: { to: string; subject: string; body: string; from?: strin
 /* A test goes to the founder alone, exactly as the recipient would see it,
    with the intended recipient noted at the top. The draft stays pending. */
 async function testSend(db: SupabaseClient, actionId: string, me: string, edits?: Edits) {
-  if (!RESEND_API_KEY) return { error: 'Email is not configured on the server (RESEND_API_KEY).' }
   if (!EMAIL_RE.test(me)) return { error: 'Your account has no email address to send a test to.' }
   const { data: a } = await db.from('life_actions').select('kind, status, payload').eq('id', actionId).maybeSingle()
   if (!a || a.kind !== 'email') return { error: 'Not found.' }
@@ -166,7 +167,6 @@ async function decide(db: SupabaseClient, actionId: string, approve: boolean, ed
   const stamp = new Date().toISOString()
   if (!approve) { await db.from('life_actions').update({ status: 'declined', decided_at: stamp }).eq('id', actionId); return { status: 'declined' } }
   if (a.kind === 'email') {
-    if (!RESEND_API_KEY) return { error: 'Email is not configured on the server (RESEND_API_KEY).' }
     // The founder's own changes on the card win, and are kept on the record.
     const p = applyEdits(a.payload as { to: string; subject: string; body: string; from?: string }, edits)
     if (edits) await db.from('life_actions').update({ payload: p }).eq('id', actionId)
