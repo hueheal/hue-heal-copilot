@@ -1,6 +1,6 @@
 # Copilot and hueandheal.com: how they connect
 
-Last checked: 23 October 2026. The site is `hueheal/HueandHeal-Website` (Astro, static, on Netlify as `hueandheal`, currently served from branch `claude/hue-heal-redesign-bhgogt` at hueandheal.netlify.app). Its own notes for the copilot are `docs/COPILOT-BRIEF.md` and `docs/DEPLOY.md` in that repo. This file is the copilot side, and the single list of what is wired, what is waiting, and what each side must keep stable.
+Last checked: 23 October 2026. The site is `hueheal/HueandHeal-Website` (Astro, static, on Netlify as `hueandheal`, currently served from branch `claude/hue-heal-redesign-bhgogt` at hueandheal.netlify.app). Its own notes for the copilot are `docs/COPILOT-BRIEF.md` and `docs/DEPLOY.md` in that repo, and `docs/COPILOT-CONNECTION.md` there mirrors this file. This file is the copilot side, and the single list of what is wired, what is waiting, and what each side must keep stable.
 
 ## What is wired
 
@@ -23,12 +23,11 @@ Secrets (Supabase, never in the repo): `NETLIFY_BUILD_HOOK_HH`, `LETTER_RENDER_S
 
 ## Still to do
 
-1. **GitHub sign-in on the Mac.** This Mac lost its GitHub credential, so the copilot changes of 23 Oct are committed locally and were deployed to Netlify directly. Push `main` once signed in (`brew install gh && gh auth login --web && gh auth setup-git`), or Netlify's next build from GitHub will roll them back.
-2. **The live branch.** Merge `claude/hue-heal-redesign-bhgogt` into `main` in the site repo and set `main` as Netlify's production branch, then re-point the "Copilot publish" build hook at `main`.
-3. **The domain.** DNS for hueandheal.com is at **Cloudflare** (not Wix, as the site's DEPLOY.md says); the apex and www still point at Wix. In Cloudflare: `www` CNAME to `hueandheal.netlify.app`, the apex to Netlify's load balancer. Leave MX (Outlook), SPF, DMARC, `resend._domainkey` and the `send` records exactly as they are. Then add the domain in Netlify, disconnect Wix, change `HH_SITE_URL` to `https://www.hueandheal.com` and `HH_SITE` in `src/lib/hhSite.ts`, and submit `/sitemap-index.xml` to Search Console.
-4. **Hero images.** Journal pieces need a 16:9 hero in the site's image direction before publishing ("Gaming is becoming healthy" and "wellness around the world" have none).
-5. **Creative Boost emails.** The site's `send-page` function needs `RESEND_API_KEY` and `RESEND_FROM` in Netlify (a sending key for hueandheal.com).
-6. **Admin sign-in on the site.** `ADMIN_PASSWORD` in Netlify's Production field must be at least 16 characters (flagged by the website chat).
+1. **The live branch.** Merge `claude/hue-heal-redesign-bhgogt` into `main` in the site repo and set `main` as Netlify's production branch, then re-point the "Copilot publish" build hook at `main`.
+2. **The domain.** DNS for hueandheal.com is at **Cloudflare** (not Wix, as the site's DEPLOY.md says); the apex and www still point at Wix. In Cloudflare: `www` CNAME to `hueandheal.netlify.app`, the apex to Netlify's load balancer. Leave MX (Outlook), SPF, DMARC, `resend._domainkey` and the `send` records exactly as they are. Then add the domain in Netlify, disconnect Wix, change `HH_SITE_URL` to `https://www.hueandheal.com` and `HH_SITE` in `src/lib/hhSite.ts`, and submit `/sitemap-index.xml` to Search Console.
+3. **Hero images.** Journal pieces need a 16:9 hero in the site's image direction before publishing ("Gaming is becoming healthy" and "wellness around the world" have none).
+4. **Creative Boost emails.** The site's `send-page` function needs `RESEND_API_KEY` and `RESEND_FROM` in Netlify (a sending key for hueandheal.com).
+5. **Admin sign-in on the site.** `ADMIN_PASSWORD` in Netlify's Production field must be at least 16 characters (flagged by the website chat).
 
 ## Notes for the website chat
 
