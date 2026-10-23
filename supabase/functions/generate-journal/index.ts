@@ -190,6 +190,11 @@ Deno.serve(async (req) => {
     '- British English. No hype, no buzzwords, no emoji. Never use em dashes or en dashes: use commas, colons, full stops, or the word "and".\n' +
     '- A pulled quote is welcome only when it is real and attributable to a named person; never invent one. Use a numbered list sparingly.\n' +
     '- Always end with a short set of key design takeaways the client can leverage and learn from.\n' +
+    // The website's house style (hueandheal.com, docs/COPILOT-BRIEF.md in the site repo).
+    '- Title: one sentence in sentence case that ends with a full stop. Dek: two sentences at most, under 40 words, saying what the reader gets. No exclamation marks anywhere.\n' +
+    '- Headings every 250 to 400 words, in sentence case. One idea per paragraph. Any list has three to five items.\n' +
+    '- Takeaways: three to five "design takeaways", each one sentence that starts with a verb and is something a founder could act on this week.\n' +
+    '- Calm, warm and precise: a designer talking to a founder. Cite real sources by name and year whenever you use a number. Say "we" and "Hue & Heal", never "Maria". The three rooms are Studio (for founders building in wellness), Lab (what we build for the world) and Mind (coaching, designed); never describe the Lab as building for ourselves.\n' +
     (isReport ? '' : shape) + '\n' +
     'Call the journal_article tool with the finished piece.'
 

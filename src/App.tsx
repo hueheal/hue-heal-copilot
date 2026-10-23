@@ -13,6 +13,7 @@ import ProposalEditor from './pages/ProposalEditor'
 import InvoiceEditor from './pages/InvoiceEditor'
 import SocialStudio from './pages/SocialStudio'
 import NewsletterEditor from './pages/NewsletterEditor'
+import LetterEditor from './pages/LetterEditor'
 import Create from './pages/Create'
 import CreateEditor from './pages/CreateEditor'
 
@@ -58,6 +59,7 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="create" element={<Create />} />
         <Route path="create/newsletter" element={<NewsletterEditor />} />
+        <Route path="create/letter" element={<LetterEditor />} />
         <Route path="create/:family" element={<CreateEditor />} />
         <Route path="calendar" element={<Navigate to="/" replace />} />
         <Route path="library" element={<Navigate to="/" replace />} />

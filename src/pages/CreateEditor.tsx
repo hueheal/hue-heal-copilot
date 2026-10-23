@@ -27,6 +27,7 @@ import { REMEDAE_CATEGORIES, toRemedaeArticle, publishToRemedae, unpublishFromRe
 import { ARTICLE_TYPES, LENGTHS, type ArticleTypeKey, type LengthKey } from '../lib/articleTypes'
 import { createPostFromArticle, type SocialFormat } from '../lib/articleToSocial'
 import RemedaeArticlePreview from '../components/RemedaeArticlePreview'
+import { HH_SITE, publishToSite, unpublishFromSite, sendSiteEmail, essayEmailData } from '../lib/hhSite'
 
 /* ============================================================
    Content Studio · unified editor for authored publications.
@@ -137,6 +138,42 @@ export default function CreateEditor() {
   const [remedaeUrl, setRemedaeUrl] = useState<string | null>(null)
   const [pinnedSlug, setPinnedSlug] = useState<string | null>(null)
   const isRemedae = (brand?.name ?? '').toLowerCase().includes('remedae')
+  const isHueHeal = /hue\s*&\s*heal/i.test(brand?.name ?? '')
+  const [siteUrl, setSiteUrl] = useState<string | null>(null)
+
+  /* Hue & Heal pieces go live on hueandheal.com: save, mark published, and
+     the site rebuilds itself in about a minute. */
+  async function publishSite() {
+    if (!title.trim() || !blocks.length) { setStatus('Write it first'); return }
+    const id = await save()
+    if (!id) { setStatus((s) => `${s ?? 'Couldn’t save the draft'} (publish not attempted)`); return }
+    setBusy(true); setStatus('Publishing to hueandheal.com…')
+    try {
+      const r = await publishToSite(id)
+      if (r.error || !r.url) { setStatus(`The website didn’t take it: ${r.error ?? 'no address returned'}`); return }
+      setPinnedSlug(r.url.split('/journal/')[1] ?? effectiveSlug()); setSiteUrl(r.url)
+      setStatus(`${r.rebuilt ? 'Published. The site is rebuilding and the piece will be live in about a minute.' : 'Published, but the site did not start rebuilding. Try Update again.'}${r.missingHero ? ' It has no hero image yet, so it shows without one.' : ''}`)
+      await reload()
+    } finally { setBusy(false) }
+  }
+  async function unpublishSite() {
+    if (!currentId) return
+    setBusy(true); setStatus('Taking it down from hueandheal.com…')
+    try {
+      const r = await unpublishFromSite(currentId)
+      if (r.error) { setStatus(`Couldn’t unpublish: ${r.error}`); return }
+      setPinnedSlug(null); setSiteUrl(null); setStatus('Back to draft. It leaves the site after the rebuild, in about a minute.'); await reload()
+    } finally { setBusy(false) }
+  }
+  async function essayEmail(mode: 'test' | 'list') {
+    if (!pinnedSlug) return
+    if (mode === 'list' && !window.confirm('Email this piece to everyone on the Hue & Heal newsletter list now?')) return
+    setBusy(true); setStatus(mode === 'test' ? 'Sending you a test…' : 'Sending to the list…')
+    try {
+      const r = await sendSiteEmail('essay', essayEmailData({ title, dek, slug: pinnedSlug, hero, readingTime, takeaways: takeawayList }), mode)
+      setStatus(r.error ? `Not sent: ${r.error}` : mode === 'test' ? `Test sent to ${r.sentTo}.` : `Sent to ${r.sent} ${r.sent === 1 ? 'subscriber' : 'subscribers'}.`)
+    } finally { setBusy(false) }
+  }
 
   async function publishRemedae() {
     if (!title.trim() || !blocks.length) { setStatus('Write it first'); return }
@@ -227,7 +264,7 @@ export default function CreateEditor() {
     setBlock(id, { url }); setStatus('Image added')
   }
 
-  function blank() { setCurrentId(null); setTitle(''); setDek(''); setReadingTime(''); setHero(''); setBlocks([]); setTakeaways(''); setPinnedSlug(null); setRemedaeUrl(null); setStatus(null) }
+  function blank() { setCurrentId(null); setTitle(''); setDek(''); setReadingTime(''); setHero(''); setBlocks([]); setTakeaways(''); setPinnedSlug(null); setRemedaeUrl(null); setSiteUrl(null); setStatus(null) }
   function openDoc(a: JournalArticle) {
     setCurrentId(a.id); setTitle(a.title); setDek(a.dek); setReadingTime(a.reading_time); setHero(a.hero_image ?? '')
     setBlocks(Array.isArray(a.blocks) && a.blocks.length ? (a.blocks as unknown as Block[]) : [])
@@ -237,6 +274,7 @@ export default function CreateEditor() {
     const published = a.status === 'published' && !!a.slug
     setPinnedSlug(published ? a.slug : null)
     setRemedaeUrl(published && isRemedae ? `https://remedae.app/journal/${a.slug}` : null)
+    setSiteUrl(published && isHueHeal ? `${HH_SITE}/journal/${a.slug}` : null)
     if (isMobile) setMView('preview')
   }
   const effectiveSlug = () => pinnedSlug ?? slugify(title || 'untitled')
@@ -504,6 +542,34 @@ export default function CreateEditor() {
                       </div>
                     )}
                     {pinnedSlug && <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Live at /journal/{pinnedSlug}. Edits update this article in place, even if you retitle it.</div>}
+                  </>
+                )}
+
+                {family === 'journal' && isHueHeal && (
+                  <>
+                    <div style={rail}>Publish to hueandheal.com</div>
+                    <button className="hh-btn" onClick={publishSite} disabled={busy || !title.trim() || !blocks.length}
+                      style={{ background: 'var(--ck-accent)', border: '1px solid var(--ck-accent)', color: 'var(--hh-on-accent, #10140F)', borderRadius: 999, padding: '10px 18px', fontSize: 12.5, fontWeight: 500, cursor: 'pointer', opacity: busy || !title.trim() || !blocks.length ? 0.55 : 1 }}>
+                      {pinnedSlug ? '↗ Update the live piece' : '↗ Publish to the journal'}
+                    </button>
+                    {!hero && <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Add a 16:9 hero image first: the site shows the piece without one.</div>}
+                    {pinnedSlug && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+                        {siteUrl && <a href={siteUrl} target="_blank" rel="noreferrer" style={{ fontSize: 12.5, color: 'var(--ck-accent)' }}>View on the site ↗</a>}
+                        <ConfirmButton onConfirm={unpublishSite} style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '6px 12px', fontSize: 12, color: 'var(--ck-muted)', cursor: 'pointer' }}>Unpublish</ConfirmButton>
+                      </div>
+                    )}
+                    {pinnedSlug && (
+                      <>
+                        <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6 }}>Live at /journal/{pinnedSlug}. Saving updates it in place after Update.</div>
+                        <div style={rail}>Tell the list</div>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button className="hh-btn" disabled={busy} onClick={() => void essayEmail('test')} style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, cursor: 'pointer' }}>Send me a test</button>
+                          <button className="hh-btn" disabled={busy} onClick={() => void essayEmail('list')} style={{ background: 'none', border: '1px solid var(--ck-line)', borderRadius: 999, padding: '8px 14px', fontSize: 12.5, cursor: 'pointer' }}>Email the newsletter list</button>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--ck-faint)', marginTop: 6, lineHeight: 1.45 }}>The email uses the website's own design. Each subscriber gets their own unsubscribe link.</div>
+                      </>
+                    )}
                   </>
                 )}
 

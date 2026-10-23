@@ -54,7 +54,8 @@ export default function Create() {
   function openTile(run: (typeof TILES)[number]['run']) {
     if (run === 'journal') { nav('/create/journal'); return }
     if (run === 'report') { nav('/create/report'); return }
-    if (run === 'newsletter') { nav('/create/newsletter'); return }
+    // Hue & Heal's newsletter is the Letter, designed by the website.
+    if (run === 'newsletter') { nav(/hue\s*&\s*heal/i.test(brand?.name ?? '') ? '/create/letter' : '/create/newsletter'); return }
     if (run === 'proposals') { nav('/proposals'); return }
     void newPost(run)
   }
