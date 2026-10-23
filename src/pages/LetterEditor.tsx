@@ -80,6 +80,7 @@ export default function LetterEditor() {
   const [status, setStatus] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const timer = useRef<number>(0)
+  const touched = useRef(false)
   const isHueHeal = /hue\s*&\s*heal/i.test(brand?.name ?? '')
 
   useEffect(() => {
@@ -95,8 +96,10 @@ export default function LetterEditor() {
       const rows = (nl ?? []) as { id: string; status: string; blocks: { issue?: Issue }[] }[]
       const sent = rows.filter((r) => r.status === 'sent').length
       const draft = rows.find((r) => r.status === 'draft')
-      if (draft?.blocks?.[0]?.issue) { setIssue({ ...blankIssue(sent + 1), ...draft.blocks[0].issue }); setDraftId(draft.id) }
-      else setIssue(blankIssue(sent + 1))
+      // Never overwrite words typed while this was loading.
+      if (draft?.blocks?.[0]?.issue) { setDraftId(draft.id); if (!touched.current) setIssue({ ...blankIssue(sent + 1), ...draft.blocks[0].issue }) }
+      else if (!touched.current) setIssue(blankIssue(sent + 1))
+      else setIssue((i) => ({ ...i, number: sent + 1 }))
     })()
   }, [brand?.id])
 
@@ -116,8 +119,8 @@ export default function LetterEditor() {
     return () => window.clearTimeout(timer.current)
   }, [data, ready])
 
-  const set = (patch: Partial<Issue>) => setIssue((i) => ({ ...i, ...patch }))
-  const setRoom = (r: Room, patch: Partial<Issue['rooms'][Room]>) => setIssue((i) => ({ ...i, rooms: { ...i.rooms, [r]: { ...i.rooms[r], ...patch } } }))
+  const set = (patch: Partial<Issue>) => { touched.current = true; setIssue((i) => ({ ...i, ...patch })) }
+  const setRoom = (r: Room, patch: Partial<Issue['rooms'][Room]>) => { touched.current = true; setIssue((i) => ({ ...i, rooms: { ...i.rooms, [r]: { ...i.rooms[r], ...patch } } })) }
 
   async function save(): Promise<void> {
     if (!supabase || !brand?.id) return

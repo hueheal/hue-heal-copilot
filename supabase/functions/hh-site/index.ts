@@ -29,6 +29,7 @@ const SITE = (Deno.env.get('HH_SITE_URL') ?? 'https://www.hueandheal.com').repla
 const FORMS_SECRET = Deno.env.get('NETLIFY_FORMS_SECRET') ?? ''
 const COPILOT = 'https://copilotadmin.hueandheal.com'
 const UNSUB = '__HH_UNSUB_TOKEN__'
+const RESEND_PLACEHOLDER = '{{{RESEND_UNSUBSCRIBE_URL}}}'
 const DEFAULT_FROM = 'Hue & Heal <hello@hueandheal.com>'
 
 type Json = Record<string, unknown>
@@ -69,7 +70,11 @@ async function render(type: string, data: Json): Promise<{ subject?: string; htm
   }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: (e as Error).message }) }) as unknown as Response)
   const out = await res.json().catch(() => ({})) as Json
   if (!res.ok) return { error: `The website renderer answered ${res.status}: ${String(out.error ?? 'no details')}` }
-  return { subject: String(out.subject ?? ''), html: String(out.html ?? ''), text: String(out.text ?? '') }
+  // The renderer writes Resend's Broadcast placeholder for the unsubscribe
+  // link; the copilot sends one email per person, so it puts in their own.
+  const link = typeof data.unsubscribeUrl === 'string' ? data.unsubscribeUrl : ''
+  const fill = (v: unknown) => (link ? String(v ?? '').split(RESEND_PLACEHOLDER).join(link) : String(v ?? ''))
+  return { subject: String(out.subject ?? ''), html: fill(out.html), text: fill(out.text) }
 }
 
 async function email(db: SupabaseClient, admin: SupabaseClient, brand: Json, uid: string, me: string, body: Json) {
