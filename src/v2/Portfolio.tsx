@@ -80,22 +80,11 @@ export default function Portfolio() {
 
       {conns === null ? <div className="v2-stack">{[0, 1].map((i) => <div key={i} className="v2-skeleton" style={{ height: 220 }} />)}</div> : (
         <>
-          {groups.studio.filter((b) => inLens(b.id)).length > 0 && (
+          {[...groups.studio, ...groups.ventures].filter((b) => inLens(b.id)).length > 0 && (
             <section className="v2-section">
-              <div className="v2-section-head"><h2 className="v2-label">The studio</h2></div>
+              <div className="v2-section-head"><h2 className="v2-label">The studio and its ventures</h2></div>
               <div className="v2-port-grid">
-                {groups.studio.filter((b) => inLens(b.id)).map((b) => (
-                  <PortCard key={b.id} title={b.name} color={b.accent_color} conns={all.filter((c) => c.brand_id === b.id)} busy={checking === b.id}
-                    onCheck={() => void check({ brandId: b.id }, b.id)} onRebuild={rebuild} onChanged={load} scope={{ brand_id: b.id }} />
-                ))}
-              </div>
-            </section>
-          )}
-          {groups.ventures.filter((b) => inLens(b.id)).length > 0 && (
-            <section className="v2-section">
-              <div className="v2-section-head"><h2 className="v2-label">Ventures</h2></div>
-              <div className="v2-port-grid">
-                {groups.ventures.filter((b) => inLens(b.id)).map((b) => (
+                {[...groups.studio, ...groups.ventures].filter((b) => inLens(b.id)).map((b) => (
                   <PortCard key={b.id} title={b.name} color={b.accent_color} conns={all.filter((c) => c.brand_id === b.id)} busy={checking === b.id}
                     onCheck={() => void check({ brandId: b.id }, b.id)} onRebuild={rebuild} onChanged={load} scope={{ brand_id: b.id }} />
                 ))}
