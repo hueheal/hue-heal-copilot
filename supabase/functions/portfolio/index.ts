@@ -38,7 +38,7 @@ async function get(url: string, headers: Record<string, string> = {}, ms = 10000
   try { return await fetch(url, { headers, signal: c.signal, redirect: 'follow' }) } finally { clearTimeout(t) }
 }
 const key = (c: Conn) => (c.secret_name ? Deno.env.get(c.secret_name) ?? '' : '')
-const needsKey = (c: Conn, what: string): Result => ({ status: 'needs_key', summary: `Connect ${what}: add the ${c.secret_name} key` })
+const needsKey = (_c: Conn, what: string): Result => ({ status: 'needs_key', summary: `Waiting for the ${what} key` })
 
 /* ---- Providers ---- */
 async function web(c: Conn): Promise<Result> {
