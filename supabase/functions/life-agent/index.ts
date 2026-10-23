@@ -27,6 +27,7 @@ As PA: keep their tasks, milestones, calendar and pipeline true. When they menti
 As coach: you hold their mission, purpose and weekly focus. When the week drifts from them, say so plainly and briefly. Ask at most one question per reply, and only when the answer changes what you do.
 As commercial partner: the Opportunity Radar (in CURRENT STATE) is the Commercial Engine's scored view of tenders, contracts, funding and outbound targets. Talk about it plainly: fit out of 5, the action, the angle, the deadline. When the founder decides on an opportunity ("pursue", "watch", "pass on that, too generic"), record it with radar_decide and keep their reason; reasons teach the engine. The radar scans every morning at 6.30 on the founder's Mac; run_radar is an extra paid cloud scan, only when they ask for one now.
 Outreach emails: lead with the organisation's experience opportunity, never with "we are a design studio". One short paragraph on who the founder is and why Hue & Heal. Invite a conversation rather than selling a project. Under 180 words, signed with the founder's first name and "Founder, Hue & Heal". If you do not know the recipient's address, leave "to" empty; the founder adds it on the card.
+As portfolio keeper: PORTFOLIO (in CURRENT STATE) is the live health of everything Hue & Heal runs (websites, hosting, code, email, data) for the studio, the ventures and the clients. Mention anything down or failing without being asked when it matters today. portfolio_check runs a fresh check. Never claim something is fixed; say what the check shows.
 As operating system: work for a business's team (content, research, outreach, finance, legal review) goes to that team with brief_team. Their approvals come back to the founder in the app.
 
 Act without asking on anything internal and reversible (tasks, milestones, events, pipeline, focus). Anything that leaves the building (sending an email, making a booking, publishing, spending) is drafted with draft_email or request_booking and waits for the founder's approval; say that it is waiting. Never claim an email was sent or a booking made. Never invent facts about people, organisations or money; ask, or leave the field empty.
@@ -66,6 +67,8 @@ const TOOLS: Anthropic.Beta.BetaTool[] = [
     input_schema: { type: 'object', properties: { brand: brandProp, text: { type: 'string', description: 'The brief, in the founder\'s words plus any context they gave.' } }, required: ['brand', 'text'] } },
   { name: 'radar_decide', description: 'Record the founder\'s decision on a radar opportunity from OPPORTUNITY RADAR. pursue files it in the pipeline with a first next step; watch keeps an eye on it; pass removes it; reopen puts it back. Include their reason in note.',
     input_schema: { type: 'object', properties: { id: str, decision: { type: 'string', enum: ['pursue', 'watch', 'pass', 'reopen'] }, note: str }, required: ['id', 'decision'] } },
+  { name: 'portfolio_check', description: 'Run a fresh live check of the portfolio (websites, hosting, code, email) for one business by name, or everything when omitted. Returns each connection\'s status.',
+    input_schema: { type: 'object', properties: { brand: brandProp }, required: [] } },
   { name: 'run_radar', description: 'Start an extra Commercial Engine scan in the cloud now (about $1.30; the daily scan already runs free on the founder\'s Mac at 06:30). Only when the founder explicitly asks for a fresh scan now. Results arrive in a few minutes on the Radar.',
     input_schema: { type: 'object', properties: {}, required: [] } },
 ]
@@ -87,7 +90,7 @@ function brandId(ctx: Ctx, name: unknown): string | null {
 async function state(ctx: Ctx): Promise<string> {
   const now = new Date().toISOString()
   const in14 = new Date(Date.now() + 14 * 86400000).toISOString()
-  const [prof, tasks, ms, pipe, evs, pend, appr, prios, opps, run] = await Promise.all([
+  const [prof, tasks, ms, pipe, evs, pend, appr, prios, opps, run, port] = await Promise.all([
     ctx.db.from('life_profile').select('*').maybeSingle(),
     ctx.db.from('life_tasks').select('id, title, due, brand_id, is_now').eq('status', 'open').order('is_now', { ascending: false }).order('due', { ascending: true, nullsFirst: false }).limit(40),
     ctx.db.from('life_milestones').select('id, title, horizon, due, status, brand_id').in('status', ['planned', 'active']).order('due', { ascending: true, nullsFirst: false }).limit(40),
@@ -98,6 +101,7 @@ async function state(ctx: Ctx): Promise<string> {
     ctx.db.from('priorities').select('title, brand_id, position').eq('status', 'active').order('position').limit(20),
     ctx.db.from('radar_opportunities').select('id, lane, title, org, fit, action, angle, money, deadline, location, status, url').in('status', ['open', 'watching']).gte('fit', 3).order('fit', { ascending: false }).limit(30),
     ctx.db.from('radar_runs').select('brief, finished_at').not('brief', 'is', null).order('started_at', { ascending: false }).limit(1).maybeSingle(),
+    ctx.db.from('connections').select('label, status, summary, checked_at, brand_id').order('position').limit(60),
   ])
   const bn = (id: unknown) => (id ? ctx.brands.find((b) => b.id === id)?.name ?? '' : 'life')
   const p = (prof.data ?? {}) as Json
@@ -116,6 +120,7 @@ async function state(ctx: Ctx): Promise<string> {
     '', 'CALENDAR, NEXT 14 DAYS:', ...((evs.data ?? []) as Json[]).map((e) => `- ${fmtTime(String(e.starts_at))}: ${cut(e.title, 90)}${e.location ? ` @ ${cut(e.location, 40)}` : ''}`),
     '', `WAITING FOR THE FOUNDER'S APPROVAL: ${((pend.data ?? []) as Json[]).map((a) => `${a.kind}: ${cut(a.summary, 80)}`).join('; ') || 'nothing from you'}; team: ${((appr.data ?? []) as Json[]).map((j) => `${cut(String(j.task).replace(/^[A-Z]+:\s*/, ''), 70)} (${bn(j.brand_id)})`).join('; ') || 'nothing'}`,
     '', 'BUSINESS PRIORITIES:', ...((prios.data ?? []) as Json[]).map((x) => `- ${cut(x.title)} (${bn(x.brand_id)})`),
+    '', 'PORTFOLIO (live checks):', ...((port.data ?? []) as Json[]).map((c) => `- ${bn(c.brand_id)} ${c.label}: ${c.status}, ${cut(c.summary, 90)}`),
     '', `OPPORTUNITY RADAR${run.data?.finished_at ? ` (scanned ${fmtTime(String(run.data.finished_at))})` : ''}:`,
     ...(((run.data?.brief as { priorities?: { text: string }[] } | null)?.priorities ?? []).map((p, i) => `Priority ${i + 1}: ${cut(p.text, 220)}`)),
     ...((opps.data ?? []) as Json[]).map((o) => `- [${o.id}] ${o.lane}, fit ${o.fit}/5, ${String(o.action).replace('_', ' ')}${o.status === 'watching' ? ' (watching)' : ''}: ${cut(o.title, 90)} / ${cut(o.org, 50)}${o.money ? `, ${cut(o.money, 40)}` : ''}${o.deadline ? `, closes ${String(o.deadline).slice(0, 10)}` : ''}${o.location ? `, ${cut(o.location, 30)}` : ''}. Angle: ${cut(o.angle, 160)}`),
@@ -207,6 +212,14 @@ async function runTool(ctx: Ctx, name: string, input: Json): Promise<string> {
       const { data: o } = await db.from('radar_opportunities').select('title, org').eq('id', String(input.id)).maybeSingle()
       const name = cut(o?.org || o?.title, 60)
       return did('radar', decision === 'pursue' ? `In your pipeline: ${name}` : decision === 'pass' ? `Passed on ${name}` : decision === 'watch' ? `Watching ${name}` : `Back on the radar: ${name}`, (data as string | null) ?? String(input.id))
+    }
+    case 'portfolio_check': {
+      const bid = brandId(ctx, input.brand)
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/portfolio`, { method: 'POST', headers: { authorization: `Bearer ${ctx.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ op: 'check', ...(bid ? { brandId: bid } : {}) }) }).catch(() => null)
+      const out = res ? await res.json().catch(() => ({})) as { results?: Json[]; error?: string } : { error: 'The portfolio check did not answer.' }
+      if (out.error) return JSON.stringify({ ok: false, error: out.error })
+      ctx.actions.push({ kind: 'portfolio', summary: 'Checked the portfolio' })
+      return JSON.stringify({ ok: true, results: (out.results ?? []).map((r) => ({ label: r.label, status: r.status, summary: r.summary })) })
     }
     case 'run_radar': {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/radar-engine`, { method: 'POST', headers: { authorization: `Bearer ${ctx.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ op: 'run' }) }).catch(() => null)

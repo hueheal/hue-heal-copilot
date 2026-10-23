@@ -11,6 +11,7 @@ import Plan from './Plan'
 import Pipeline from './Pipeline'
 import Calendar from './Calendar'
 import Radar from './Radar'
+import Portfolio from './Portfolio'
 import './v2.css'
 
 /* ============================================================
@@ -36,7 +37,7 @@ interface LifeCtx {
 const Ctx = createContext<LifeCtx | null>(null)
 export const useLife = () => { const c = useContext(Ctx); if (!c) throw new Error('useLife outside V2'); return c }
 
-const TILE: Record<string, string> = { 'hue & heal': '/os/ws-hh.png', remedae: '/os/ws-remedae.png', 'mazzi summer showdown': '/os/ws-showdown.png' }
+const TILE: Record<string, string> = { 'hue & heal': '/os/ws-hh.png', remedae: '/os/ws-remedae.png', 'mazzi summer showdown': '/os/ws-showdown.png', 'moss island': '/os/ws-moss.png' }
 const LIFE_COLOR = '#8C7B6B'
 
 export default function V2App() {
@@ -102,7 +103,7 @@ function Shell() {
 
   const ctx: LifeCtx = { profile, setProfile, lens, setLens, brands, colorOf, nameOf, inLens, version, bump, send: (t, v) => void send(t, v), prefill, pending, decide }
   const isChat = loc.pathname.startsWith('/v2/chat')
-  const menuItems: [string, string][] = [['Today', '/v2'], ['Plan', '/v2/plan'], ['Pipeline', '/v2/pipeline'], ['Radar', '/v2/radar'], ['Calendar', '/v2/calendar'], ['Chat', '/v2/chat'], ['Team', '/os?with=slt'], ['Studio', '/create'], ['Settings', '/settings']]
+  const menuItems: [string, string][] = [['Today', '/v2'], ['Plan', '/v2/plan'], ['Pipeline', '/v2/pipeline'], ['Radar', '/v2/radar'], ['Portfolio', '/v2/portfolio'], ['Calendar', '/v2/calendar'], ['Chat', '/v2/chat'], ['Team', '/os?with=slt'], ['Studio', '/create'], ['Settings', '/settings']]
   const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).join('').replace('&', '').slice(0, 2).toUpperCase()
 
   return (
@@ -148,6 +149,7 @@ function Shell() {
             <Route path="plan" element={<Plan />} />
             <Route path="pipeline" element={<Pipeline />} />
             <Route path="radar" element={<Radar />} />
+            <Route path="portfolio" element={<Portfolio />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="chat" element={<Chat messages={messages} thinking={thinking} />} />
           </Routes>

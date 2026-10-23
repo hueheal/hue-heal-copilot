@@ -29,6 +29,13 @@ export interface Opportunity {
   closed_reason: string; decision_note: string; change_note: string; pipeline_id: string | null
   first_seen: string; changed_at: string | null; last_checked: string
 }
+export interface Connection {
+  id: string; brand_id: string | null; client_id: string | null; label: string
+  kind: 'website' | 'hosting' | 'repo' | 'email' | 'database' | 'analytics' | 'payments' | 'social'
+  provider: string; config: Record<string, string>; secret_name: string
+  status: 'ok' | 'warn' | 'down' | 'needs_key' | 'unchecked'; summary: string; detail: Record<string, unknown>; checked_at: string | null; position: number
+}
+export interface ClientRow { id: string; name: string; sector: string; stage: string; brand_id: string | null }
 export interface RadarBrief { priorities: { text: string; opportunity_id: string | null }[]; verdict: { label: string; text: string; opportunity_id: string | null }[]; insight: string }
 export interface RadarRun { id: string; trigger?: string; status: 'running' | 'done' | 'failed'; brief: RadarBrief | null; usage: { usd?: number; searches?: number }; started_at: string; finished_at: string | null; error: string | null; lanes?: { lane: string; status: string }[] }
 export interface Milestone { id: string; brand_id: string | null; title: string; detail: string; horizon: Horizon; due: string | null; status: 'planned' | 'active' | 'done' | 'dropped'; position: number }
@@ -262,6 +269,42 @@ export async function runRadar(): Promise<{ runId?: string; note?: string; error
 export const isNew = (o: Opportunity) => Date.now() - new Date(o.first_seen).getTime() < 36 * 3600000
 export const isUpdated = (o: Opportunity) => !!o.changed_at && !isNew(o) && Date.now() - new Date(o.changed_at).getTime() < 36 * 3600000 && !!o.change_note
 export const isUrgent = (o: Opportunity) => { const d = daysUntil(o.deadline); return d !== null && d >= 0 && d <= 7 }
+
+
+/* ---- Portfolio: what Hue & Heal runs, and how it is doing ---- */
+const demoConn = (c: Partial<Connection> & Pick<Connection, 'id' | 'label' | 'kind' | 'provider'>): Connection => ({ brand_id: null, client_id: null, config: {}, secret_name: '', status: 'ok', summary: '', detail: {}, checked_at: at(0, 6, 10), position: 0, ...c })
+const demoPortfolio: Connection[] = [
+  demoConn({ id: 'c1', label: 'Website', kind: 'website', provider: 'web', config: { url: 'https://example.com' }, summary: 'Live, 420 ms' }),
+  demoConn({ id: 'c2', label: 'Hosting', kind: 'hosting', provider: 'netlify', summary: 'Deployed 2 h ago from main', position: 1 }),
+  demoConn({ id: 'c3', label: 'Code', kind: 'repo', provider: 'github', status: 'needs_key', summary: 'Connect GitHub: add the GITHUB_TOKEN key', secret_name: 'GITHUB_TOKEN', position: 2 }),
+]
+export async function listConnections(): Promise<Connection[]> {
+  if (!live) return demoPortfolio
+  const { data } = await db().from('connections' as never).select('*').order('position')
+  return (data ?? []) as Connection[]
+}
+export async function listClients(): Promise<ClientRow[]> {
+  if (!live) return []
+  const { data } = await db().from('clients' as never).select('id, name, sector, stage, brand_id').order('created_at', { ascending: false }).limit(50)
+  return (data ?? []) as ClientRow[]
+}
+export async function checkPortfolio(scope: { brandId?: string; clientId?: string; id?: string } = {}): Promise<{ results?: unknown[]; error?: string }> {
+  if (!live) return { results: [] }
+  return call('portfolio', { op: 'check', ...scope })
+}
+export async function portfolioAct(id: string, action: 'rebuild'): Promise<{ ok?: boolean; note?: string; error?: string }> {
+  if (!live) return { note: 'Sample mode: nothing was rebuilt.' }
+  return call('portfolio', { op: 'act', id, action })
+}
+export async function addConnection(row: Pick<Connection, 'label' | 'kind' | 'provider' | 'config' | 'secret_name'> & { brand_id?: string | null; client_id?: string | null; position?: number }): Promise<{ id?: string; error?: string }> {
+  if (!live) return { error: 'Sample mode: sign in to add connections.' }
+  const { data, error } = await db().from('connections' as never).insert(row as never).select('id').single()
+  return error ? { error: error.message } : { id: (data as { id: string }).id }
+}
+export async function removeConnection(id: string): Promise<void> {
+  if (!live) return
+  await db().from('connections' as never).delete().eq('id', id)
+}
 
 /* ---- The conversation ---- */
 export async function listMessages(limit = 60): Promise<LifeMessage[]> {
