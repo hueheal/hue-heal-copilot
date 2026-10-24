@@ -130,10 +130,15 @@ async function supabaseMetrics(c: Conn, prev: Json | null): Promise<Result> {
   const r = await fetch(`${url}/rest/v1/rpc/copilot_metrics`, { method: 'POST', headers: { apikey: anon, authorization: `Bearer ${anon}`, 'content-type': 'application/json' }, body: JSON.stringify({ p_key: tok }) }).catch(() => null)
   if (!r?.ok) return { status: 'warn', summary: `Could not read the numbers (${r?.status ?? 'no answer'})` }
   const m = (await r.json().catch(() => ({}))) as Json
-  const parts = Object.entries(m).slice(0, 4).map(([k, v]) => {
+  // config.show: [[metric, "singular|plural"], ...] sets the order and words;
+  // without it, the first four metrics as they come.
+  const show = Array.isArray(c.config.show) ? (c.config.show as [string, string][]) : Object.keys(m).slice(0, 4).map((k) => [k, k.replace(/_/g, ' ')] as [string, string])
+  const parts = show.filter(([k]) => typeof m[k] === 'number').map(([k, words]) => {
+    const v = Number(m[k])
+    const [one, many] = words.includes('|') ? words.split('|') : [words, words]
     const before = prev && typeof prev[k] === 'number' ? Number(prev[k]) : null
-    const diff = before !== null ? Number(v) - before : 0
-    return `${Number(v).toLocaleString('en-GB')} ${k.replace(/_/g, ' ')}${diff > 0 ? ` (+${diff})` : ''}`
+    const diff = before !== null ? v - before : 0
+    return `${v.toLocaleString('en-GB')} ${v === 1 ? one : many}${diff > 0 ? ` (+${diff})` : ''}`
   })
   return { status: 'ok', summary: parts.join(', ') || 'Connected', metrics: m }
 }

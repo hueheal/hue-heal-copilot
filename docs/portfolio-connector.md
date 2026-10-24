@@ -21,7 +21,7 @@ Copilot V2 → **Portfolio** (`/v2/portfolio`). Everything Hue & Heal runs, in o
 
 Keys are set by the founder on the Mac, typed hidden: `bash scripts/connect-provider.sh netlify | vercel | github`.
 
-## Not yet connected
+## Data and what is still open
 
-- **Product data.** Remedae and Moss Island each need a small read-only `copilot_metrics(p_key)` function in their own Supabase database (returning counts only, no personal data, guarded by a key only the copilot holds). This touches those production databases, so it waits for the founder's go-ahead.
+- **Product data** (24 October 2026). Moss Island: live (families, families playing and quests this week, founding applications, new feedback). Remedae: the function is in `remedae/supabase/migrations/20261024000000_copilot_metrics.sql`; it goes live once the founder runs it in Remedae's Supabase SQL editor (Remedae's database is in a separate Supabase account). Each product's database holds only the SHA-256 fingerprint of the key in `copilot_access`, which no client role can read; the keys are the copilot secrets `MOSS_METRICS_KEY` and `REMEDAE_METRICS_KEY`. A connection's `config.show` sets which counts appear and their words (`"singular|plural"`).
 - **Clients.** The two clients (Opti-u, Helius Network) have no sites to watch yet; use Connect on their card when they do.
