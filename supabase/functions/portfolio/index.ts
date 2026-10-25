@@ -3,7 +3,8 @@
 // studio site, the ventures, the clients). Each row in `connections` is one
 // thing to watch: a live website, its hosting, its code, its email, its data.
 //
-// POST, cron (x-cron-secret): { op: 'check' }            every connection
+// POST, cron (x-cron-secret): { op: 'check' }            every connection, and
+//                             renews Instagram tokens with under 15 days left
 // POST, founder (Bearer jwt): { op: 'check', brandId?, clientId?, id? }
 //                             { op: 'act', id, action: 'rebuild' }  (Netlify)
 // Providers: web (no key), netlify (NETLIFY_TOKEN), vercel (VERCEL_TOKEN),
@@ -184,6 +185,25 @@ function claims(jwt: string): { sub?: string; role?: string; exp?: number } {
   try { return JSON.parse(atob(jwt.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))) } catch { return {} }
 }
 
+/* Instagram's long-lived tokens last 60 days and can be renewed while still
+   valid. Renewing them here, twice a day, keeps every brand's account
+   connected; a token that has already expired needs Connect Instagram again. */
+async function renewInstagram(admin: SupabaseClient): Promise<void> {
+  const { data } = await admin.from('brand_profiles').select('id, name, instagram').not('instagram', 'is', null)
+  for (const b of (data ?? []) as { id: string; name: string; instagram: Json }[]) {
+    const token = String(b.instagram?.access_token ?? '')
+    const left = new Date(String(b.instagram?.expires_at ?? 0)).getTime() - Date.now()
+    if (!token || b.instagram?.via !== 'instagram_login' || left <= 0 || left > 15 * 86400000) continue
+    try {
+      const res = await fetch(`https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=${encodeURIComponent(token)}`)
+      const r = await res.json() as Json
+      if (!res.ok || !r.access_token) { console.error('instagram renew', b.name, JSON.stringify(r).slice(0, 200)); continue }
+      const instagram = { ...b.instagram, access_token: String(r.access_token), expires_at: new Date(Date.now() + Number(r.expires_in ?? 0) * 1000).toISOString() }
+      await admin.from('brand_profiles').update({ instagram }).eq('id', b.id)
+    } catch (e) { console.error('instagram renew', b.name, (e as Error).message) }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405)
@@ -192,6 +212,7 @@ Deno.serve(async (req) => {
   const cols = 'id, owner, brand_id, client_id, label, kind, provider, config, secret_name'
 
   if (CRON_SECRET && req.headers.get('x-cron-secret') === CRON_SECRET) {
+    await renewInstagram(admin)
     const { data } = await admin.from('connections').select(cols)
     return json({ ok: true, checked: (await checkAll(admin, (data ?? []) as Conn[])).length })
   }
