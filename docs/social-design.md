@@ -16,25 +16,31 @@ Concepts to approve are published at https://claude.ai/artifact/GKRswG8eoG4VgDUA
 
 ## Hue & Heal
 
-**Source**
-- The Hue & Heal Brand Figma, file `qDrGcT3SPOrIuEiVaiBw0E`, frame `170:1124` (25 Oct 2026).
-- The website kit (site repo `docs/social/launch/`) is the website's own launch set, not the everyday style.
+**Sources**
+- **Look and type:** the new website (repo `hueheal/HueandHeal-Website`, live at hueandheal.netlify.app). It sets the typefaces, scale, colour, lockups and halos.
+- **Post structures:** the Hue & Heal Brand Figma, file `qDrGcT3SPOrIuEiVaiBw0E`, frame `170:1124`.
+- **Redesign:** 25 Oct 2026, after Maria asked for closer alignment with the website. The type system is recorded in `scripts/post-render/hh/TYPE-SYSTEM.md`.
 
 **Look**
-- **Photography:** warm, cinematic, full-bleed photos fading to near black. Amber lamplight, candlelight, dusk.
-- **Type:** Ivy Ora light from the studio's Adobe Fonts kit, with one *italic phrase*. Poppins for the small lines.
-- **Eyebrow:** a tiny tracked eyebrow at the top, such as EXPERIENCE DESIGN, CREATIVE COACHING or hue&heal's GUIDE TO.
-- **Centred stack:** a small line, the big title, a small line under it, and a glass pill.
-- **Footer:** "Swipe to see how ⟶" in Ivy Ora italic.
-- **No-photo slides:** pause and closing slides sit on black, with a glowing halo or ring in the room colours.
+- **Typefaces:** the website's own Newsreader (display optical size for titles, text optical size for ledes) and Poppins. The font files sit in `scripts/post-render/hh/`. The site does not use Ivy Ora.
+- **Type scale:** the site's 1.25 ratio, rebased on a 36px body: 29, 36, 45, 56, 70, 88, 110, 138, 172.
+- **Colour:**
+  - Near-black ground #07080b, with warm white #ece7dd type and #a9a398 secondary text.
+  - Room accents on labels and links: Studio coral #d98a6c, Lab jade #8db59c, Mind periwinkle #aeb2da.
+  - The italic phrase is warm white over photos. On black it takes the site's peach to lilac gradient.
+- **Lockups:** the closing slides carry the room lockup: hue&heal: Studio, Lab or Mind.
+- **Kept from the Figma:**
+  - cinematic photos fading to black;
+  - the tracked eyebrow;
+  - the centred cover stack and the pill;
+  - "Swipe to see how";
+  - halo rings for pauses;
+  - labelled "Experience: / Why it works:" slides.
+- **Layout:** 80px side margins. Text blocks end on the same line across a carousel.
 
 **Kinds**
-- `cover`: the series cover.
-- `feature`: one named example, with its own photo and labelled lines such as "Experience:" and "Why it works:".
-- `tip`: one idea in a series, with its own photo.
-- `pause`: a word in a ring.
-- `statement`: a line set large.
-- `close`: a question or call on the warm glow, with the wordmark.
+- `cover`, `feature` (with its own photo) and `tip` (with its own photo).
+- `pause`, `statement` and `close`. These take the room in `kicker`: studio, lab or mind.
 
 ## Remedae
 

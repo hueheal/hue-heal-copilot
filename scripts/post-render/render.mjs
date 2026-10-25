@@ -7,8 +7,8 @@
 //   const out = await renderPosts(posts)   // [{ company, slides: [Buffer] }]
 //
 // The slides are served from a small local server rather than opened as
-// files: the studio's Ivy Ora (Adobe Fonts) loads on localhost, and the pages
-// reach Moss Island's art (/moss), Copilot's public folder (/copilot) and the
+// files, so the pages reach Hue & Heal's website fonts and lockups (/hh),
+// Moss Island's art (/moss), Copilot's public folder (/copilot) and the
 // game's own quest cards (/card/<id>.png, captured by moss-cards.mjs).
 //
 // Test on a sample:  node scripts/post-render/render.mjs <posts.json> <out dir>
@@ -27,7 +27,7 @@ const MOSS_ART = process.env.MOSS_ART ?? join(process.env.HOME ?? '', 'Claude', 
 const QUESTS = (() => {
   try { return JSON.parse(readFileSync(join(here, '..', '..', 'supabase', 'functions', '_shared', 'moss-quests.json'), 'utf8')) } catch { return { quests: [], packs: [] } }
 })()
-const TYPES = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml' }
+const TYPES = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' }
 
 async function browser() {
   const core = process.env.PW ?? join(process.env.HOME ?? '', '.local/lib/node_modules/@playwright/cli/node_modules/playwright-core/index.mjs')
@@ -39,7 +39,8 @@ async function browser() {
 
 /** A static server for the slides and their assets, on a free localhost port. */
 function serve(dir) {
-  const roots = { s: dir, card: dir, moss: MOSS_ART, copilot: COPILOT_PUBLIC }
+  // /hh/... is Hue & Heal's own kit: the website's Newsreader and Poppins files (OFL) and lockups.
+  const roots = { s: dir, card: dir, moss: MOSS_ART, copilot: COPILOT_PUBLIC, hh: join(here, 'hh') }
   const server = http.createServer((req, res) => {
     const url = decodeURIComponent((req.url ?? '/').split('?')[0])
     const [, top, ...rest] = url.split('/')

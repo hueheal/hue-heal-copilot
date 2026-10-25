@@ -1,8 +1,8 @@
 // ============================================================================
 // The three post families, one per brand, as HTML slides at 1080 x 1350.
 // Each follows the style its own brand chat defined:
-//   Hue & Heal   the Hue & Heal Brand Figma (qDrGcT3SPOrIuEiVaiBw0E, 170:1124): warm
-//                cinematic photos, Ivy Ora with italic, tracked eyebrows, halos on black
+//   Hue & Heal   the new website's type and colour (Newsreader and Poppins, the screen's
+//                near black, the room halos) on the Brand Figma's post structures
 //   Remedae      the Remedae Instagram system (docs/remedae-social-system.md,
 //                src/lib/social/remedae.ts): forest ground, Quando headlines with one
 //                mint *phrase*, Poppins, one cue ending in ›, the mark bottom-left
@@ -24,7 +24,6 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const hl = (s, open, close) => esc(s).replace(/\*([^*]+)\*/g, `${open}$1${close}`)
 const plain = (s) => esc(String(s ?? '').replace(/\*/g, ''))
 
-const TYPEKIT = '<link rel="stylesheet" href="https://use.typekit.net/oeh6lcv.css">'
 const FONTS = 'https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..500;1,6..72,200..500&family=Poppins:wght@300;400;500;600;700&family=Quando&display=block'
 /* Shrinks any [data-fit] element until it fits its max height, so long titles never spill. */
 const FIT = `<script>
@@ -36,78 +35,180 @@ document.fonts.ready.then(() => {
   document.body.dataset.ready = '1'
 })
 </script>`
-const page = (css, body, bg) => `<!doctype html><html><head><meta charset="utf-8">${TYPEKIT}<link href="${FONTS}" rel="stylesheet"><style>
+const page = (css, body, bg) => `<!doctype html><html><head><meta charset="utf-8"><link href="${FONTS}" rel="stylesheet"><style>
 *{box-sizing:border-box;margin:0;padding:0}html,body{width:1080px;height:1350px;overflow:hidden}
 body{position:relative;background:${bg}}${css}</style></head><body>${body}${FIT}</body></html>`
 
 /* ---------------------------------------------------------------- Hue & Heal */
-// From the Hue & Heal Brand Figma (file qDrGcT3SPOrIuEiVaiBw0E, frame 170:1124):
-// warm, cinematic full-bleed photography fading to near black; a tiny tracked
-// eyebrow at the top; a centred stack of a small Poppins line, a large light
-// Ivy Ora title that mixes roman and *italic*, and a glass pill; "Swipe to see
-// how" in Ivy Ora italic at the foot; closing and pause slides on black with a
-// glowing halo. Ivy Ora comes from the studio's Adobe Fonts kit (it loads on
-// localhost, which is why the slides are served rather than opened as files).
-const HH = { ground: '#0a0908', ink: '#F4F0E7', mute: 'rgba(244,240,231,.82)', faint: 'rgba(244,240,231,.62)' }
-const HALO = { studio: '#d98a6c', lab: '#8db59c', mind: '#aeb2da' }
+// Set from the new website (hueandheal.com: src/styles/global.css, docs/COLOUR-SYSTEM.md,
+// the Halo cards of the Design Your Next Chapter deck) and laid out on the post
+// structures of the Hue & Heal Brand Figma (qDrGcT3SPOrIuEiVaiBw0E, 170:1124):
+// cinematic photos fading to the screen's near black, a tracked eyebrow, a centred
+// stack, a glass pill, "Swipe to see how", the halo ring on black for pauses and
+// labelled "Experience:" lines on example slides.
+// Two voices, as on the site: Newsreader (variable, opsz) for every title, lede and
+// cue; Poppins for body copy and small text. The font files are the site's own
+// (@fontsource 5.3, OFL), served by render.mjs from ./hh. The type system, one
+// 1.25 scale on a 34px base, is documented in TYPE-SYSTEM.md beside the concepts.
+const HH = {
+  ground: '#07080b',            // the Halo card black (site .hh-card); the photo fades end here
+  ink: '#ece7dd',               // --screen, primary type
+  ink2: 'rgba(236,231,221,.86)', // body over photography
+  mute: '#a9a398',              // --mute, secondary type (8.1:1)
+  em: '#fff8ef',                // the emphasis on a photograph (site .ah__title em)
+  sig: 'linear-gradient(95deg,#f2a98e 0%,#d49bc9 50%,#9fb6ee 100%)', // --em, the signature word on dark
+  k: '#c7b9e6',                 // --k, the site's label colour when no room is named
+}
+/* The three rooms, from the site's halo tokens: accent (type safe), depth, complement. */
+const ROOMS = {
+  studio: { a: '#d98a6c', d: '#9c4a2f', c: '#a3a88c', lock: 'hue-heal-studio.svg' },
+  lab: { a: '#8db59c', d: '#2f6a52', c: '#b58a71', lock: 'hue-heal-lab.svg' },
+  mind: { a: '#aeb2da', d: '#76789d', c: '#dabfb4', lock: 'hue-heal-mind.svg' },
+}
 const HH_MARK = readFileSync(join(here, 'hh-wordmark.txt'), 'utf8').trim()
-const hhWordmark = (h, c = HH.ink) => `<svg viewBox="0 0 549 107" style="height:${h}px;width:${Math.round(h * 549 / 107)}px;display:block;margin:0 auto" fill="${c}"><path d="${HH_MARK}"/></svg>`
-const HH_CSS = `body{color:${HH.ink};font-family:Poppins,sans-serif;font-weight:300}
-.ivy{font-family:'ivyora-display','Newsreader',Georgia,serif;font-weight:300;letter-spacing:-.01em}
-.ivy em{font-style:italic}
-.ey{position:absolute;left:0;right:0;top:62px;text-align:center;font-weight:400;font-size:22px;letter-spacing:.32em;text-transform:uppercase;color:${HH.mute}}
+const lockup = (room) => {
+  try { const svg = readFileSync(join(here, 'hh', ROOMS[room].lock), 'utf8'); return { d: svg.match(/ d="([^"]+)"/)[1], vb: svg.match(/viewBox="([^"]+)"/)[1] } } catch { return null }
+}
+const LOCKS = Object.fromEntries(Object.keys(ROOMS).map((r) => [r, lockup(r)]))
+/** The wordmark, or the room's own lockup (hue&heal: Studio) when the room is known. */
+const hhWordmark = (h, room, c = HH.ink) => {
+  const l = room && LOCKS[room]
+  const vb = l ? l.vb : '0 0 549 107'
+  const [, , w, vh] = vb.split(' ').map(Number)
+  return `<svg viewBox="${vb}" style="height:${Math.round((h * vh) / 107)}px;width:${Math.round((h * w) / 107)}px;display:block;margin:0 auto" fill="${c}"><path d="${l ? l.d : HH_MARK}"/></svg>`
+}
+/** Which room a slide belongs to: kicker studio|lab|mind on pause, statement and close, else read from the eyebrow. */
+function roomOf(s) {
+  const k = String(s.kicker || '').trim().toLowerCase()
+  if (ROOMS[k]) return k
+  const e = String(s.eyebrow || '').toLowerCase()
+  if (/coach|mind|chapter|creativ/.test(e)) return 'mind'
+  if (/\blab\b|remedae|moss island|product/.test(e)) return 'lab'
+  if (/experience design|studio|founder|wellness design|hospitality|guest|spa|hotel/.test(e)) return 'studio'
+  return ''
+}
+const F = '/hh/fonts/'
+const HH_CSS = `
+@font-face{font-family:'HH Serif';src:url(${F}newsreader-latin-opsz-normal.woff2) format('woff2');font-weight:200 800;font-style:normal;font-display:block}
+@font-face{font-family:'HH Serif';src:url(${F}newsreader-latin-opsz-italic.woff2) format('woff2');font-weight:200 800;font-style:italic;font-display:block}
+${[300, 400, 500, 600].map((w) => `@font-face{font-family:'HH Sans';src:url(${F}poppins-latin-${w}-normal.woff2) format('woff2');font-weight:${w};font-display:block}`).join('\n')}
+body{color:${HH.ink};font-family:'HH Sans',Poppins,sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;font-kerning:normal}
+/* ---- The scale: 1.25 on 36px. 29 36 45 56 70 88 110 138 172 ---- */
+.ey{position:absolute;left:80px;right:80px;top:68px;text-align:center;font-weight:500;font-size:26px;line-height:1.3;letter-spacing:.24em;text-transform:uppercase;color:rgba(236,231,221,.8);text-wrap:balance}
+.kick{font-weight:500;font-size:45px;line-height:1.2;letter-spacing:-.005em}
+.d{font-family:'HH Serif',serif;font-weight:300;font-variation-settings:'opsz' 72;text-wrap:balance;padding-bottom:.08em;margin-bottom:-.08em}
+.d em{font-style:italic;font-weight:300;padding-right:.04em}
+.xl{font-size:172px;line-height:.94;letter-spacing:-.032em}
+.l{font-size:110px;line-height:.98;letter-spacing:-.026em}
+.m{font-size:88px;line-height:1.04;letter-spacing:-.02em}
+.lede{font-family:'HH Serif',serif;font-weight:350;font-variation-settings:'opsz' 36;font-size:45px;line-height:1.28;letter-spacing:-.01em;text-wrap:pretty}
+.body{font-weight:300;font-size:36px;line-height:1.5;letter-spacing:-.005em;color:${HH.ink2};text-wrap:pretty}
+.lbl{font-weight:500;color:var(--a);letter-spacing:.005em}
+.cue{position:absolute;left:0;right:0;bottom:62px;display:flex;justify-content:center;align-items:center;gap:18px;font-family:'HH Serif',serif;font-style:italic;font-weight:300;font-variation-settings:'opsz' 36;font-size:36px;line-height:1;color:rgba(236,231,221,.8)}
+.cue i{position:relative;width:54px;height:1.5px;background:currentColor;top:2px}
+.cue i::after{content:'';position:absolute;right:0;top:-5px;width:11px;height:11px;border-top:1.5px solid currentColor;border-right:1.5px solid currentColor;transform:rotate(45deg)}
+.pill{display:inline-block;padding:16px 36px 18px;border-radius:999px;font-weight:500;font-size:29px;line-height:1.2;letter-spacing:.005em;color:${HH.ink};
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04)),rgba(8,9,12,.34);backdrop-filter:blur(28px) saturate(1.35);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.2),inset 0 1.5px 0 rgba(255,255,255,.3),0 30px 60px -30px rgba(0,0,0,.6)}
+.cta{font-weight:500;font-size:36px;line-height:1.3;color:var(--a);letter-spacing:.005em}
+/* ---- Grounds ---- */
 .photo{position:absolute;inset:0;background-size:cover;background-position:center}
-.fade::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,9,8,.42) 0%,rgba(10,9,8,0) 22%,rgba(10,9,8,0) 42%,rgba(10,9,8,.78) 72%,rgba(10,9,8,.94) 100%)}
-.stack{position:absolute;left:70px;right:70px;text-align:center}
-.pill{display:inline-block;padding:10px 30px;border-radius:999px;background:rgba(244,240,231,.16);border:1px solid rgba(244,240,231,.3);backdrop-filter:blur(8px);font-family:'ivyora-display','Newsreader',serif;font-style:italic;font-size:32px}
-.swipe{position:absolute;left:0;right:0;bottom:64px;text-align:center;font-family:'ivyora-display','Newsreader',serif;font-style:italic;font-size:30px;color:${HH.mute}}
-.lbl{font-weight:600;color:${HH.ink}}
-.glow{position:absolute;left:50%;top:50%;width:900px;height:900px;transform:translate(-50%,-52%);border-radius:50%;background:radial-gradient(closest-side,rgba(217,138,108,.34),rgba(217,138,108,.1) 55%,transparent 75%)}
-.ring{position:absolute;left:50%;top:50%;width:620px;height:620px;transform:translate(-50%,-55%);border-radius:50%;background:radial-gradient(closest-side,${HH.ground} 72%,var(--h) 80%,color-mix(in oklab,var(--h) 35%,transparent) 88%,transparent 100%)}`
-const ivy = (t) => hl(t, '<em>', '</em>')
-const hhEyebrow = (t) => (t ? `<p class="ey">${plain(t)}</p>` : '')
-const hhSwipe = (t) => (t ? `<p class="swipe">${plain(t).replace(/\s*(-+>|⟶|→)\s*$/, '')}  ⟶</p>` : '')
-const haloOf = (k) => HALO[String(k || '').toLowerCase()] ?? HALO.studio
+.photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,8,11,.6) 0px,rgba(7,8,11,0) 240px,rgba(7,8,11,0) calc(var(--t,760px) - 340px),rgba(7,8,11,.5) calc(var(--t,760px) - 130px),rgba(7,8,11,.82) calc(var(--t,760px) + 60px),rgba(7,8,11,.94) calc(var(--t,760px) + 280px),${HH.ground} 100%)}
+.on-photo{text-shadow:0 0 26px rgba(5,6,8,.6),0 0 3px rgba(5,6,8,.4)}
+.on-photo .d em{color:${HH.em}}
+.on-dark .d em{background:${HH.sig};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+/* The room mist (site .halo), still: main, depth and complement in soft light. */
+.mist{position:absolute;left:50%;top:var(--y,46%);width:1400px;height:1400px;transform:translate(-50%,-50%);filter:blur(36px) saturate(1.05);opacity:.9;
+  background:radial-gradient(30% 24% at 40% 58%,color-mix(in oklab,var(--a) 40%,transparent),transparent 70%),radial-gradient(26% 28% at 62% 50%,color-mix(in oklab,var(--dd) 46%,transparent),transparent 72%),radial-gradient(22% 16% at 52% 68%,color-mix(in oklab,var(--c) 12%,transparent),transparent 70%)}
+/* The halo ring of the Halo cards: a dark centre with light gathering at its edge. */
+.ring{position:absolute;left:50%;top:var(--y,47%);width:var(--w,1000px);aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(closest-side,${HH.ground} 56%,color-mix(in oklab,var(--a) 45%,${HH.ground}) 60%,color-mix(in oklab,var(--a) 80%,${HH.ground}) 64.5%,color-mix(in oklab,var(--a) 45%,${HH.ground}) 75%,color-mix(in oklab,var(--a) 14%,${HH.ground}) 88%,${HH.ground} 100%)}
+.stack{position:absolute;left:80px;right:80px;text-align:center}
+.stack > *{margin-left:auto;margin-right:auto}
+.left{position:absolute;left:80px;right:80px;text-align:left}
+`
+/* A fit that keeps a role's size unless the copy is long: steps down to a floor until the
+   block fits its height and no word overflows the measure. It runs before the shared FIT. */
+const HH_FIT = `<script>
+for (const f of ['300 100px "HH Serif"', 'italic 300 100px "HH Serif"', '350 40px "HH Serif"', '300 34px "HH Sans"', '500 34px "HH Sans"']) document.fonts.load(f)
+document.fonts.ready.then(() => {
+  for (const el of document.querySelectorAll('[data-hh]')) {
+    const [maxH, min] = el.dataset.hh.split(',').map(Number)
+    let fs = parseFloat(getComputedStyle(el).fontSize)
+    const over = () => el.scrollHeight > maxH + 2 || el.scrollWidth > el.clientWidth + fs * 0.15
+    while (over() && fs > min) { fs = Math.max(min, fs * 0.96); el.style.fontSize = fs.toFixed(1) + 'px' }
+    // A short title that breaks onto a second line for one word is drawn back onto one line,
+    // if that costs no more than an eighth of its size.
+    if (el.hasAttribute('data-one')) {
+      const lh = () => parseFloat(getComputedStyle(el).lineHeight), base = fs
+      if (el.getBoundingClientRect().height > lh() * 1.6 && el.getBoundingClientRect().height < lh() * 2.6) {
+        let f = base
+        while (f > base * 0.875 && el.getBoundingClientRect().height > lh() * 1.6) { f -= 1; el.style.fontSize = f + 'px' }
+        if (el.getBoundingClientRect().height > lh() * 1.6) el.style.fontSize = base + 'px'
+      }
+    }
+  }
+  // The photo darkens just above where the words begin, so a tall stack is never left on bare photograph.
+  const txt = document.querySelector('[data-text]'), ph = document.querySelector('.photo')
+  if (txt && ph) ph.style.setProperty('--t', Math.round(txt.getBoundingClientRect().top) + 'px')
+})
+</script>`
+/* Typographer's quotes: ' becomes ’ and "x" becomes “x”. */
+const curly = (t) => String(t ?? '').replace(/(^|[\s(])"/g, '$1\u201c').replace(/"/g, '\u201d').replace(/(^|[\s(])'/g, '$1\u2018').replace(/'/g, '\u2019')
+const em = (t) => hl(curly(t), '<em>', '</em>')
+const txt = (t) => plain(curly(t))
+const hhEyebrow = (t) => (t ? `<p class="ey">${txt(t)}</p>` : '')
+const hhCue = (t) => (t ? `<p class="cue on-photo"><span>${txt(t).replace(/\s*(-+>|⟶|→|›)\s*$/, '')}</span><i></i></p>` : '')
+const BOTTOM = 156 // every photo slide's stack ends on this line, above the cue
 
 function hhSlide(s, ctx) {
-  // The cover takes the post's photo; other slides only their own, else the warm glow.
+  const room = roomOf(s)
+  const R = ROOMS[room] ?? { a: HH.k, d: '#76789d', c: '#f2a98e' }
+  const vars = `--a:${R.a};--dd:${R.d};--c:${R.c}`
+  // The cover takes the post's photo; other slides only their own.
   const photo = s.image_url || (s.kind === 'cover' ? ctx.photo : '')
-  const bg = photo ? `<div class="photo fade" style="background-image:url('${photo}')"></div>` : '<div class="glow"></div>'
+  const bg = () => (photo ? `<div class="photo" style="background-image:url('${photo}')"></div>` : `<div class="mist" style="--y:50%"></div>`)
+  const tone = photo ? 'on-photo' : 'on-dark'
+  const wrap = (inner) => `<div style="position:absolute;inset:0;${vars}">${inner}</div>${HH_FIT}`
   switch (s.kind) {
     case 'cover':
-      // The series cover: eyebrow, small line, the big Ivy Ora title, a line, a pill, swipe.
-      return `${bg}${hhEyebrow(s.eyebrow)}<div class="stack" style="bottom:${s.cta ? 150 : 110}px">
-        ${s.kicker ? `<p style="font-size:42px;font-weight:400;margin-bottom:8px">${plain(s.kicker)}</p>` : ''}
-        <h1 class="ivy" data-fit="400" style="font-size:150px;line-height:1">${ivy(s.title)}</h1>
-        ${s.body ? `<p style="font-size:38px;font-weight:500;margin-top:30px">${plain(s.body)}</p>` : ''}
-        ${s.note ? `<p style="margin-top:24px"><span class="pill">${plain(s.note)}</span></p>` : ''}</div>${hhSwipe(s.cta)}`
+      // The series cover: eyebrow; kicker, the title, its tail; a glass pill; the cue.
+      return wrap(`${bg()}${hhEyebrow(s.eyebrow)}<div class="stack ${tone}" data-text style="bottom:${BOTTOM}px">
+        ${s.kicker ? `<p class="kick" style="margin-bottom:10px">${txt(s.kicker)}</p>` : ''}
+        <h1 class="d xl" data-hh="360,104" data-one style="max-width:920px">${em(s.title)}</h1>
+        ${s.body ? `<p class="kick" style="margin-top:12px">${txt(s.body)}</p>` : ''}
+        ${s.note ? `<p style="margin-top:40px"><span class="pill">${txt(s.note)}</span></p>` : ''}</div>${hhCue(s.cta)}`)
     case 'feature': {
-      // One example, named: the photo, its name in Ivy Ora, then labelled lines.
-      const rows = (s.items ?? []).slice(0, 3).map((it) => `<p style="font-size:27px;line-height:1.5;margin-top:18px"><span class="lbl">${plain(it.title)}</span> ${plain(it.text)}</p>`).join('')
-      return `${bg}${hhEyebrow(s.eyebrow)}<div style="position:absolute;left:72px;right:72px;bottom:92px">
-        <h2 class="ivy" data-fit="200" style="font-size:96px;line-height:1">${ivy(s.title)}</h2>
-        ${s.body ? `<p style="font-size:27px;line-height:1.5;margin-top:18px;color:${HH.mute}">${plain(s.body)}</p>` : ''}${rows}</div>`
+      // One named example: its photo, its name, then labelled lines.
+      const rows = (s.items ?? []).slice(0, 3).map((it) => `<p class="body" style="margin-top:.65em;font-size:inherit"><span class="lbl">${txt(it.title)}</span> ${txt(it.text)}</p>`).join('')
+      return wrap(`${bg()}${hhEyebrow(s.eyebrow)}<div class="left ${tone}" data-text style="bottom:${BOTTOM}px">
+        ${s.kicker ? `<p class="lbl" style="font-size:36px;margin-bottom:14px">${txt(s.kicker)}</p>` : ''}
+        <h2 class="d l" data-hh="214,78" data-one style="max-width:920px">${em(s.title)}</h2>
+        ${s.body ? `<p class="lede" style="margin-top:22px;color:${HH.ink2}">${txt(s.body)}</p>` : ''}
+        <div data-hh="440,30" style="margin-top:8px;font-size:36px;max-width:900px">${rows}</div></div>${hhCue(s.cta)}`)
     }
     case 'tip':
-      // One idea in a series: the eyebrow names the series, a centred title and three short lines.
-      return `${bg}${hhEyebrow(s.eyebrow)}<div class="stack" style="bottom:96px">
-        <h2 class="ivy" data-fit="230" style="font-size:100px;line-height:.98">${ivy(s.title)}</h2>
-        <p data-fit="190" style="font-size:28px;line-height:1.55;margin-top:22px;color:${HH.mute};white-space:pre-line">${plain(s.body)}</p></div>`
+      // One idea in a series: a centred title and three short lines.
+      return wrap(`${bg()}${hhEyebrow(s.eyebrow)}<div class="stack ${tone}" data-text style="bottom:${BOTTOM}px">
+        <h2 class="d l" data-hh="230,80" data-one style="max-width:920px">${em(s.title)}</h2>
+        <p class="body" data-hh="230,30" style="margin-top:30px;max-width:840px;white-space:pre-line">${txt(s.body)}</p></div>${hhCue(s.cta)}`)
     case 'pause':
-      // The coaching pause: a word inside a glowing ring, on black.
-      return `${hhEyebrow(s.eyebrow)}<div class="ring" style="--h:${haloOf(s.kicker || 'lab')};display:grid;place-items:center">
-        <h2 class="ivy" data-fit="260" style="font-size:${s.title.length > 10 ? 96 : 130}px;line-height:1;text-align:center;max-width:470px">${ivy(s.title)}</h2></div>
-        ${s.body ? `<div class="stack" style="bottom:150px"><p style="font-size:28px;line-height:1.55;color:${HH.mute}">${plain(s.body)}</p></div>` : ''}`
+      // The coaching pause, set like the Halo cards: the word in the ring's dark centre, a prompt beneath it.
+      return wrap(`<div class="ring"></div>${hhEyebrow(s.eyebrow)}
+        <div class="stack" style="top:47%;transform:translateY(-50%)">
+          <h2 class="d" data-hh="240,90" style="font-size:138px;line-height:1;letter-spacing:-.03em;max-width:560px">${em(s.title)}</h2>
+          ${s.body ? `<p class="lede" data-hh="180,36" style="margin-top:34px;max-width:500px;color:${HH.mute};text-wrap:balance">${txt(s.body)}</p>` : ''}</div>`)
     case 'statement':
-      return `${bg}${hhEyebrow(s.eyebrow)}<div class="stack" style="top:50%;transform:translateY(-50%)">
-        <h2 class="ivy" data-fit="640" style="font-size:96px;line-height:1.04">${ivy(s.title)}</h2>
-        ${s.body ? `<p style="font-size:30px;line-height:1.55;margin-top:30px;color:${HH.mute}">${plain(s.body)}</p>` : ''}</div>${hhSwipe(s.cta)}`
-    default: // close: the question or the call, on black with a warm glow, the wordmark below
-      return `<div class="glow"></div>${hhEyebrow(s.eyebrow)}<div class="stack" style="top:50%;transform:translateY(-58%)">
-        <h2 class="ivy" data-fit="420" style="font-size:96px;line-height:1.04">${ivy(s.title)}</h2>
-        ${s.body ? `<p style="font-size:30px;line-height:1.55;margin-top:30px;color:${HH.mute}">${plain(s.body)}</p>` : ''}
-        ${s.cta ? `<p style="font-size:28px;margin-top:26px;color:${HH.faint}">${plain(s.cta)}</p>` : ''}</div>
-        <div style="position:absolute;left:0;right:0;bottom:120px">${hhWordmark(46)}</div>`
+      // A line set large: over its own photo at the foot, or on the room's light, centred.
+      return wrap(`${bg()}${hhEyebrow(s.eyebrow)}<div class="stack ${tone}" data-text style="${photo ? `bottom:${BOTTOM}px` : 'top:50%;transform:translateY(-50%)'}">
+        <h2 class="d l" data-hh="${photo ? 520 : 640},66" style="max-width:900px">${em(s.title)}</h2>
+        ${s.body ? `<p class="lede" style="margin-top:34px;max-width:820px;color:${photo ? HH.ink2 : HH.mute}">${txt(s.body)}</p>` : ''}</div>${hhCue(s.cta)}`)
+    default: // close: the question or the call, on the room's light, the lockup below
+      return wrap(`<div class="mist" style="--y:44%"></div>${hhEyebrow(s.eyebrow)}<div class="stack on-dark" style="top:45%;transform:translateY(-50%)">
+        <h2 class="d m" data-hh="440,62" style="max-width:900px">${em(s.title)}</h2>
+        ${s.body ? `<p class="lede" style="margin-top:34px;max-width:760px;color:${HH.mute}">${txt(s.body)}</p>` : ''}
+        ${s.cta ? `<p class="cta" style="margin-top:40px">${txt(s.cta)}</p>` : ''}</div>
+        <div style="position:absolute;left:0;right:0;bottom:96px">${hhWordmark(44, room)}</div>`)
   }
 }
 
