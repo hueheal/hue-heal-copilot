@@ -7,9 +7,18 @@
 // periwinkle for coaching.
 // ============================================================================
 
+/** One designed slide, in its brand's post family (scripts/post-render/brands.mjs). */
+export interface DigestSlide {
+  kind: string; eyebrow: string; kicker: string; title: string; body: string; note: string
+  items: { title: string; text: string }[]; quest_id: string; cta: string
+  /** A slide's own photo (Hue & Heal features and tips, Remedae remedies). */
+  image_prompt?: string; image_url?: string
+}
 export interface DigestPost {
   company: string; format: string; headline: string; caption: string; hashtags: string[]
-  slides: { heading: string; body: string }[]; image_url?: string | null; post_id?: string | null; why?: string
+  slides: DigestSlide[]; image_url?: string | null; post_id?: string | null; why?: string
+  /** The rendered slides (JPEG), once the Mac has drawn them. */
+  slide_urls?: string[]
 }
 export interface DigestContent {
   date: string; dateLong: string; headline: string; opening: string
@@ -21,7 +30,12 @@ export interface DigestContent {
   next_steps: { company: string; title: string; detail: string; by: string; carried?: boolean }[]
   overdue: { company: string; title: string; due: string }[]
   question: string
+  /** Friday: next week's proposed plan, to shape in Copilot. */
+  plan?: { week_start: string; summary: string; items: PlanLine[]; status: string }
+  /** Monday: this week's plan, now in action. */
+  week?: { week_start: string; summary: string; items: PlanLine[]; status: string; auto: boolean }
 }
+export interface PlanLine { day: string; company: string; channel: string; format: string; topic: string; angle: string }
 
 const C = { ground: '#0b0d12', card: '#141821', ink: '#ece7dd', mute: '#b3ada2', faint: '#8a857c', rule: 'rgba(236,231,221,0.14)' }
 const HUE: Record<string, string> = { 'Hue & Heal': '#d98a6c', Remedae: '#8db59c', 'Moss Island': '#7fb8bd', coaching: '#aeb2da', Industry: '#8a857c' }
@@ -132,17 +146,24 @@ export function digestEmail(d: DigestContent, opts: { base: string; appUrl: stri
   if (d.posts.length) {
     rows.push(`<tr><td class="px" style="padding:26px 40px 4px">${label('Ready to post')}${h2('One for each channel')}${p('Each one is saved as a draft in Copilot. Open it to check the slides, change anything, then post.', 'mute', C.mute, 15, 4)}</td></tr>`)
     for (const post of d.posts) {
-      const href = post.post_id ? `${app}/create/social/${post.post_id}` : `${app}/create`
-      const fmt = post.format === 'carousel' ? `Carousel, ${post.slides.length} slides` : post.format === 'video' ? 'Reel' : 'Single image'
+      const href = post.post_id ? `${app}/v2/post/${post.post_id}` : `${app}/create`
+      const fmt = post.format === 'carousel' ? `Carousel, ${(post.slide_urls?.length || post.slides.length)} slides` : post.format === 'video' ? 'Reel' : 'Single image'
       // Long captions stop at the last full sentence; the studio has the rest.
       const head = post.caption.slice(0, 460)
       const stop = Math.max(head.lastIndexOf('. '), head.lastIndexOf('.\n'), head.lastIndexOf('? '), head.lastIndexOf('?\n'))
       const caption = post.caption.length <= 460 ? post.caption : `${stop > 160 ? head.slice(0, stop + 1) : `${head.replace(/\s+\S*$/, '')}…`}`
-      const slides = post.slides.length && post.format !== 'single'
-        ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 14px">${post.slides.map((s, i) => `<tr><td valign="top" width="26" class="faint" style="padding:5px 0;font-family:${SANS};font-size:12px;color:${C.faint}">${i + 1}</td><td class="mute" style="padding:5px 0;font-family:${SANS};font-weight:300;font-size:14px;line-height:1.5;color:${C.mute}"><span class="ink" style="color:${C.ink};font-weight:500">${esc(s.heading)}</span>${s.body ? ` ${esc(s.body)}` : ''}</td></tr>`).join('')}</table>`
+      const designed = post.slide_urls ?? []
+      // Designed slides when the Mac has drawn them: the cover large, the rest
+      // as a strip. Otherwise the cover photo and the slide titles as text.
+      const strip = designed.length > 1
+        ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px"><tr>${designed.slice(1, 5).map((u) => `<td width="25%" valign="top" style="padding:0 4px 0 0"><a href="${esc(href)}"><img src="${esc(u)}" width="112" alt="" style="display:block;width:100%;height:auto;border:0;border-radius:8px"></a></td>`).join('')}${'<td width="25%"></td>'.repeat(Math.max(0, 4 - designed.slice(1, 5).length))}</tr></table>${designed.length > 5 ? p(`and ${designed.length - 5} more`, 'faint', C.faint, 12, 14) : ''}`
         : ''
-      const img = post.image_url
-        ? `<a href="${esc(href)}" style="display:block;margin:0 0 18px"><img src="${esc(post.image_url)}" width="472" alt="${esc(post.headline)}" style="display:block;width:100%;max-width:472px;height:auto;border:0;border-radius:14px"></a>`
+      const slides = !designed.length && post.slides.length > 1
+        ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 14px">${post.slides.map((s, i) => `<tr><td valign="top" width="26" class="faint" style="padding:5px 0;font-family:${SANS};font-size:12px;color:${C.faint}">${i + 1}</td><td class="mute" style="padding:5px 0;font-family:${SANS};font-weight:300;font-size:14px;line-height:1.5;color:${C.mute}"><span class="ink" style="color:${C.ink};font-weight:500">${esc(s.title.replace(/\*/g, ''))}</span>${s.body ? ` ${esc(s.body)}` : ''}</td></tr>`).join('')}</table>`
+        : ''
+      const cover = designed[0] ?? post.image_url
+      const img = cover
+        ? `<a href="${esc(href)}" style="display:block;margin:0 0 ${strip ? 8 : 18}px"><img src="${esc(cover)}" width="472" alt="${esc(post.headline)}" style="display:block;width:100%;max-width:472px;height:auto;border:0;border-radius:14px"></a>${strip}`
         : ''
       rows.push(`<tr><td class="px" style="padding:16px 40px 8px">${card(`
         ${img}
@@ -170,6 +191,32 @@ export function digestEmail(d: DigestContent, opts: { base: string; appUrl: stri
       ${c.apply ? `${label('For you')}${p(nl(c.apply), 'mute', C.mute, 15)}` : ''}
       ${card(`${label('Today\'s drill  ·  15 minutes', HUE.coaching, '')}${p(nl(c.drill), 'ink', C.ink, 15)}`, '20px 22px 4px')}
       ${c.term?.word ? `<div style="height:18px;line-height:18px">&nbsp;</div>${label('Word to own')}<p class="ink" style="margin:0 0 6px;font-family:${SERIF};font-size:22px;line-height:1.2;color:${C.ink}">${esc(c.term.word)}</p>${p(esc(c.term.meaning), 'mute', C.mute, 15)}` : ''}
+    </td></tr>`)
+    rows.push(rule())
+  }
+
+  // The week's plan: proposed on Friday, in action from Monday.
+  const planBlock = (items: PlanLine[]) => {
+    const days = [...new Set(items.map((i) => i.day))].sort()
+    return days.map((day) => `<tr><td style="padding:14px 0 4px;border-top:1px solid ${C.rule}" class="rule">
+        <p class="faint" style="margin:0 0 6px;font-family:${SANS};font-weight:500;font-size:12px;letter-spacing:.4px;text-transform:uppercase;color:${C.faint}">${esc(new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${day}T12:00:00Z`)))}</p>
+        ${items.filter((i) => i.day === day).map((i) => `<p class="mute" style="margin:0 0 6px;font-family:${SANS};font-weight:300;font-size:14px;line-height:1.5;color:${C.mute}">${dot(i.company)}<span class="ink" style="color:${C.ink};font-weight:500">${esc(i.topic)}</span> &nbsp;<span class="faint" style="color:${C.faint}">${esc(i.channel === 'instagram' ? i.format || 'post' : i.channel === 'journal' ? 'Journal' : 'Newsletter')}</span></p>`).join('')}
+      </td></tr>`).join('')
+  }
+  if (d.plan?.items.length) {
+    rows.push(`<tr><td class="px" style="padding:26px 40px 6px">${label('Planning day', HUE['Hue & Heal'], '')}${h2('Next week, proposed')}
+      ${d.plan.summary ? p(esc(d.plan.summary), 'mute', C.mute, 15) : ''}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${planBlock(d.plan.items)}</table>
+      <div style="padding:20px 0 6px">${button('Shape and approve the plan', `${app}/v2/week`)}</div>
+      ${p('Keep, drop or change anything, add your notes, or ask for a rework. Not approved by Monday morning, it runs as proposed.', 'faint', C.faint, 13, 0)}
+    </td></tr>`)
+    rows.push(rule())
+  }
+  if (d.week?.items.length) {
+    rows.push(`<tr><td class="px" style="padding:26px 40px 6px">${label('Action mode', HUE['Hue & Heal'], '')}${h2('This week')}
+      ${p(d.week.auto ? 'You did not shape the plan on Friday, so it runs as proposed. Change it any time in Copilot.' : 'The plan you approved. Today\'s posts above follow it.', 'mute', C.mute, 15)}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${planBlock(d.week.items)}</table>
+      <div style="padding:16px 0 4px">${textLink('Open the week', `${app}/v2/week`)}</div>
     </td></tr>`)
     rows.push(rule())
   }
@@ -226,7 +273,7 @@ ${rows.join('\n')}
     `Founder's Digest, ${d.dateLong}`, '', d.headline, '', d.opening, '',
     "TODAY'S THREE", ...d.priorities.map((x, i) => `${i + 1}. [${x.company}] ${x.text}${x.by ? ` (by ${byLabel(x.by, d.date)})` : ''}`), '',
     'IN THE INDUSTRY', ...d.news.map((n) => `- ${n.title} (${n.source}) ${n.url}\n  ${n.snippet}\n  ${n.so_what}`), '',
-    'READY TO POST', ...d.posts.map((x) => `- ${x.company}: ${x.headline}\n  ${x.post_id ? `${app}/create/social/${x.post_id}` : ''}`), '',
+    'READY TO POST', ...d.posts.map((x) => `- ${x.company}: ${x.headline}\n  ${x.post_id ? `${app}/v2/post/${x.post_id}` : ''}`), '',
     `FOUNDER COACHING: ${c?.title ?? ''}`, c?.principle ?? '', c?.lesson ?? '', `Drill: ${c?.drill ?? ''}`, '',
     'NEXT STEPS', ...d.next_steps.map((s) => `- [${s.company}] ${s.title} (by ${byLabel(s.by, d.date)})`), '',
     d.question,

@@ -205,6 +205,25 @@ async function call<T>(fn: string, body: unknown): Promise<T & { error?: string 
 
 export type EmailEdits = { to?: string; subject?: string; body?: string }
 
+/* ---- The weekly content plan ---- */
+export interface PlanItem {
+  id: string; day: string; company: string; channel: 'instagram' | 'journal' | 'newsletter'; format: string
+  topic: string; angle: string; why_now: string; pillar: string; sources: { title: string; url: string }[]; keep: boolean
+}
+export interface ContentPlan { id: string; week_start: string; status: 'proposed' | 'approved'; summary: string | null; items: PlanItem[]; input: string | null; auto_approved: boolean; updated_at: string }
+export async function listPlans(): Promise<ContentPlan[]> {
+  if (!live) return []
+  const { data } = await db().from('content_plans' as never).select('id, week_start, status, summary, items, input, auto_approved, updated_at').order('week_start', { ascending: false }).limit(4)
+  return (data ?? []) as unknown as ContentPlan[]
+}
+export async function savePlan(id: string, patch: Partial<Pick<ContentPlan, 'items' | 'input'>>): Promise<void> {
+  if (!live) return
+  await db().from('content_plans' as never).update({ ...patch, updated_at: new Date().toISOString() } as never).eq('id', id)
+}
+export async function planAction(id: string, action: 'approve' | 'rework', notes?: string): Promise<{ note?: string; items?: PlanItem[]; summary?: string; error?: string }> {
+  return call('founder-digest', { op: 'plan', id, action, notes })
+}
+
 /* ---- The Founder's Digest ---- */
 export async function listDigests(limit = 14): Promise<DigestRow[]> {
   if (!live) return []

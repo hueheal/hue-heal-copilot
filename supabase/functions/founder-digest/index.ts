@@ -14,6 +14,8 @@
 //   filed   a written digest waits to be checked and saved: posts become
 //           drafts, next steps become tasks, the lesson moves on
 //   images  one cover image per post (Higgsfield), uploaded to the studio
+//   render  the Mac draws each post in its brand's design (scripts/post-render);
+//           without it in time, the email goes with the cover photos
 //   send    the email, once the send time has come
 //   sent | failed
 // Each invocation advances a row by one step, so no call outlives the
@@ -22,9 +24,11 @@
 //
 // POST, cron (x-cron-secret): { op: 'tick' }
 //                             { op: 'open_mac' | 'run', owner }  via founder_digest_call()
+//                             { op: 'propose', owner, week_start }  a week's plan now
 // POST, founder (Bearer jwt): { op: 'run' }      write today's now and send it when ready
 //                             { op: 'preview', date? }  the email as HTML
 //                             { op: 'resend', date? }   send that day's again
+//                             { op: 'plan', id, action: 'approve' | 'rework', notes? }  the weekly plan
 // Secrets: ANTHROPIC_API_KEY, CRON_SECRET, RESEND_API_KEY, HIGGSFIELD_KEY, HH_SITE_URL.
 // ============================================================================
 import Anthropic from 'npm:@anthropic-ai/sdk@0.129.0'
@@ -33,8 +37,9 @@ import { corsHeaders, json } from '../_shared/cors.ts'
 import { resendKeyFor } from '../_shared/resend.ts'
 import { submitImage, checkImage, download, hasHiggsfield } from '../_shared/higgsfield.ts'
 import { loadLibrary, composePrompt, referenceFor } from '../_shared/imagery.ts'
-import { digestEmail, type DigestContent, type DigestPost } from '../_shared/digest-email.ts'
+import { digestEmail, type DigestContent, type DigestPost, type DigestSlide } from '../_shared/digest-email.ts'
 import RULES from '../_shared/digest-rules.json' with { type: 'json' }
+import MOSS from '../_shared/moss-quests.json' with { type: 'json' }
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -69,6 +74,40 @@ interface Row {
   send_after: string; force_send: boolean; created_at: string
 }
 const CURRICULUM = RULES.curriculum as { title: string; brief: string }[]
+/* Each brand's post family (rendered on the Mac by scripts/post-render). */
+const KINDS: Record<string, string[]> = {
+  'Hue & Heal': ['cover', 'feature', 'tip', 'pause', 'statement', 'close'],
+  Remedae: ['cover', 'question', 'number', 'remedy', 'glance', 'myth', 'hook', 'statement'],
+  'Moss Island': ['sky', 'scene', 'steps', 'statement', 'quest', 'close'],
+}
+interface MossQuest { id: string; word: string; mins: string; title: string; why: string; steps: string[]; skill: string; home: string }
+interface MossPack { id: string; name: string; kind: string; from: string | null; to: string | null; on: string | null }
+const MOSS_QUESTS = (MOSS as { quests: MossQuest[] }).quests
+const MOSS_PACKS = (MOSS as { packs: MossPack[] }).packs
+const KIND_NAME: Record<string, string> = { MOVE: 'Move', PLAY: 'Play', REST: 'Rest', CARE: 'Care', GROW: 'Grow' }
+
+/** The quests the writer may use today: every quest of a pack that is on now or
+    starts within two weeks, plus a rotating handful from the everyday deck, never
+    the ones recent digests already showed. */
+function mossQuestLines(date: string, used: Set<string>): string[] {
+  const soon = addDays(date, 14)
+  const packs = MOSS_PACKS.filter((p) => p.from && p.to && p.from <= soon && p.to >= date)
+  const lines: string[] = []
+  for (const p of packs) {
+    const qs = MOSS_QUESTS.filter((q) => q.home === p.id && !used.has(q.id))
+    if (!qs.length) continue
+    lines.push(`## ${p.name} (pack ${p.id}, ${p.from} to ${p.to}${p.on ? `, the day is ${p.on}` : ''})`)
+    for (const q of qs.slice(0, 12)) lines.push(`- ${q.id} | ${KIND_NAME[q.word] ?? q.word} | ${q.mins} | ${q.title} | builds ${q.skill}`)
+  }
+  const everyday = MOSS_QUESTS.filter((q) => q.home === 'foundation' && !used.has(q.id))
+  const start = (Number(date.replace(/-/g, '')) * 7) % Math.max(1, everyday.length)
+  lines.push('## Everyday deck (any time)')
+  for (let i = 0; i < 24 && everyday.length; i++) {
+    const q = everyday[(start + i * 17) % everyday.length]
+    lines.push(`- ${q.id} | ${KIND_NAME[q.word] ?? q.word} | ${q.mins} | ${q.title} | builds ${q.skill}`)
+  }
+  return lines
+}
 
 /* ---- Small helpers ---- */
 const cut = (v: unknown, n: number) => String(v ?? '').replace(/[–—]/g, ', ').replace(/[ \t]+/g, ' ').trim().slice(0, n)
@@ -94,6 +133,9 @@ function londonInstant(date: string, minutes: number): Date {
   return new Date(guess.getTime() - fix * 60_000)
 }
 const addDays = (date: string, n: number) => new Date(new Date(`${date}T12:00:00Z`).getTime() + n * 86400000).toISOString().slice(0, 10)
+/** 0 Sunday to 6 Saturday, for a YYYY-MM-DD. */
+const weekday = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay()
+const mondayOf = (date: string) => addDays(date, -((weekday(date) + 6) % 7))
 
 function addUsage(total: Json, model: string, u: Json | undefined): Json {
   if (!u) return total
@@ -115,6 +157,42 @@ async function brandsFor(admin: SupabaseClient, owner: string): Promise<{ id: st
   const { data } = await admin.from('brand_profiles').select('id, name, knowledge').or(`owner.eq.${owner}${ids.length ? `,id.in.(${ids.join(',')})` : ''}`)
   return (data ?? []) as { id: string; name: string; knowledge: Record<string, string> | null }[]
 }
+
+/* ---- The weekly plan: proposed on Friday, shaped by the founder, acted on from Monday ---- */
+export interface PlanItem {
+  id: string; day: string; company: string; channel: 'instagram' | 'journal' | 'newsletter'; format: string
+  topic: string; angle: string; why_now: string; pillar: string; sources: { title: string; url: string }[]; keep: boolean
+}
+interface PlanRow { id: string; owner: string; week_start: string; status: string; summary: string | null; items: PlanItem[]; input: string | null; auto_approved: boolean }
+const CHANNELS = ['instagram', 'journal', 'newsletter']
+
+function cleanPlan(items: Json[], weekStart: string): PlanItem[] {
+  const days = [0, 1, 2, 3, 4, 5, 6].map((n) => addDays(weekStart, n))
+  return items.slice(0, 40).map((it) => ({
+    id: crypto.randomUUID().slice(0, 8),
+    day: days.includes(String(it.day)) ? String(it.day) : weekStart,
+    company: (COMPANIES as readonly string[]).includes(String(it.company)) ? String(it.company) : 'Hue & Heal',
+    channel: (CHANNELS.includes(String(it.channel)) ? String(it.channel) : 'instagram') as PlanItem['channel'],
+    format: flat(it.format, 40), topic: flat(it.topic, 160), angle: flat(it.angle, 260), why_now: flat(it.why_now, 260), pillar: flat(it.pillar, 80),
+    sources: ((it.sources ?? []) as Json[]).filter((x) => /^https?:\/\//.test(String(x.url))).slice(0, 3).map((x) => ({ title: flat(x.title, 120), url: String(x.url).slice(0, 500) })),
+    keep: true,
+  })).filter((it) => it.topic).sort((a, b) => a.day.localeCompare(b.day) || COMPANIES.indexOf(a.company as never) - COMPANIES.indexOf(b.company as never))
+}
+
+/** Approves a plan: the Journal and newsletter items become dated tasks. */
+async function approvePlan(admin: SupabaseClient, plan: PlanRow, auto: boolean): Promise<void> {
+  await admin.from('content_plans').update({ status: 'approved', auto_approved: auto, approved_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', plan.id)
+  const brands = await brandsFor(admin, plan.owner)
+  const { data: open } = await admin.from('life_tasks').select('title').eq('owner', plan.owner).neq('status', 'done')
+  const have = new Set(((open ?? []) as { title: string }[]).map((t) => t.title.toLowerCase()))
+  for (const it of plan.items.filter((x) => x.keep !== false && x.channel !== 'instagram')) {
+    const title = `${it.channel === 'journal' ? 'Publish the Journal piece' : 'Send the newsletter'}: ${it.topic}`.slice(0, 160)
+    if (have.has(title.toLowerCase())) continue
+    await admin.from('life_tasks').insert({ owner: plan.owner, brand_id: brands.find((b) => b.name === it.company)?.id ?? null, title, due: it.day, status: 'open', source: 'plan' })
+  }
+}
+
+const planLine = (it: PlanItem) => `- ${it.day} [${it.company}] ${it.channel}${it.format ? `, ${it.format}` : ''}: ${it.topic}. Angle: ${it.angle}${it.pillar ? ` (pillar: ${it.pillar})` : ''}`
 
 /* ---- Context: everything the writer needs, built once a day ---- */
 async function buildContext(admin: SupabaseClient, owner: string, lens: Lens, date: string, dateLong: string): Promise<{ text: string; module: number; pulse: DigestContent['pulse'] }> {
@@ -199,7 +277,30 @@ async function buildContext(admin: SupabaseClient, owner: string, lens: Lens, da
     '', `TODAY'S COACHING LESSON: ${module + 1} of ${CURRICULUM.length}, "${lesson.title}". ${lesson.brief}`,
     '', `POST FORMATS: ${RULES.formats}${lens.allow_video ? ` ${RULES.video_on}` : ' Video is not approved yet: use single or carousel only.'}`,
     '', 'POST RULES BY BRAND:', ...COMPANIES.map((co) => `## ${co}\n${(RULES.posts as Record<string, string>)[co]}`),
+    '', (RULES.design as Record<string, string>).intro, ...COMPANIES.map((co) => `## ${co}\n${(RULES.design as Record<string, string>)[co]}`),
+    '', 'MOSS ISLAND QUESTS (real quests from the game: id | kind | time | title | skill). Quest slides use these ids only:',
+    ...mossQuestLines(date, new Set(recentRows.flatMap((r) => ((r.content as Partial<DigestContent>).posts ?? []).flatMap((p) => (p.slides ?? []).map((x) => x.quest_id)).filter(Boolean) as string[]))),
+    '', 'EACH BRAND\'S SOCIAL STRATEGY:', ...COMPANIES.map((co) => `## ${co}\n${(RULES.strategy as Record<string, string>)[co]}`),
   ]
+
+  // The week's plan. One still proposed by Monday is taken as proposed.
+  const thisWeek = mondayOf(date)
+  const { data: planData } = await admin.from('content_plans').select('*').eq('owner', owner).in('week_start', [thisWeek, addDays(thisWeek, 7)])
+  const plans = (planData ?? []) as PlanRow[]
+  const current = plans.find((x) => x.week_start === thisWeek)
+  if (current && current.status === 'proposed') { await approvePlan(admin, current, true); current.status = 'approved'; current.auto_approved = true }
+  const kept = (current?.items ?? []).filter((x) => x.keep !== false)
+  if (current && kept.length) {
+    lines.push('', `THIS WEEK'S PLAN (${current.auto_approved ? 'taken as proposed: she did not shape it' : 'approved by the founder'}):`, ...kept.map(planLine))
+    const today = kept.filter((x) => x.day === date && x.channel === 'instagram')
+    if (today.length) lines.push('', 'TODAY\'S PLANNED POSTS: today\'s post for each of these brands must be this item (keep its topic, angle and format; design it in the brand\'s family):', ...today.map(planLine))
+    if (current.input) lines.push('', `HER NOTES ON THIS WEEK: ${flat(current.input, 600)}`)
+  }
+  const next = plans.find((x) => x.week_start === addDays(thisWeek, 7))
+  const dow = weekday(date)
+  if (dow === 5 && next?.status !== 'approved') lines.push('', `${RULES.planning} Next week runs from Monday ${addDays(thisWeek, 7)} to Friday ${addDays(thisWeek, 11)}.${next?.input ? ` Her notes so far: ${flat(next.input, 600)}` : ''}`)
+  else lines.push('', 'PLANNING: week_plan and plan_summary stay empty today (planning is on Fridays).')
+  if (dow === 1 && kept.length) lines.push('', RULES.action as string)
   return { text: lines.join('\n'), module, pulse }
 }
 
@@ -299,12 +400,26 @@ async function fileStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> 
     if (!p) continue
     let format = ['single', 'carousel', 'video'].includes(String(p.format)) ? String(p.format) : 'single'
     if (format === 'video' && !lens.allow_video) format = 'carousel'
-    const slides = ((p.slides ?? []) as Json[]).slice(0, 8).map((x) => ({ heading: flat(x.heading, 120), body: cut(x.body, 400) }))
+    // The designed slides: each kind must belong to the brand's family, and a
+    // Moss Island quest slide must name a real quest from the game.
+    const kinds = KINDS[company]
+    let slides: DigestSlide[] = ((p.slides ?? []) as Json[]).slice(0, 8).map((x) => ({
+      kind: kinds.includes(String(x.kind)) ? String(x.kind) : (kinds.includes('statement') ? 'statement' : kinds[0]),
+      eyebrow: flat(x.eyebrow, 60), kicker: flat(x.kicker, 120), title: flat(x.title, 160), body: cut(x.body, 420), note: flat(x.note, 160),
+      items: ((x.items ?? []) as Json[]).slice(0, 6).map((it) => ({ title: flat(it.title, 90), text: flat(it.text, 160) })),
+      quest_id: String(x.quest_id ?? ''), cta: flat(x.cta, 60),
+      image_prompt: company === 'Moss Island' ? '' : cut(x.image_prompt, 1200), image_url: '',
+    })).filter((x) => x.kind !== 'quest' || MOSS_QUESTS.some((q) => q.id === x.quest_id))
+    if (!slides.length) slides = [{ kind: kinds[0], eyebrow: '', kicker: '', title: flat(p.headline, 140), body: '', note: '', items: [], quest_id: '', cta: '', image_prompt: '', image_url: '' }]
+    // At most four slide photos a post, beyond the cover.
+    let photos = 0
+    for (const x of slides) if (x.image_prompt && ++photos > 4) x.image_prompt = ''
+    if (format === 'single') slides = slides.slice(0, 1)
     if (format === 'carousel' && slides.length < 3) format = 'single'
     posts.push({
       company, format, headline: flat(p.headline, 140), caption: cut(p.caption, 2200),
       hashtags: ((p.hashtags ?? []) as string[]).map((h) => flat(h, 40).replace(/^#/, '').replace(/\s+/g, '')).filter(Boolean).slice(0, 8),
-      slides: format === 'single' ? [] : slides, why: flat(p.why, 200), image_url: null, post_id: null,
+      slides, why: flat(p.why, 200), image_url: null, post_id: null,
       ...({ image_prompt: cut(p.image_prompt, 1200) } as Json),
     })
   }
@@ -315,7 +430,12 @@ async function fileStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> 
     const { data: ins, error } = await admin.from('social_posts').insert({
       owner: row.owner, brand_id: brandId(post.company), digest_id: row.id, platform: 'instagram',
       topic: post.headline, headline: post.headline, caption: [post.caption, post.hashtags.map((h) => `#${h}`).join(' ')].filter(Boolean).join('\n\n'),
-      hashtags: post.hashtags, slides: post.slides, format: post.format === 'single' ? 'portrait' : 'carousel',
+      hashtags: post.hashtags, format: post.format === 'single' ? 'portrait' : 'carousel',
+      // The studio's own slide text (heading and body) for editing there.
+      slides: post.format === 'single' ? [] : post.slides.slice(1).map((x) => {
+        const q = x.kind === 'quest' ? MOSS_QUESTS.find((m) => m.id === x.quest_id) : undefined
+        return { heading: q?.title ?? x.title, body: q ? q.steps.join(' ') : x.body || x.items.map((it) => it.title).join(', ') }
+      }),
       sector: 'health_fitness', accent, status: 'draft',
     }).select('id').single()
     if (error) console.error('digest post', error.message)
@@ -360,13 +480,38 @@ async function fileStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> 
       term: { word: flat(term.word, 60), meaning: flat(term.meaning, 300) },
     },
     next_steps, overdue, question: flat(raw.question, 300),
+    ...(await planFor(admin, row, raw)),
   }
   // The lesson moves on only once a digest is actually written.
   await admin.from('life_profile').update({ digest_lens: { ...lens, coaching_next: (module + 1) % CURRICULUM.length } }).eq('owner', row.owner)
-  return { content: content as unknown as Json, stage: hasHiggsfield() && posts.length ? 'images' : 'send', state: { ...row.state, raw: undefined, images_started: Date.now() } }
+  const next = hasHiggsfield() && posts.length ? 'images' : lens.mac !== false ? 'render' : 'send'
+  return { content: content as unknown as Json, stage: next, state: { ...row.state, raw: undefined, images_started: Date.now(), render_since: Date.now() } }
+}
+
+/** Friday: save the proposed plan for next week. Monday: carry this week's plan into the email. */
+async function planFor(admin: SupabaseClient, row: Row, raw: Json): Promise<Partial<DigestContent>> {
+  const date = row.digest_date
+  const out: Partial<DigestContent> = {}
+  if (weekday(date) === 5 && Array.isArray(raw.week_plan) && raw.week_plan.length) {
+    const weekStart = addDays(mondayOf(date), 7)
+    const { data: existing } = await admin.from('content_plans').select('id, status').eq('owner', row.owner).eq('week_start', weekStart).maybeSingle()
+    if (existing?.status !== 'approved') {
+      const items = cleanPlan(raw.week_plan as Json[], weekStart)
+      const summary = cut(raw.plan_summary, 900)
+      await admin.from('content_plans').upsert({ owner: row.owner, week_start: weekStart, status: 'proposed', summary, items, digest_id: row.id, updated_at: new Date().toISOString() }, { onConflict: 'owner,week_start' })
+      out.plan = { week_start: weekStart, summary, items, status: 'proposed' }
+    }
+  }
+  if (weekday(date) === 1) {
+    const { data: cur } = await admin.from('content_plans').select('week_start, summary, items, status, auto_approved').eq('owner', row.owner).eq('week_start', mondayOf(date)).maybeSingle()
+    if (cur) out.week = { week_start: cur.week_start, summary: cur.summary ?? '', items: ((cur.items ?? []) as PlanItem[]).filter((x) => x.keep !== false), status: cur.status, auto: cur.auto_approved }
+  }
+  return out
 }
 
 /* ---- Images: one cover per post ---- */
+// Hue & Heal's look is its Brand Figma's: warm and cinematic, not the brighter house brief.
+const HH_LOOK = 'Cinematic editorial photograph, warm amber lamplight or candlelight or dusk, deep shadows that keep their detail, rich brown, amber and terracotta palette, subtle film grain, premium hospitality and wellness spaces, people unposed and never looking at the camera, a darker lower third, full-bleed, no text, no logos.'
 const MOSS_LOOK = 'Full-bleed natural documentary family photograph that fills the whole frame edge to edge, warm soft daylight, real home or outdoor setting, candid and calm, a child doing a real-life activity seen from behind, in silhouette or hands only so no face is visible, families of many backgrounds, shallow depth of field, gentle colour, no screens.'
 async function imagesStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> {
   const content = row.content as unknown as DigestContent & { posts: (DigestPost & { image_prompt?: string; image_req?: string; image_failed?: string })[] }
@@ -374,13 +519,25 @@ async function imagesStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>
   const brandRows = await brandsFor(admin, row.owner)
   const brandId = (co: string) => brandRows.find((b) => b.name === co)?.id ?? null
 
+  // Each slide with its own photo is one more image job, rendered like the cover.
+  type SlideImage = DigestSlide & { image_req?: string; image_failed?: string }
+  const slideJobs = content.posts.flatMap((post) => ((post.slides ?? []) as SlideImage[]).filter((x) => x.image_prompt).map((slide) => ({ slide, company: post.company })))
   // Submit what has not been submitted.
+  for (const { slide, company } of slideJobs) {
+    if (slide.image_url || slide.image_req || slide.image_failed) continue
+    try {
+      const lib = company === 'Remedae' ? await loadLibrary(admin, brandId(company)) : null
+      const req = { purpose: 'social', surface: 'social-portrait', subject: slide.image_prompt }
+      const { statusUrl } = await submitImage((lib ? composePrompt(lib, req) : `${slide.image_prompt ?? ''} ${HH_LOOK}`).slice(0, 2400), { aspect: '3:4', resolution: '1080p', referenceUrl: lib ? await referenceFor(lib, req) : undefined })
+      slide.image_req = statusUrl
+    } catch (e) { slide.image_failed = cut((e as Error).message, 200) }
+  }
   for (const post of content.posts) {
     if (post.image_url || post.image_req || post.image_failed || !post.image_prompt) continue
     try {
-      const lib = post.company === 'Moss Island' ? null : await loadLibrary(admin, brandId(post.company))
+      const lib = post.company === 'Remedae' ? await loadLibrary(admin, brandId(post.company)) : null
       const req = { purpose: 'social', surface: 'social-portrait', subject: post.image_prompt }
-      const prompt = lib ? composePrompt(lib, req) : `${post.image_prompt} ${post.company === 'Moss Island' ? MOSS_LOOK : ''}`.trim()
+      const prompt = lib ? composePrompt(lib, req) : `${post.image_prompt} ${post.company === 'Moss Island' ? MOSS_LOOK : HH_LOOK}`.trim()
       const ref = lib ? await referenceFor(lib, req) : undefined
       const { statusUrl } = await submitImage(prompt.slice(0, 2400), { aspect: '3:4', resolution: '1080p', referenceUrl: ref })
       post.image_req = statusUrl
@@ -389,7 +546,7 @@ async function imagesStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>
   // Wait for them, bounded, then upload each finished one to the studio.
   const deadline = Date.now() + 95_000
   let wait = 4000
-  while (Date.now() < deadline && content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed)) {
+  while (Date.now() < deadline && (content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed) || slideJobs.some(({ slide: x }) => x.image_req && !x.image_url && !x.image_failed))) {
     await new Promise((r) => setTimeout(r, wait))
     wait = Math.min(wait + 2000, 10_000)
     for (const post of content.posts) {
@@ -407,10 +564,27 @@ async function imagesStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>
         if (post.post_id) await admin.from('social_posts').update({ image_url: post.image_url }).eq('id', post.post_id)
       } catch (e) { console.error('digest image', (e as Error).message) }
     }
+    for (const { slide: x } of slideJobs) {
+      if (!x.image_req || x.image_url || x.image_failed) continue
+      try {
+        const c = await checkImage(x.image_req)
+        if (c.state === 'failed') { x.image_failed = c.reason; continue }
+        if (c.state !== 'ready') continue
+        const img = await download(c.url)
+        const path = `${row.owner}/digest/${row.digest_date}-slide-${crypto.randomUUID().slice(0, 8)}.${img.contentType.includes('png') ? 'png' : 'jpg'}`
+        const up = await admin.storage.from('social-assets').upload(path, img.bytes, { contentType: img.contentType, upsert: true })
+        if (up.error) { x.image_failed = up.error.message; continue }
+        x.image_url = admin.storage.from('social-assets').getPublicUrl(path).data.publicUrl
+      } catch (e) { console.error('digest slide image', (e as Error).message) }
+    }
   }
-  const pending = content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed)
+  const pending = content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed) || slideJobs.some(({ slide: x }) => x.image_req && !x.image_url && !x.image_failed)
   const givenUp = Date.now() - started > IMAGE_GIVE_UP_MS
-  return { content: content as unknown as Json, stage: pending && !givenUp ? 'images' : 'send' }
+  if (pending && !givenUp) return { content: content as unknown as Json, stage: 'images' }
+  // With the Mac on, it draws each post in its brand's design next; the cloud
+  // sends without the designs if the Mac has not drawn them in time.
+  const lens = await lensOf(admin, row.owner)
+  return { content: content as unknown as Json, stage: lens.mac !== false ? 'render' : 'send', state: { ...row.state, render_since: Date.now() } }
 }
 
 /* ---- Sending ---- */
@@ -434,6 +608,38 @@ async function sendStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> 
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 200)}`)
   const out = await res.json() as { id?: string }
   return { stage: 'sent', sent_at: new Date().toISOString(), sent_to: to, resend_id: out.id ?? null, force_send: false } as Partial<Row>
+}
+
+/** Writes (or rewrites) a week's plan with Opus: from scratch, or from the
+    current items with her keep and drop choices and her notes. */
+async function writePlan(admin: SupabaseClient, owner: string, weekStart: string, current: PlanItem[], notes: string): Promise<{ items: PlanItem[]; summary: string; usage: Json }> {
+  const { data: last } = await admin.from('founder_digests').select('content').eq('owner', owner).not('content', 'is', null).order('digest_date', { ascending: false }).limit(1).maybeSingle()
+  const news = (((last?.content ?? {}) as Partial<DigestContent>).news ?? []).map((n) => `- ${n.title} (${n.source}) ${n.url}: ${n.so_what}`)
+  const lens = await lensOf(admin, owner)
+  const prompt = [
+    `THE WEEK: Monday ${weekStart} to Friday ${addDays(weekStart, 4)}.`,
+    '', RULES.planning as string,
+    '', 'THE COMPANIES:', ...COMPANIES.map((co) => `## ${co}\n${flat(lens.companies?.[co], 1600)}`),
+    '', 'EACH BRAND\'S SOCIAL STRATEGY:', ...COMPANIES.map((co) => `## ${co}\n${(RULES.strategy as Record<string, string>)[co]}`),
+    '', 'POST RULES BY BRAND (the plan\'s wording follows these too):', ...COMPANIES.map((co) => `## ${co}\n${(RULES.posts as Record<string, string>)[co]}`),
+    '', 'HER INTERESTS:', ...(lens.interests ?? []).map((x) => `- ${x}`),
+    ...(current.length ? ['', 'THE CURRENT PLAN (KEEP = she kept it, DROP = she dropped it):', ...current.map((it) => `${it.keep === false ? 'DROP' : 'KEEP'} ${planLine(it)}`)] : []),
+    '', `HER NOTES: ${notes || '(none)'}`,
+    '', 'THIS WEEK\'S NEWS:', ...news,
+    '', 'MOSS ISLAND QUESTS:', ...mossQuestLines(weekStart, new Set()),
+    '', current.length
+      ? 'Rewrite the plan for this week following her notes. Keep the kept items unless her notes change them, replace the dropped ones, and say in plan_summary what changed and why.'
+      : 'Write the plan for this week now, in week_plan and plan_summary.',
+  ].join('\n')
+  const props = (RULES.schema as unknown as { properties: Json }).properties
+  const schema = { type: 'object', additionalProperties: false, properties: { plan_summary: props.plan_summary, week_plan: props.week_plan }, required: ['plan_summary', 'week_plan'] }
+  const res = await anthropic.beta.messages.create({
+    model: WRITE_MODEL, max_tokens: 8000, system: RULES.system,
+    messages: [{ role: 'user', content: prompt }],
+    output_config: { effort: 'medium', format: { type: 'json_schema', schema } },
+  } as never) as Anthropic.Beta.BetaMessage
+  const out = JSON.parse(res.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text').map((b) => b.text).join('')) as Json
+  return { items: cleanPlan((out.week_plan ?? []) as Json[], weekStart), summary: cut(out.plan_summary, 900), usage: res.usage as unknown as Json }
 }
 
 /* ---- The tick ---- */
@@ -470,6 +676,15 @@ async function openToday(admin: SupabaseClient, onlyOwner?: string, mode: 'auto'
 async function tick(admin: SupabaseClient): Promise<Json> {
   await openToday(admin)
   const nowIso = new Date().toISOString()
+  // The Mac draws the designs; if it has not within 15 minutes of send time
+  // (or of the images being ready, when later), the digest goes without them.
+  // A cloud-written day waits only five minutes: the Mac is probably asleep.
+  const { data: waiting } = await admin.from('founder_digests').select('id, source, send_after, state, force_send').eq('stage', 'render')
+  for (const w of (waiting ?? []) as { id: string; source: string; send_after: string; state: Json; force_send: boolean }[]) {
+    const since = Number(w.state?.render_since ?? 0)
+    const due = Math.max(w.force_send ? 0 : new Date(w.send_after).getTime(), since) + (w.source === 'mac' ? 15 : 5) * 60_000
+    if (Date.now() > due) await admin.from('founder_digests').update({ stage: 'send', error: 'The Mac did not draw the post designs in time, so the digest went with the cover photos.' }).eq('id', w.id).eq('stage', 'render')
+  }
   // The Mac had until send time; after that the cloud writes it.
   await admin.from('founder_digests').update({ stage: 'news', source: 'cloud', error: 'The Mac did not file this one by send time, so the cloud wrote it.' })
     .eq('stage', 'mac').lt('send_after', nowIso)
@@ -529,6 +744,15 @@ Deno.serve(async (req) => {
       EdgeRuntime.waitUntil(tick(admin).catch((e) => console.error('digest tick', (e as Error).message)))
       return json({ ok: true })
     }
+    // From the database: write a week's plan now (for a week that has none yet).
+    if (body.op === 'propose' && typeof body.owner === 'string' && isoDate(body.week_start)) {
+      const owner = body.owner, weekStart = mondayOf(isoDate(body.week_start)!)
+      EdgeRuntime.waitUntil((async () => {
+        const out = await writePlan(admin, owner, weekStart, [], '')
+        await admin.from('content_plans').upsert({ owner, week_start: weekStart, status: 'proposed', summary: out.summary, items: out.items, usage: addUsage({}, WRITE_MODEL, out.usage), updated_at: new Date().toISOString() }, { onConflict: 'owner,week_start' })
+      })().catch((e) => console.error('digest propose', (e as Error).message)))
+      return json({ ok: true })
+    }
     // From the database (founder_digest_call): the Mac opening its day early,
     // or a cloud run written now and sent as soon as it is ready.
     if ((body.op === 'open_mac' || body.op === 'run') && typeof body.owner === 'string') {
@@ -561,6 +785,26 @@ Deno.serve(async (req) => {
     await openToday(admin, owner, 'cloud')
     kick()
     return json({ ok: true, note: 'Writing it now. It arrives in about five minutes.' })
+  }
+
+  // The weekly plan, from /v2/week: approve it, or rework it with her notes.
+  if (body.op === 'plan') {
+    const { data } = await admin.from('content_plans').select('*').eq('id', String(body.id ?? '')).eq('owner', owner).maybeSingle()
+    const plan = data as PlanRow | null
+    if (!plan) return json({ error: 'That plan was not found.' }, 404)
+    if (body.action === 'approve') { await approvePlan(admin, plan, false); return json({ ok: true, note: 'Approved. The Journal and newsletter items are on your plan as dated tasks.' }) }
+    if (body.action === 'rework') {
+      const notes = cut(body.notes, 1500)
+      try {
+        const out = await writePlan(admin, owner, plan.week_start, plan.items, notes)
+        if (!out.items.length) return json({ error: 'The rework came back empty. Try again.' }, 502)
+        await admin.from('content_plans').update({ items: out.items, summary: out.summary, input: notes || plan.input, status: 'proposed', usage: addUsage((plan as unknown as { usage?: Json }).usage ?? {}, WRITE_MODEL, out.usage), updated_at: new Date().toISOString() }).eq('id', plan.id)
+        return json({ ok: true, items: out.items, summary: out.summary })
+      } catch (e) {
+        return json({ error: `The rework did not finish: ${cut((e as Error).message, 200)}` }, 502)
+      }
+    }
+    return json({ error: 'Unknown plan action' }, 400)
   }
 
   if (body.op === 'preview' || body.op === 'resend') {

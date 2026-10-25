@@ -13,6 +13,8 @@ import Calendar from './Calendar'
 import Radar from './Radar'
 import Portfolio from './Portfolio'
 import Digest from './Digest'
+import Post from './Post'
+import Week from './Week'
 import './v2.css'
 
 /* ============================================================
@@ -104,7 +106,7 @@ function Shell() {
 
   const ctx: LifeCtx = { profile, setProfile, lens, setLens, brands, colorOf, nameOf, inLens, version, bump, send: (t, v) => void send(t, v), prefill, pending, decide }
   const isChat = loc.pathname.startsWith('/v2/chat')
-  const menuItems: [string, string][] = [['Today', '/v2'], ['Plan', '/v2/plan'], ['Pipeline', '/v2/pipeline'], ['Digest', '/v2/digest'], ['Radar', '/v2/radar'], ['Portfolio', '/v2/portfolio'], ['Calendar', '/v2/calendar'], ['Chat', '/v2/chat'], ['Team', '/os?with=slt'], ['Studio', '/create'], ['Settings', '/settings']]
+  const menuItems: [string, string][] = [['Today', '/v2'], ['Plan', '/v2/plan'], ['Pipeline', '/v2/pipeline'], ['Digest', '/v2/digest'], ['Week', '/v2/week'], ['Radar', '/v2/radar'], ['Portfolio', '/v2/portfolio'], ['Calendar', '/v2/calendar'], ['Chat', '/v2/chat'], ['Team', '/os?with=slt'], ['Studio', '/create'], ['Settings', '/settings']]
   const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).join('').replace('&', '').slice(0, 2).toUpperCase()
 
   return (
@@ -152,6 +154,8 @@ function Shell() {
             <Route path="radar" element={<Radar />} />
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="digest" element={<Digest />} />
+            <Route path="post/:id" element={<Post />} />
+            <Route path="week" element={<Week />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="chat" element={<Chat messages={messages} thinking={thinking} />} />
           </Routes>

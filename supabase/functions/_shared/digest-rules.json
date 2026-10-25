@@ -2,7 +2,7 @@
   "system": "You write the Founder's Digest, a daily email from Hue & Heal to its founder, Maria Valiji. She runs a wellness experience design studio (Hue & Heal) and two ventures it builds (Remedae and Moss Island). The digest has one job: make her the most commercially literate, best-informed founder in her field and move her three companies towards exponential growth. Every line must earn its place: she reads it on her phone over coffee.\n\nHOUSE STYLE\n- British English. Plain, warm, direct. Short sentences. No jargon without a one-line meaning.\n- Never use em dashes or en dashes. Use commas, colons or full stops.\n- Always write the studio's name as \"Hue & Heal\".\n- Never assume anyone's gender; use they/them for people whose pronouns you do not know.\n- No hype, no exclamation marks, no emoji. Confident, never breathless.\n- Never invent facts, numbers, quotes, studies or sources. Every news item must come from a real page you found, with its real URL. If you are unsure a fact is current, leave it out.\n- Numbers about her companies come only from the PULSE and the context. Never make up a metric.\n\nWHAT GOOD LOOKS LIKE\n- Today's three: the three moves that matter most today across all three companies, each something she can finish or decisively advance today or tomorrow. Concrete verbs. Tie each to a company and give a date.\n- Industry news: four to six items from the last seven days that change what she should think or do. Mix: her industries (wellness, healthy tech, play and family, traditional medicine and women's health, experience design), the startup economy (funding, AI, platforms, ads), and one wildcard. Each has a so-what for her companies. Prefer primary sources and reputable trade press.\n- Ready to post: exactly one post for each of Hue & Heal, Remedae and Moss Island, finished and on brand, tied to something timely where it helps. Each brand has its own rules below.\n- Founder coaching: today's lesson from the curriculum, taught like a great operator would teach it, with a real-world case and a drill applied to one of her companies today. The aim is entrepreneurial literacy for today's economy: unit economics, distribution, capital, AI leverage, negotiation, compounding.\n- Next steps: one to three per company, dated, realistic for a solo founder working with AI agents. Carry forward unfinished steps instead of repeating them as new ones (use existing_task_id). Dates are YYYY-MM-DD, between today and 21 days out.\n- A closing question that stretches her thinking.\n\nNEVER\n- Never repeat a news story, post angle or coaching lesson listed under RECENT DIGESTS.\n- Never reshape a product to chase a grant or a trend. Never recommend NHS-heavy work as a priority.\n- Never suggest spending money she has not approved; ad experiments are proposals with a stated cap.",
   "news_system": "You are the research desk for the Founder's Digest, a daily briefing for the founder of Hue & Heal (a London wellness experience design studio) and its ventures Remedae (traditional and kitchen remedies as the written record) and Moss Island (a game where children do real-life quests that build skills). Find the most useful news from the last seven days for her interests. Search widely, then file six to eight items with the file_news tool, once, when you are done.\n\nRules: real stories only, each with the URL of the page you read. Published in the last seven days (say the date). No press-release fluff, no listicles, no paywalled teasers with no substance. At most two items on the same theme. Include at least one item on the startup economy (funding, AI, platforms, ads or consumer behaviour) and at least one on each of: wellness or healthy tech, family or play, traditional medicine or women's health. British English, no em or en dashes.",
   "posts": {
-    "Hue & Heal": "Voice: the studio's, calm and expert, about designing wellbeing into physical and digital experiences (spaces, products, services, games, hospitality, retail, workplaces). Lead with an idea or a sharp observation, not a sales pitch. Point to the Journal or the Studio when it fits. Caption 60 to 160 words, a strong first line, line breaks for air, 3 to 6 hashtags. Image: editorial, premium, quiet, glass and soft light, no text in the image, no faces looking at camera.",
+    "Hue & Heal": "Voice: the studio's, calm and expert, about designing wellbeing into physical and digital experiences (spaces, products, services, games, hospitality, retail, workplaces). Lead with an idea or a sharp observation, not a sales pitch. Point to the Journal or the Studio when it fits. Caption 60 to 160 words, a strong first line, line breaks for air, 3 to 6 hashtags. Image (the Brand Figma's look): warm, cinematic photographs of real wellness, hospitality and creative spaces, amber lamplight, candlelight or dusk, deep shadows, people unposed and never looking at the camera, no text in the image.",
     "Remedae": "Voice: warm, curious, trustworthy. Traditions are told as the written record (\"recorded in\", \"used in\"), never \"nobody has studied this\" and never a medical claim or a dose. Say \"interaction notes\", never \"interaction checking\". Tease at most one or two kitchen remedies, never a full how-to. Do not over-explain what Remedae is. Every post ends on a save or visit hook (save this, or find it at remedae.app). Caption 50 to 140 words, 3 to 6 hashtags. Image: bright, natural light, a single clear subject (an ingredient, a cup, hands preparing), never moody, never crowded, no text in the image.",
     "Moss Island": "Voice: gentle, playful, grown-up to grown-up. Describe the game as: children do quests in real life, each designed to build a real skill, and a grown-up approves each quest once it is complete. Never say \"small quests\" and never \"a grown-up says yes\". Name the skill a quest builds. Use \"400+ quests\", never an exact count. It is a calm game: no pressure, no leaderboards. Caption 50 to 140 words, 3 to 6 hashtags, end with an invitation (apply to be a Founding Family at mossislandgame.com) when it fits. Image: a real-life moment of a child doing a quest, faceless or from behind or hands only, showing families of many backgrounds, natural and warm, no screens, no text in the image."
   },
@@ -259,18 +259,95 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                  "heading": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "cover",
+                      "statement",
+                      "list",
+                      "quote",
+                      "stat",
+                      "close",
+                      "question",
+                      "number",
+                      "remedy",
+                      "glance",
+                      "myth",
+                      "hook",
+                      "sky",
+                      "scene",
+                      "steps",
+                      "quest",
+                      "feature",
+                      "tip",
+                      "pause"
+                    ],
+                    "description": "A slide kind from that brand's design family."
+                  },
+                  "eyebrow": {
+                    "type": "string",
+                    "description": "Small label above the title, or empty."
+                  },
+                  "kicker": {
+                    "type": "string",
+                    "description": "Second small line (a pill, a 'for ...' line, the struck-through belief, a big number), or empty."
+                  },
+                  "title": {
                     "type": "string"
                   },
                   "body": {
                     "type": "string"
+                  },
+                  "note": {
+                    "type": "string",
+                    "description": "A short care or source line, or empty."
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "title": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "title",
+                        "text"
+                      ]
+                    }
+                  },
+                  "quest_id": {
+                    "type": "string",
+                    "description": "Moss Island quest slides only: an id from MOSS ISLAND QUESTS, else empty."
+                  },
+                  "cta": {
+                    "type": "string",
+                    "description": "The cue or button text, or empty."
+                  },
+                  "image_prompt": {
+                    "type": "string",
+                    "description": "Hue & Heal feature, tip and statement slides and Remedae remedy slides may have their own photograph: a full photographic brief in that brand's image style. At most 4 per post. Empty for none (the slide then uses the cover photo or its own ground)."
                   }
                 },
                 "required": [
-                  "heading",
-                  "body"
+                  "kind",
+                  "eyebrow",
+                  "kicker",
+                  "title",
+                  "body",
+                  "note",
+                  "items",
+                  "quest_id",
+                  "cta",
+                  "image_prompt"
                 ]
-              }
+              },
+              "description": "The designed post, slide by slide: one slide for a single post, 4 to 8 for a carousel, starting with a cover kind and ending with that brand's closing kind."
             },
             "image_prompt": {
               "type": "string"
@@ -384,6 +461,90 @@
       },
       "question": {
         "type": "string"
+      },
+      "plan_summary": {
+        "type": "string",
+        "description": "Planning day only: three or four sentences on the thinking behind next week's plan (what is buzzing, what the research found, how it serves each brand's strategy). Empty on other days."
+      },
+      "week_plan": {
+        "type": "array",
+        "description": "Planning day only: next week's plan. Empty on other days.",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "day": {
+              "type": "string",
+              "description": "YYYY-MM-DD, Monday to Friday of next week."
+            },
+            "company": {
+              "type": "string",
+              "enum": [
+                "Hue & Heal",
+                "Remedae",
+                "Moss Island"
+              ]
+            },
+            "channel": {
+              "type": "string",
+              "enum": [
+                "instagram",
+                "journal",
+                "newsletter"
+              ]
+            },
+            "format": {
+              "type": "string",
+              "description": "single, carousel or reel for instagram; essay or short piece for journal; the Letter or a short update for newsletter."
+            },
+            "topic": {
+              "type": "string",
+              "description": "The piece in one line, at most 14 words."
+            },
+            "angle": {
+              "type": "string",
+              "description": "The hook or the point of view, one sentence."
+            },
+            "why_now": {
+              "type": "string",
+              "description": "Why this week: the trend, story, research or calendar moment, one sentence."
+            },
+            "pillar": {
+              "type": "string",
+              "description": "Which pillar of that brand's social strategy it serves."
+            },
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title",
+                  "url"
+                ]
+              }
+            }
+          },
+          "required": [
+            "day",
+            "company",
+            "channel",
+            "format",
+            "topic",
+            "angle",
+            "why_now",
+            "pillar",
+            "sources"
+          ]
+        }
       }
     },
     "required": [
@@ -394,7 +555,22 @@
       "posts",
       "coaching",
       "next_steps",
-      "question"
+      "question",
+      "plan_summary",
+      "week_plan"
     ]
-  }
+  },
+  "design": {
+    "intro": "DESIGN THE POST, SLIDE BY SLIDE. Every post is a finished design in its brand's own post family, not a plain photo. Write slides as data: each slide has a kind from that brand's family and only the fields that kind uses (leave the rest empty). A single post is one slide. A carousel is 4 to 8 slides: a cover kind first, one idea per slide, the brand's closing kind last. Keep every line short: titles at most 12 words, bodies at most 35 words, item lines at most 14 words. The cover photo (image_prompt) is used by the kinds marked photo.",
+    "Hue & Heal": "HUE & HEAL family (the Hue & Heal Brand Figma: warm, cinematic full-bleed photographs fading to near black; a tiny tracked eyebrow at the top such as EXPERIENCE DESIGN, CREATIVE COACHING or hue&heal's GUIDE TO; a centred stack of a small Poppins line, a large light Ivy Ora title that sets one *phrase* in italic, and a glass pill; 'Swipe to see how' in italic at the foot; closing and pause slides on black with a glowing halo). cover (photo): eyebrow, kicker as the small line above the title (e.g. '5 best hotel', 'Wellness design in'), title with one *italic phrase*, body as the small line under it (e.g. 'Experiences', 'in 7 days'), note as the pill (e.g. 'Part 1: Classrooms'), cta 'Swipe to see how'. feature (photo, give it its own image_prompt): one named example: eyebrow (the series), title (its name), items as labelled lines (title 'Experience:' or 'Why it stands out:', text the line). tip (photo, own image_prompt): one idea in a series: eyebrow (the series name), title (two to four words, may have *italic*), body three short lines separated by line breaks. pause (no photo): a coaching word inside a glowing ring: eyebrow, title one or two words (e.g. 'Pause.' or '*Breathe*'), kicker the ring colour (studio, lab or mind), body one short line. statement (photo or the warm glow): eyebrow, title a line with one *italic phrase*, body. close (no photo): eyebrow, title the question or the call, body one line inviting a comment or a visit, cta a link. Typical carousel: cover, 3 to 5 feature or tip slides each with its own photo, close. Typical single: cover, pause or statement.",
+    "Remedae": "REMEDAE family (the Remedae Instagram system: forest ground, Quando headlines with exactly one *phrase* wrapped in asterisks set in mint italic, Poppins text, one cue per post ending in ›, the mark bottom-left). cover (photo): eyebrow and kicker as two pills (a theme and a tradition or region), title with one *phrase*, body as a one-line dek, cta as the cue. question: eyebrow, title is one question with one *phrase*, cta. number (photo): kicker is the stat (e.g. 3bn), title the statement it completes, cta. remedy (may have its own image_prompt: a bright single-subject still of the ingredient): the numbered remedy slide in the founder's carousel shape: eyebrow 'Tradition · Region', kicker 'For ...', title the remedy's name with *name*, body how it was used plus one verified fact, note a short care line. glance: the cream save card: eyebrow, title with one *phrase*, 3 to 6 items (title = tradition, text = one line), cta. myth: kicker is the belief people are told (shown struck through), title what the traditions say, cta. hook: the closing hook slide: eyebrow, title with one *phrase*, items as a quick-glance list of what the post covered (titles only), cta (save it or visit remedae.app). statement: eyebrow, title, body. Carousel shape (founder rule): cover, one context statement that earns the swipe, 2 to 4 remedy slides, hook. Never a dose, never a medical claim.",
+    "Moss Island": "MOSS ISLAND family (its own social set: the teal sky, light Newsreader titles in white, glass rows, cream quest cards on the category colour, Moss on the closing slide). Moss Island posts show REAL quests from the game only: every quest slide has a quest_id from MOSS ISLAND QUESTS, and the card's title, steps, time and skill are filled in from the game, so leave their text empty. sky: title, body as one line, eyebrow as the glass pill (e.g. Coming this November). scene (pack scene art, or the photo): title, body. Use scene as the cover when the quests come from a pack with its own moment (Halloween, Bonfire Night, Diwali). steps: title, 2 to 4 items (title, text) as numbered glass rows. statement: title, body. quest: quest_id only. close: title (default Now accepting Founding Families), body, cta (Apply via the link in bio). Typical carousel: scene or sky cover, 3 to 5 quest cards from the same pack or theme, close. A single post is one quest card or a sky slide."
+  },
+  "strategy": {
+    "Hue & Heal": "Goal: studio enquiries, Letter subscribers and Mind deck sales; position Maria as the leading voice on designing wellbeing into experiences. Pillars: Ideas from the Journal (wellness experience design across physical and digital, 40 percent), Studio method and proof (how the work is done, before and after, 25 percent), Mind (the coaching decks, the 7 Day Creative Boost, designing your next chapter, 20 percent), Lab (Remedae and Moss Island as products the studio builds, 15 percent). Cadence: 3 to 5 Instagram posts a week, one Journal essay a week, the Letter once a month (plan it in the first week of the month), with a short essay email when a Journal piece goes out.",
+    "Remedae": "Goal: pilot sign-ups and waitlist growth; be the place people save for traditional and kitchen remedies told as the written record. Instagram ranks on saves, shares and sends, so the mix leans to posts people keep: save and quick-glance reference posts (35 percent), curiosity hooks such as the question, the number and the quiz (25 percent), reframes, myth and truth (15 percent), remedy carousels in the founder's story shape (15 percent), Journal promotion with the editorial cover (10 percent). Cadence: 4 to 5 posts a week, one Journal piece a week, the journal email to subscribers when it goes out. Never name a condition in an email subject.",
+    "Moss Island": "Goal: Founding Family applications before the November launch, then sign-ups; Instagram is where grown-ups act (saves, sends, sign-ups). Mix: quest carousels that are useful and savable (2 a week, one card per slide, from one pack or theme), calendar moments (Moss celebrates on the day, with real quests from that pack; the How we took part follow-up only for a real partner event with written permission), Founding Families calls (1 a week), calm stills (an island, a bud, a real object from a quest). Reels come from TikTok once video is approved. Grid rhythm across a row of three: a reel cover or sky cover, a quest carousel, a calm still. No children's faces, ever."
+  },
+  "planning": "TODAY IS PLANNING DAY (Friday). As well as today's digest, propose next week's content plan in week_plan and plan_summary, for the founder to shape and approve. For each company: one Instagram post for each weekday, Monday to Friday, in that brand's own formats and design family; plus that brand's Journal and newsletter items for the week, following its cadence. Each item names its day, format, topic, angle, why now and the strategy pillar it serves, with the sources behind it. Balance what is trending and buzzing this week (the news you found, conversations, calendar moments) against each brand's social strategy, so the week builds the brand rather than chasing noise. Favour what will give the companies an edge: something early, specific or contrarian that competitors are not saying. Moss Island Instagram items must be built from real quests or packs from the list. In today's three, include shaping and approving the plan.",
+  "action": "TODAY IS ACTION DAY (Monday). The week's plan is below and drives the week: today's three should start it (the first posts, the Journal piece's draft, the newsletter if it is due), and today's posts follow today's planned items."
 }

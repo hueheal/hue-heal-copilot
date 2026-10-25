@@ -550,3 +550,29 @@ html:has(.v2) { scroll-padding-top: 124px; scroll-padding-bottom: 130px; }
   .v2-digest-grid { grid-template-columns: minmax(0, 1fr); }
   .v2-digest-frame { height: 78dvh; min-height: 520px; border-radius: 22px; }
 }
+
+/* ---- A digest post, ready to go ---- */
+.v2-post-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 20px; align-items: start; }
+.v2-post-slides { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(280px, 420px); gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 8px; }
+.v2-post-slides img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 20px; scroll-snap-align: start; box-shadow: var(--rim), var(--lift); }
+.v2-post-caption { margin: 0; white-space: pre-wrap; font-size: 14.5px; line-height: 1.55; color: var(--ink); max-height: 420px; overflow: auto; }
+@media (max-width: 960px) {
+  .v2-post-grid { grid-template-columns: minmax(0, 1fr); }
+  .v2-post-slides { grid-auto-columns: 82%; }
+}
+
+/* ---- The weekly content plan ---- */
+.v2-week-days { display: grid; grid-template-columns: repeat(5, minmax(220px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.v2-week-day { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.v2-week-co { display: flex; flex-direction: column; gap: 8px; }
+.v2-week-item { border-radius: 20px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.v2-week-item[data-drop] { opacity: 0.45; }
+.v2-week-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.v2-week-item :is(input, textarea), .v2-week-notes textarea { width: 100%; border: 1px solid transparent; border-radius: 10px; background: transparent; padding: 4px 6px; margin: 0 -6px; font: inherit; color: var(--ink); resize: vertical; outline: none; }
+.v2-week-item input { font-size: 14.5px; font-weight: 500; letter-spacing: -0.3px; }
+.v2-week-item textarea { font-size: 13px; line-height: 1.45; color: var(--ink-60); }
+.v2-week-item :is(input, textarea):focus, .v2-week-notes textarea:focus { border-color: var(--accent); background: var(--field); }
+.v2-week-item a { color: var(--ink-60); }
+.v2-week-notes { margin-top: 20px; }
+.v2-week-notes textarea { margin: 0; border-color: var(--line); background: var(--field); padding: 12px 14px; font-size: 14px; line-height: 1.5; }
+@media (max-width: 960px) { .v2-week-days { grid-template-columns: repeat(5, 78%); scroll-snap-type: x mandatory; } .v2-week-day { scroll-snap-align: start; } }
