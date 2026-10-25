@@ -1,14 +1,14 @@
 // ============================================================================
 // Hue & Heal :: role-scheduler
-// The cadence engine for the org. Invoked daily (chained from the 7am
-// daily-posts cron; also callable with the same x-cron-secret). For every
+// The cadence engine for the org. Invoked daily at 07:00 UTC by the
+// role-scheduler-daily cron (callable with the same x-cron-secret). For every
 // enabled lead whose schedule is due today it runs the standing task through
 // its department, and on Fridays it also writes the weekly digest and runs
 // each department's retro, which rewrites the playbook. Deliverables land in
 // role_runs; needs and experiments land in role_items; notes to colleagues
 // land in role_notes. If the workspace has a linked Telegram chat, each
 // deliverable is pushed there.
-// Secrets: CRON_SECRET (same as daily-posts), ANTHROPIC_API_KEY,
+// Secrets: CRON_SECRET (shared by every cron), ANTHROPIC_API_KEY,
 // SUPABASE_SERVICE_ROLE_KEY, TELEGRAM_BOT_TOKEN (optional).
 // Deploy:  npx supabase functions deploy role-scheduler --no-verify-jwt --project-ref <ref>
 // ============================================================================

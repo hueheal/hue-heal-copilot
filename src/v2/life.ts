@@ -13,6 +13,16 @@ export interface LifeProfile {
   display_name: string; mission: string; purpose: string; values_list: string[]
   focus_areas: { name: string; why?: string }[]; weekly_focus: string
   tender_keywords: string[]; calendar_ics: string; voice_replies: boolean; radar_lens: RadarLens
+  digest_lens?: DigestLens | null
+}
+/** What the Founder's Digest covers and when it arrives. */
+export interface DigestLens {
+  enabled?: boolean; send_at?: string; prep_at?: string; to?: string | null; mac?: boolean; allow_video?: boolean
+  coaching_next?: number; interests?: string[]; companies?: Record<string, string>
+}
+export interface DigestRow {
+  id: string; digest_date: string; stage: string; source: 'mac' | 'cloud'; error: string | null
+  usage: { usd?: number; searches?: number }; sent_at: string | null; sent_to: string | null; headline: string | null
 }
 export interface RadarLens {
   identity?: string; look_for?: string; buyers?: string; down_rank?: string; geography?: string; contracts?: string
@@ -194,6 +204,23 @@ async function call<T>(fn: string, body: unknown): Promise<T & { error?: string 
 }
 
 export type EmailEdits = { to?: string; subject?: string; body?: string }
+
+/* ---- The Founder's Digest ---- */
+export async function listDigests(limit = 14): Promise<DigestRow[]> {
+  if (!live) return []
+  const { data } = await db().from('founder_digests' as never).select('id, digest_date, stage, source, error, usage, sent_at, sent_to, headline:content->>headline').order('digest_date', { ascending: false }).limit(limit)
+  return (data ?? []) as unknown as DigestRow[]
+}
+export async function digestPreview(date?: string): Promise<{ date?: string; stage?: string; subject?: string; html?: string; error?: string }> {
+  if (!live) return { error: 'The preview needs Copilot to be connected.' }
+  return call('founder-digest', { op: 'preview', date })
+}
+export async function digestRun(): Promise<{ note?: string; error?: string }> {
+  return call('founder-digest', { op: 'run' })
+}
+export async function digestResend(date?: string): Promise<{ note?: string; error?: string }> {
+  return call('founder-digest', { op: 'resend', date })
+}
 export async function decideAction(id: string, approve: boolean, edits?: EmailEdits): Promise<{ status?: string; error?: string }> {
   if (!live) { const a = demo.actions.find((x) => x.id === id); if (a) { Object.assign(a.payload, edits ?? {}); a.status = approve ? (a.kind === 'email' ? 'sent' : 'approved') : 'declined' } return { status: a?.status } }
   return call('life-sync', { op: 'decide', actionId: id, approve, edits })

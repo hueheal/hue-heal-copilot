@@ -1,0 +1,400 @@
+{
+  "system": "You write the Founder's Digest, a daily email from Hue & Heal to its founder, Maria Valiji. She runs a wellness experience design studio (Hue & Heal) and two ventures it builds (Remedae and Moss Island). The digest has one job: make her the most commercially literate, best-informed founder in her field and move her three companies towards exponential growth. Every line must earn its place: she reads it on her phone over coffee.\n\nHOUSE STYLE\n- British English. Plain, warm, direct. Short sentences. No jargon without a one-line meaning.\n- Never use em dashes or en dashes. Use commas, colons or full stops.\n- Always write the studio's name as \"Hue & Heal\".\n- Never assume anyone's gender; use they/them for people whose pronouns you do not know.\n- No hype, no exclamation marks, no emoji. Confident, never breathless.\n- Never invent facts, numbers, quotes, studies or sources. Every news item must come from a real page you found, with its real URL. If you are unsure a fact is current, leave it out.\n- Numbers about her companies come only from the PULSE and the context. Never make up a metric.\n\nWHAT GOOD LOOKS LIKE\n- Today's three: the three moves that matter most today across all three companies, each something she can finish or decisively advance today or tomorrow. Concrete verbs. Tie each to a company and give a date.\n- Industry news: four to six items from the last seven days that change what she should think or do. Mix: her industries (wellness, healthy tech, play and family, traditional medicine and women's health, experience design), the startup economy (funding, AI, platforms, ads), and one wildcard. Each has a so-what for her companies. Prefer primary sources and reputable trade press.\n- Ready to post: exactly one post for each of Hue & Heal, Remedae and Moss Island, finished and on brand, tied to something timely where it helps. Each brand has its own rules below.\n- Founder coaching: today's lesson from the curriculum, taught like a great operator would teach it, with a real-world case and a drill applied to one of her companies today. The aim is entrepreneurial literacy for today's economy: unit economics, distribution, capital, AI leverage, negotiation, compounding.\n- Next steps: one to three per company, dated, realistic for a solo founder working with AI agents. Carry forward unfinished steps instead of repeating them as new ones (use existing_task_id). Dates are YYYY-MM-DD, between today and 21 days out.\n- A closing question that stretches her thinking.\n\nNEVER\n- Never repeat a news story, post angle or coaching lesson listed under RECENT DIGESTS.\n- Never reshape a product to chase a grant or a trend. Never recommend NHS-heavy work as a priority.\n- Never suggest spending money she has not approved; ad experiments are proposals with a stated cap.",
+  "news_system": "You are the research desk for the Founder's Digest, a daily briefing for the founder of Hue & Heal (a London wellness experience design studio) and its ventures Remedae (traditional and kitchen remedies as the written record) and Moss Island (a game where children do real-life quests that build skills). Find the most useful news from the last seven days for her interests. Search widely, then file six to eight items with the file_news tool, once, when you are done.\n\nRules: real stories only, each with the URL of the page you read. Published in the last seven days (say the date). No press-release fluff, no listicles, no paywalled teasers with no substance. At most two items on the same theme. Include at least one item on the startup economy (funding, AI, platforms, ads or consumer behaviour) and at least one on each of: wellness or healthy tech, family or play, traditional medicine or women's health. British English, no em or en dashes.",
+  "posts": {
+    "Hue & Heal": "Voice: the studio's, calm and expert, about designing wellbeing into physical and digital experiences (spaces, products, services, games, hospitality, retail, workplaces). Lead with an idea or a sharp observation, not a sales pitch. Point to the Journal or the Studio when it fits. Caption 60 to 160 words, a strong first line, line breaks for air, 3 to 6 hashtags. Image: editorial, premium, quiet, glass and soft light, no text in the image, no faces looking at camera.",
+    "Remedae": "Voice: warm, curious, trustworthy. Traditions are told as the written record (\"recorded in\", \"used in\"), never \"nobody has studied this\" and never a medical claim or a dose. Say \"interaction notes\", never \"interaction checking\". Tease at most one or two kitchen remedies, never a full how-to. Do not over-explain what Remedae is. Every post ends on a save or visit hook (save this, or find it at remedae.app). Caption 50 to 140 words, 3 to 6 hashtags. Image: bright, natural light, a single clear subject (an ingredient, a cup, hands preparing), never moody, never crowded, no text in the image.",
+    "Moss Island": "Voice: gentle, playful, grown-up to grown-up. Describe the game as: children do quests in real life, each designed to build a real skill, and a grown-up approves each quest once it is complete. Never say \"small quests\" and never \"a grown-up says yes\". Name the skill a quest builds. Use \"400+ quests\", never an exact count. It is a calm game: no pressure, no leaderboards. Caption 50 to 140 words, 3 to 6 hashtags, end with an invitation (apply to be a Founding Family at mossislandgame.com) when it fits. Image: a real-life moment of a child doing a quest, faceless or from behind or hands only, showing families of many backgrounds, natural and warm, no screens, no text in the image."
+  },
+  "formats": "Formats: single (one image, the caption carries the idea) or carousel (4 to 7 slides: slide 1 is the hook, the middle slides each carry one idea in at most 25 words, the last slide is the takeaway or the call to action). Choose the format the idea needs. Write image_prompt as a full photographic brief for the cover image (subject, setting, light, framing, mood), following that brand's image rule, never asking for text or logos in the image.",
+  "video_on": "Video is approved: you may choose format video for at most one post when a moment is clearly better as a short reel. Give a 15 to 30 second script in slides (one slide per shot: heading = what we see, body = on-screen text or voice line) and still write an image_prompt for the cover.",
+  "curriculum": [
+    {
+      "title": "Unit economics",
+      "brief": "CAC, LTV, contribution margin and payback period. Why a business that loses money on every customer cannot grow its way out. How to calculate each with rough numbers on day one."
+    },
+    {
+      "title": "Distribution beats product",
+      "brief": "Why the best product rarely wins without a channel. Owned, earned, paid and partner distribution. Choosing one channel to master before adding a second."
+    },
+    {
+      "title": "Pricing power",
+      "brief": "Value-based pricing, anchoring, good-better-best tiers, annual plans and why most founders underprice. Pricing as a positioning decision."
+    },
+    {
+      "title": "Cash, burn and runway",
+      "brief": "Cash is oxygen. Gross versus net burn, default alive versus default dead, the 18-month rule, and the weekly cash ritual."
+    },
+    {
+      "title": "Non-dilutive capital in the UK",
+      "brief": "Grants (Innovate UK and others), SEIS and EIS advance assurance, R&D tax credits, competitions and revenue-based finance. When free money costs too much focus."
+    },
+    {
+      "title": "How venture capital thinks",
+      "brief": "The power law, fund maths, why investors need billion-pound outcomes, what a seed investor actually underwrites, and when not to raise venture at all."
+    },
+    {
+      "title": "Growth loops",
+      "brief": "Loops versus funnels: content loops, referral loops, user-generated loops and paid loops. Designing one loop per product that compounds."
+    },
+    {
+      "title": "Retention and cohorts",
+      "brief": "Retention is the foundation of growth. Reading a cohort table, the smile curve, activation moments and why fixing churn beats buying users."
+    },
+    {
+      "title": "Positioning",
+      "brief": "Competitive alternatives, unique attributes, value, best-fit customers and market category (April Dunford's framework). Owning one word in the customer's mind."
+    },
+    {
+      "title": "Paid acquisition fundamentals",
+      "brief": "CPM, CTR, CPC, conversion rate, CPA and ROAS, and how they chain together. Creative is the targeting now. Running a first test on a capped budget."
+    },
+    {
+      "title": "Experiment design",
+      "brief": "Hypothesis, metric, minimum detectable effect and stopping rules. ICE scoring. Running ten cheap tests a month instead of one big bet."
+    },
+    {
+      "title": "Lead generation and the B2B pipeline",
+      "brief": "ICP, signals, outbound that does not feel like spam, lead magnets, and pipeline maths: how many conversations make one client."
+    },
+    {
+      "title": "Leverage",
+      "brief": "Labour, capital, code and media as the four kinds of leverage, and why code and media are permissionless. Building a company where output is not tied to hours."
+    },
+    {
+      "title": "AI-native operations",
+      "brief": "Agents as staff: which work to delegate, how to write a job description for an agent, approval gates, measuring agent output, and the one-founder company."
+    },
+    {
+      "title": "Network effects and moats",
+      "brief": "Direct, indirect, data and community network effects. Real moats for consumer wellness: brand, trust, proprietary content, community and switching costs."
+    },
+    {
+      "title": "Community-led growth",
+      "brief": "Turning early users into a community that recruits, teaches and retains. Founding member programmes, rituals and the 1,000 true fans idea."
+    },
+    {
+      "title": "Content as distribution",
+      "brief": "Building an owned audience: one flagship format, a publishing cadence, repurposing, and measuring content by pipeline and sign-ups, not likes."
+    },
+    {
+      "title": "Partnerships and business development",
+      "brief": "Finding partners whose customers are yours, structuring a pilot, revenue share versus fees, and the one-page partnership proposal."
+    },
+    {
+      "title": "B2B2C channels",
+      "brief": "Selling to consumers through institutions: schools, employers, insurers, hotels and retailers. Long cycles, big contracts, and how to get the first one."
+    },
+    {
+      "title": "Regulation as strategy",
+      "brief": "ASA and CAP codes on health claims, the Children's Code, Online Safety Act, MHRA borderlines. Compliance done early as a trust moat rather than a cost."
+    },
+    {
+      "title": "Reading financial statements",
+      "brief": "P&L, balance sheet and cash flow statement in plain English. Gross margin, operating leverage and the three numbers every founder should know daily."
+    },
+    {
+      "title": "Valuation, cap tables and dilution",
+      "brief": "Pre and post money, option pools, SAFEs and ASAs, dilution across rounds, and how to model what you keep."
+    },
+    {
+      "title": "The studio model",
+      "brief": "How venture studios and holding companies work: shared services, portfolio economics, founder equity, and when a studio should spin out, sell or keep a venture."
+    },
+    {
+      "title": "Negotiation",
+      "brief": "BATNA, anchoring, trading rather than conceding, silence, and negotiating day rates, partnership terms and term sheets."
+    },
+    {
+      "title": "Storytelling for capital and customers",
+      "brief": "The narrative arc of a pitch: why now, why you, the insight, proof and the ask. One story told consistently across deck, site and social."
+    },
+    {
+      "title": "Decision making under uncertainty",
+      "brief": "One-way versus two-way doors, expected value, pre-mortems, and making faster decisions with 70 percent of the information."
+    },
+    {
+      "title": "Founder time and focus",
+      "brief": "Maker and manager schedules, the one priority per week rule, saying no, and an operating rhythm: daily, weekly, monthly and quarterly reviews."
+    },
+    {
+      "title": "Macro for founders",
+      "brief": "Interest rates, consumer confidence, ad market cycles and funding climates: how the economy changes what to build, price and raise right now."
+    },
+    {
+      "title": "Compounding and exponential growth",
+      "brief": "Small weekly improvements compounding, the doubling-time rule of 72, S-curves, and setting goals in growth rates rather than totals."
+    },
+    {
+      "title": "Exits and strategic value",
+      "brief": "Who buys wellness and family brands and why, acqui-hires, strategic versus financial buyers, and building something sellable even if you never sell."
+    }
+  ],
+  "schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "headline": {
+        "type": "string",
+        "description": "The email subject and title: the day's big idea, 4 to 9 words, no date."
+      },
+      "opening": {
+        "type": "string",
+        "description": "Two or three sentences: what matters most today and why."
+      },
+      "priorities": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "company": {
+              "type": "string",
+              "enum": [
+                "Hue & Heal",
+                "Remedae",
+                "Moss Island"
+              ]
+            },
+            "text": {
+              "type": "string"
+            },
+            "by": {
+              "type": "string",
+              "description": "YYYY-MM-DD."
+            }
+          },
+          "required": [
+            "company",
+            "text",
+            "by"
+          ]
+        }
+      },
+      "news": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "snippet": {
+              "type": "string",
+              "description": "What happened, at most 40 words."
+            },
+            "so_what": {
+              "type": "string",
+              "description": "What it means for her, at most 28 words."
+            },
+            "tag": {
+              "type": "string",
+              "enum": [
+                "Hue & Heal",
+                "Remedae",
+                "Moss Island",
+                "Industry"
+              ]
+            },
+            "source": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            },
+            "date": {
+              "type": "string",
+              "description": "YYYY-MM-DD."
+            }
+          },
+          "required": [
+            "title",
+            "snippet",
+            "so_what",
+            "tag",
+            "source",
+            "url",
+            "date"
+          ]
+        }
+      },
+      "posts": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "company": {
+              "type": "string",
+              "enum": [
+                "Hue & Heal",
+                "Remedae",
+                "Moss Island"
+              ]
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "single",
+                "carousel",
+                "video"
+              ]
+            },
+            "headline": {
+              "type": "string"
+            },
+            "caption": {
+              "type": "string"
+            },
+            "hashtags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "slides": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "heading": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "heading",
+                  "body"
+                ]
+              }
+            },
+            "image_prompt": {
+              "type": "string"
+            },
+            "why": {
+              "type": "string",
+              "description": "Why this post today, one short sentence."
+            }
+          },
+          "required": [
+            "company",
+            "format",
+            "headline",
+            "caption",
+            "hashtags",
+            "slides",
+            "image_prompt",
+            "why"
+          ]
+        }
+      },
+      "coaching": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "principle": {
+            "type": "string",
+            "description": "The lesson in one memorable line."
+          },
+          "lesson": {
+            "type": "string",
+            "description": "The teaching, 110 to 170 words, with the key numbers or formula."
+          },
+          "case": {
+            "type": "string",
+            "description": "A real company that shows it, 40 to 70 words."
+          },
+          "apply": {
+            "type": "string",
+            "description": "How it applies to one of her companies right now, 40 to 80 words."
+          },
+          "drill": {
+            "type": "string",
+            "description": "A 15-minute exercise for today with a concrete output."
+          },
+          "term": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "meaning": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "meaning"
+            ]
+          }
+        },
+        "required": [
+          "principle",
+          "lesson",
+          "case",
+          "apply",
+          "drill",
+          "term"
+        ]
+      },
+      "next_steps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "company": {
+              "type": "string",
+              "enum": [
+                "Hue & Heal",
+                "Remedae",
+                "Moss Island"
+              ]
+            },
+            "title": {
+              "type": "string",
+              "description": "Starts with a verb, at most 12 words."
+            },
+            "detail": {
+              "type": "string",
+              "description": "One sentence: the output and how to know it is done."
+            },
+            "by": {
+              "type": "string",
+              "description": "YYYY-MM-DD."
+            },
+            "existing_task_id": {
+              "type": "string",
+              "description": "The id from OPEN TASKS when carrying one forward, else empty."
+            }
+          },
+          "required": [
+            "company",
+            "title",
+            "detail",
+            "by",
+            "existing_task_id"
+          ]
+        }
+      },
+      "question": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "headline",
+      "opening",
+      "priorities",
+      "news",
+      "posts",
+      "coaching",
+      "next_steps",
+      "question"
+    ]
+  }
+}

@@ -27,6 +27,7 @@ As PA: keep their tasks, milestones, calendar and pipeline true. When they menti
 As coach: you hold their mission, purpose and weekly focus. When the week drifts from them, say so plainly and briefly. Ask at most one question per reply, and only when the answer changes what you do.
 As commercial partner: the Opportunity Radar (in CURRENT STATE) is the Commercial Engine's scored view of tenders, contracts, funding and outbound targets. Talk about it plainly: fit out of 5, the action, the angle, the deadline. When the founder decides on an opportunity ("pursue", "watch", "pass on that, too generic"), record it with radar_decide and keep their reason; reasons teach the engine. The radar scans every morning at 6.30 on the founder's Mac; run_radar is an extra paid cloud scan, only when they ask for one now.
 Outreach emails: lead with the organisation's experience opportunity, never with "we are a design studio". One short paragraph on who the founder is and why Hue & Heal. Invite a conversation rather than selling a project. Under 180 words, signed with the founder's first name and "Founder, Hue & Heal". If you do not know the recipient's address, leave "to" empty; the founder adds it on the card.
+As the digest's editor: the Founder's Digest is the founder's daily email at 07:30 (today's three, industry news, one ready post per channel, a coaching lesson, dated next steps). When they say what they want more or less of ("add biophilic design to my digest", "stop the reels", "send it at 7"), change it with digest_settings.
 As portfolio keeper: PORTFOLIO (in CURRENT STATE) is the live health of everything Hue & Heal runs (websites, hosting, code, email, data) for the studio, the ventures and the clients. Mention anything down or failing without being asked when it matters today. portfolio_check runs a fresh check. Never claim something is fixed; say what the check shows.
 As operating system: work for a business's team (content, research, outreach, finance, legal review) goes to that team with brief_team. Their approvals come back to the founder in the app.
 
@@ -69,6 +70,8 @@ const TOOLS: Anthropic.Beta.BetaTool[] = [
     input_schema: { type: 'object', properties: { id: str, decision: { type: 'string', enum: ['pursue', 'watch', 'pass', 'reopen'] }, note: str }, required: ['id', 'decision'] } },
   { name: 'portfolio_check', description: 'Run a fresh live check of the portfolio (websites, hosting, code, email) for one business by name, or everything when omitted. Returns each connection\'s status.',
     input_schema: { type: 'object', properties: { brand: brandProp }, required: [] } },
+  { name: 'digest_settings', description: 'Change the Founder\'s Digest: add or remove interest topics (they steer the news and coaching), the send time (HH:MM, London), whether reels are allowed, or pause it.',
+    input_schema: { type: 'object', properties: { add_interests: { type: 'array', items: str }, remove_interests: { type: 'array', items: str }, send_at: str, allow_video: { type: 'boolean' }, enabled: { type: 'boolean' } }, required: [] } },
   { name: 'run_radar', description: 'Start an extra Commercial Engine scan in the cloud now (about $1.30; the daily scan already runs free on the founder\'s Mac at 06:30). Only when the founder explicitly asks for a fresh scan now. Results arrive in a few minutes on the Radar.',
     input_schema: { type: 'object', properties: {}, required: [] } },
 ]
@@ -220,6 +223,23 @@ async function runTool(ctx: Ctx, name: string, input: Json): Promise<string> {
       if (out.error) return JSON.stringify({ ok: false, error: out.error })
       ctx.actions.push({ kind: 'portfolio', summary: 'Checked the portfolio' })
       return JSON.stringify({ ok: true, results: (out.results ?? []).map((r) => ({ label: r.label, status: r.status, summary: r.summary })) })
+    }
+    case 'digest_settings': {
+      const { data: prof } = await db.from('life_profile').select('digest_lens').eq('owner', ctx.uid).maybeSingle()
+      const lens = ((prof?.digest_lens ?? {}) as Json)
+      const has = (list: string[], t: string) => list.some((x) => x.toLowerCase() === t.toLowerCase())
+      let interests = ((lens.interests ?? []) as string[]).slice()
+      for (const t of ((input.add_interests ?? []) as string[]).map((x) => cut(x, 120).trim()).filter(Boolean)) if (!has(interests, t)) interests.push(t)
+      const drop = ((input.remove_interests ?? []) as string[]).map((x) => x.toLowerCase())
+      interests = interests.filter((x) => !drop.some((d) => x.toLowerCase().includes(d)))
+      const next: Json = { ...lens, interests }
+      const at = String(input.send_at ?? '').match(/^(\d{1,2}):(\d{2})$/)
+      if (at) { const mins = Number(at[1]) * 60 + Number(at[2]); next.send_at = `${String(Math.floor(mins / 60) % 24).padStart(2, '0')}:${at[2]}`; const prep = (mins + 1380) % 1440; next.prep_at = `${String(Math.floor(prep / 60)).padStart(2, '0')}:${String(prep % 60).padStart(2, '0')}` }
+      if (typeof input.allow_video === 'boolean') next.allow_video = input.allow_video
+      if (typeof input.enabled === 'boolean') next.enabled = input.enabled
+      const { error } = await db.from('life_profile').update({ digest_lens: next }).eq('owner', ctx.uid)
+      if (error) return fail(error)
+      return did('digest', 'Updated your digest')
     }
     case 'run_radar': {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/radar-engine`, { method: 'POST', headers: { authorization: `Bearer ${ctx.token}`, 'content-type': 'application/json' }, body: JSON.stringify({ op: 'run' }) }).catch(() => null)

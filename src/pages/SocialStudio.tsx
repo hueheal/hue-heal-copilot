@@ -183,7 +183,7 @@ export default function SocialStudio() {
   const [step, setStep] = useState<'topic' | 'template' | 'edit'>('edit')
   const [copyTopic, setCopyTopic] = useState('')
   const [copyBusy, setCopyBusy] = useState(false)
-  const { current: brandWorld } = useBrand()
+  const { current: brandWorld, brands: worlds, setCurrent: setWorld } = useBrand()
 
   useEffect(() => { listBrands().then(setBrands).catch(() => {}) }, [])
 
@@ -194,6 +194,10 @@ export default function SocialStudio() {
     if (!id) return
     getPost(id).then((p) => {
       if (!p) { setStatus('Could not load post'); return }
+      // A post opens in its own brand world: the morning digest drafts one
+      // for each, and a Remedae post must use Remedae's templates and account.
+      const own = (p as { brand_id?: string | null }).brand_id
+      if (own && own !== brandWorld?.id && worlds.some((b) => b.id === own)) { setWorld(own); return }
       setPost(p)
       setCopyTopic(p.topic || '')
       const seed = { headline: p.headline || p.topic, sector: SECTOR_LABEL[p.sector], accent: p.accent, brandName: brandWorld?.name, logoUrl: brandWorld?.logo_url ?? undefined, style: resolveStyle(brandWorld ?? undefined), coverImage: p.image_url ?? undefined, website: brandWorld?.website ?? undefined, dek: (p.caption ?? '').split(/\n/)[0]?.slice(0, 160) || undefined }
@@ -211,7 +215,8 @@ export default function SocialStudio() {
       const blank = !isDesign(p.design) && !(p.headline ?? '').trim() && !(p.caption ?? '').trim() && !(p.slides ?? []).length && !p.image_url
       setStep(blank ? ((p.topic ?? '').trim() ? 'template' : 'topic') : 'edit')
     }).catch(() => setStatus('Could not load post'))
-  }, [id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, brandWorld?.id, worlds.length])
 
   const spec = useMemo(() => (design ? INSTAGRAM_FORMATS[design.format] : INSTAGRAM_FORMATS.portrait), [design])
   // Track viewport width so the canvas scales to fit small screens.
