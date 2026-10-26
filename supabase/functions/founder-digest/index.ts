@@ -14,8 +14,6 @@
 //   filed   a written digest waits to be checked and saved: posts become
 //           drafts, next steps become tasks, the lesson moves on
 //   images  one cover image per post (Higgsfield), uploaded to the studio
-//   render  the Mac draws each post in its brand's design (scripts/post-render);
-//           without it in time, the email goes with the cover photos
 //   send    the email, once the send time has come
 //   sent | failed
 // Each invocation advances a row by one step, so no call outlives the
@@ -74,12 +72,10 @@ interface Row {
   send_after: string; force_send: boolean; created_at: string
 }
 const CURRICULUM = RULES.curriculum as { title: string; brief: string }[]
-/* Each brand's post family (rendered on the Mac by scripts/post-render). */
-const KINDS: Record<string, string[]> = {
-  'Hue & Heal': ['cover', 'feature', 'tip', 'pause', 'statement', 'close'],
-  Remedae: ['cover', 'question', 'number', 'remedy', 'glance', 'myth', 'hook', 'statement'],
-  'Moss Island': ['sky', 'scene', 'steps', 'statement', 'quest', 'close'],
-}
+/* The slide roles a post's copy is written in. The posts themselves are made
+   in each brand's own Figma templates (docs/social-design.md). */
+const ROLES = ['cover', 'statement', 'list', 'quote', 'close']
+const KINDS: Record<string, string[]> = { 'Hue & Heal': ROLES, Remedae: ROLES, 'Moss Island': [...ROLES, 'quest'] }
 interface MossQuest { id: string; word: string; mins: string; title: string; why: string; steps: string[]; skill: string; home: string }
 interface MossPack { id: string; name: string; kind: string; from: string | null; to: string | null; on: string | null }
 const MOSS_QUESTS = (MOSS as { quests: MossQuest[] }).quests
@@ -203,7 +199,7 @@ async function buildContext(admin: SupabaseClient, owner: string, lens: Lens, da
     admin.from('connections').select('id, brand_id, config, provider').eq('owner', owner).eq('provider', 'supabase'),
     admin.from('subscribers').select('brand_id').eq('owner', owner).eq('status', 'subscribed'),
     admin.from('priorities').select('title, detail, brand_id, status, due').eq('owner', owner).eq('status', 'active').order('position').limit(15),
-    admin.from('life_tasks').select('id, title, due, brand_id, source, created_at').eq('owner', owner).neq('status', 'done').order('due', { ascending: true, nullsFirst: false }).limit(40),
+    admin.from('life_tasks').select('id, title, due, brand_id, source, created_at, is_now').eq('owner', owner).neq('status', 'done').order('due', { ascending: true, nullsFirst: false }).limit(40),
     admin.from('life_tasks').select('title, brand_id, done_at').eq('owner', owner).eq('status', 'done').gte('done_at', since7).limit(20),
     admin.from('radar_runs').select('brief, finished_at').eq('owner', owner).eq('status', 'done').order('finished_at', { ascending: false }).limit(1).maybeSingle(),
     admin.from('radar_opportunities').select('title, org, lane, fit, action, deadline, why, product').eq('owner', owner).eq('status', 'open').gte('fit', 4).order('fit', { ascending: false }).limit(8),
@@ -262,6 +258,11 @@ async function buildContext(admin: SupabaseClient, owner: string, lens: Lens, da
     ...((prios.data ?? []) as Json[]).map((p) => `- [${nameOf(p.brand_id)}] ${flat(p.title, 140)}${p.due ? ` (due ${p.due})` : ''}`),
     '', 'OPEN TASKS (id in brackets; carry these forward with existing_task_id rather than repeating them):',
     ...((open.data ?? []) as Json[]).map((t) => `- [${t.id}] [${nameOf(t.brand_id)}] ${flat(t.title, 140)}${t.due ? `, due ${t.due}${String(t.due) < date ? ' (OVERDUE)' : ''}` : ''}${t.source === 'digest' ? ', from an earlier digest' : ''}`),
+    // What she set for today herself leads the email.
+    ...(((open.data ?? []) as Json[]).some((t) => t.is_now && (!t.due || String(t.due) <= date))
+      ? ['', 'HER OWN TASKS FOR TODAY (she set these herself: they are today\'s three, in this order, word for word in spirit; say why each matters today and give each a by date of today):',
+        ...((open.data ?? []) as Json[]).filter((t) => t.is_now && (!t.due || String(t.due) <= date)).map((t) => `- [${nameOf(t.brand_id)}] ${flat(t.title, 200)}`)]
+      : []),
     '', 'DONE IN THE LAST 7 DAYS:', ...((done.data ?? []) as Json[]).map((t) => `- [${nameOf(t.brand_id)}] ${flat(t.title, 120)}`),
     '', 'OPPORTUNITY RADAR:',
     ...(brief?.priorities ? ((brief.priorities as Json[]) ?? []).map((p) => `- Radar priority: ${flat(p.text, 300)}`) : []),
@@ -408,12 +409,14 @@ async function fileStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> 
       eyebrow: flat(x.eyebrow, 60), kicker: flat(x.kicker, 120), title: flat(x.title, 160), body: cut(x.body, 420), note: flat(x.note, 160),
       items: ((x.items ?? []) as Json[]).slice(0, 6).map((it) => ({ title: flat(it.title, 90), text: flat(it.text, 160) })),
       quest_id: String(x.quest_id ?? ''), cta: flat(x.cta, 60),
-      image_prompt: company === 'Moss Island' ? '' : cut(x.image_prompt, 1200), image_url: '',
+      image_url: '',
     })).filter((x) => x.kind !== 'quest' || MOSS_QUESTS.some((q) => q.id === x.quest_id))
-    if (!slides.length) slides = [{ kind: kinds[0], eyebrow: '', kicker: '', title: flat(p.headline, 140), body: '', note: '', items: [], quest_id: '', cta: '', image_prompt: '', image_url: '' }]
-    // At most four slide photos a post, beyond the cover.
-    let photos = 0
-    for (const x of slides) if (x.image_prompt && ++photos > 4) x.image_prompt = ''
+    if (!slides.length) slides = [{ kind: kinds[0], eyebrow: '', kicker: '', title: flat(p.headline, 140), body: '', note: '', items: [], quest_id: '', cta: '', image_url: '' }]
+    // A quest slide carries the real quest's title and skill, for the email's slide list.
+    for (const x of slides) {
+      const q = x.kind === 'quest' ? MOSS_QUESTS.find((m) => m.id === x.quest_id) : undefined
+      if (q) { x.title = q.title; x.body = `Builds ${q.skill}` }
+    }
     if (format === 'single') slides = slides.slice(0, 1)
     if (format === 'carousel' && slides.length < 3) format = 'single'
     posts.push({
@@ -484,8 +487,7 @@ async function fileStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> 
   }
   // The lesson moves on only once a digest is actually written.
   await admin.from('life_profile').update({ digest_lens: { ...lens, coaching_next: (module + 1) % CURRICULUM.length } }).eq('owner', row.owner)
-  const next = hasHiggsfield() && posts.length ? 'images' : lens.mac !== false ? 'render' : 'send'
-  return { content: content as unknown as Json, stage: next, state: { ...row.state, raw: undefined, images_started: Date.now(), render_since: Date.now() } }
+  return { content: content as unknown as Json, stage: hasHiggsfield() && posts.length ? 'images' : 'send', state: { ...row.state, raw: undefined, images_started: Date.now() } }
 }
 
 /** Friday: save the proposed plan for next week. Monday: carry this week's plan into the email. */
@@ -512,32 +514,19 @@ async function planFor(admin: SupabaseClient, row: Row, raw: Json): Promise<Part
 /* ---- Images: one cover per post ---- */
 // Hue & Heal's look is its Brand Figma's: warm and cinematic, not the brighter house brief.
 const HH_LOOK = 'Cinematic editorial photograph, warm amber lamplight or candlelight or dusk, deep shadows that keep their detail, rich brown, amber and terracotta palette, subtle film grain, premium hospitality and wellness spaces, people unposed and never looking at the camera, a darker lower third, full-bleed, no text, no logos.'
-const MOSS_LOOK = 'Full-bleed natural documentary family photograph that fills the whole frame edge to edge, warm soft daylight, real home or outdoor setting, candid and calm, a child doing a real-life activity seen from behind, in silhouette or hands only so no face is visible, families of many backgrounds, shallow depth of field, gentle colour, no screens.'
 async function imagesStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> {
   const content = row.content as unknown as DigestContent & { posts: (DigestPost & { image_prompt?: string; image_req?: string; image_failed?: string })[] }
   const started = Number(row.state.images_started ?? Date.now())
   const brandRows = await brandsFor(admin, row.owner)
   const brandId = (co: string) => brandRows.find((b) => b.name === co)?.id ?? null
 
-  // Each slide with its own photo is one more image job, rendered like the cover.
-  type SlideImage = DigestSlide & { image_req?: string; image_failed?: string }
-  const slideJobs = content.posts.flatMap((post) => ((post.slides ?? []) as SlideImage[]).filter((x) => x.image_prompt).map((slide) => ({ slide, company: post.company })))
-  // Submit what has not been submitted.
-  for (const { slide, company } of slideJobs) {
-    if (slide.image_url || slide.image_req || slide.image_failed) continue
-    try {
-      const lib = company === 'Remedae' ? await loadLibrary(admin, brandId(company)) : null
-      const req = { purpose: 'social', surface: 'social-portrait', subject: slide.image_prompt }
-      const { statusUrl } = await submitImage((lib ? composePrompt(lib, req) : `${slide.image_prompt ?? ''} ${HH_LOOK}`).slice(0, 2400), { aspect: '3:4', resolution: '1080p', referenceUrl: lib ? await referenceFor(lib, req) : undefined })
-      slide.image_req = statusUrl
-    } catch (e) { slide.image_failed = cut((e as Error).message, 200) }
-  }
   for (const post of content.posts) {
-    if (post.image_url || post.image_req || post.image_failed || !post.image_prompt) continue
+    // Moss Island's templates use the game's own art, not a stock photo.
+    if (post.image_url || post.image_req || post.image_failed || !post.image_prompt || post.company === 'Moss Island') continue
     try {
       const lib = post.company === 'Remedae' ? await loadLibrary(admin, brandId(post.company)) : null
       const req = { purpose: 'social', surface: 'social-portrait', subject: post.image_prompt }
-      const prompt = lib ? composePrompt(lib, req) : `${post.image_prompt} ${post.company === 'Moss Island' ? MOSS_LOOK : HH_LOOK}`.trim()
+      const prompt = lib ? composePrompt(lib, req) : `${post.image_prompt} ${HH_LOOK}`
       const ref = lib ? await referenceFor(lib, req) : undefined
       const { statusUrl } = await submitImage(prompt.slice(0, 2400), { aspect: '3:4', resolution: '1080p', referenceUrl: ref })
       post.image_req = statusUrl
@@ -546,7 +535,7 @@ async function imagesStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>
   // Wait for them, bounded, then upload each finished one to the studio.
   const deadline = Date.now() + 95_000
   let wait = 4000
-  while (Date.now() < deadline && (content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed) || slideJobs.some(({ slide: x }) => x.image_req && !x.image_url && !x.image_failed))) {
+  while (Date.now() < deadline && content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed)) {
     await new Promise((r) => setTimeout(r, wait))
     wait = Math.min(wait + 2000, 10_000)
     for (const post of content.posts) {
@@ -564,27 +553,10 @@ async function imagesStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>
         if (post.post_id) await admin.from('social_posts').update({ image_url: post.image_url }).eq('id', post.post_id)
       } catch (e) { console.error('digest image', (e as Error).message) }
     }
-    for (const { slide: x } of slideJobs) {
-      if (!x.image_req || x.image_url || x.image_failed) continue
-      try {
-        const c = await checkImage(x.image_req)
-        if (c.state === 'failed') { x.image_failed = c.reason; continue }
-        if (c.state !== 'ready') continue
-        const img = await download(c.url)
-        const path = `${row.owner}/digest/${row.digest_date}-slide-${crypto.randomUUID().slice(0, 8)}.${img.contentType.includes('png') ? 'png' : 'jpg'}`
-        const up = await admin.storage.from('social-assets').upload(path, img.bytes, { contentType: img.contentType, upsert: true })
-        if (up.error) { x.image_failed = up.error.message; continue }
-        x.image_url = admin.storage.from('social-assets').getPublicUrl(path).data.publicUrl
-      } catch (e) { console.error('digest slide image', (e as Error).message) }
-    }
   }
-  const pending = content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed) || slideJobs.some(({ slide: x }) => x.image_req && !x.image_url && !x.image_failed)
+  const pending = content.posts.some((p) => p.image_req && !p.image_url && !p.image_failed)
   const givenUp = Date.now() - started > IMAGE_GIVE_UP_MS
-  if (pending && !givenUp) return { content: content as unknown as Json, stage: 'images' }
-  // With the Mac on, it draws each post in its brand's design next; the cloud
-  // sends without the designs if the Mac has not drawn them in time.
-  const lens = await lensOf(admin, row.owner)
-  return { content: content as unknown as Json, stage: lens.mac !== false ? 'render' : 'send', state: { ...row.state, render_since: Date.now() } }
+  return { content: content as unknown as Json, stage: pending && !givenUp ? 'images' : 'send' }
 }
 
 /* ---- Sending ---- */
@@ -676,15 +648,6 @@ async function openToday(admin: SupabaseClient, onlyOwner?: string, mode: 'auto'
 async function tick(admin: SupabaseClient): Promise<Json> {
   await openToday(admin)
   const nowIso = new Date().toISOString()
-  // The Mac draws the designs; if it has not within 15 minutes of send time
-  // (or of the images being ready, when later), the digest goes without them.
-  // A cloud-written day waits only five minutes: the Mac is probably asleep.
-  const { data: waiting } = await admin.from('founder_digests').select('id, source, send_after, state, force_send').eq('stage', 'render')
-  for (const w of (waiting ?? []) as { id: string; source: string; send_after: string; state: Json; force_send: boolean }[]) {
-    const since = Number(w.state?.render_since ?? 0)
-    const due = Math.max(w.force_send ? 0 : new Date(w.send_after).getTime(), since) + (w.source === 'mac' ? 15 : 5) * 60_000
-    if (Date.now() > due) await admin.from('founder_digests').update({ stage: 'send', error: 'The Mac did not draw the post designs in time, so the digest went with the cover photos.' }).eq('id', w.id).eq('stage', 'render')
-  }
   // The Mac had until send time; after that the cloud writes it.
   await admin.from('founder_digests').update({ stage: 'news', source: 'cloud', error: 'The Mac did not file this one by send time, so the cloud wrote it.' })
     .eq('stage', 'mac').lt('send_after', nowIso)

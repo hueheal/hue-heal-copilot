@@ -17,8 +17,10 @@ export interface DigestSlide {
 export interface DigestPost {
   company: string; format: string; headline: string; caption: string; hashtags: string[]
   slides: DigestSlide[]; image_url?: string | null; post_id?: string | null; why?: string
-  /** The rendered slides (JPEG), once the Mac has drawn them. */
+  /** The finished slides, once the post is made in the brand's Figma templates. */
   slide_urls?: string[]
+  /** The post's frame in Figma. */
+  figma_url?: string
 }
 export interface DigestContent {
   date: string; dateLong: string; headline: string; opening: string
@@ -89,6 +91,8 @@ const dot = (company: string) => `<span style="display:inline-block;width:8px;he
 const tag = (company: string, extra = '') => `<p class="faint" style="margin:0 0 6px;font-family:${SANS};font-weight:400;font-size:12px;letter-spacing:0.2px;color:${C.faint}">${dot(company)}${esc(company)}${extra ? ` &nbsp;&middot;&nbsp; ${esc(extra)}` : ''}</p>`
 const card = (inner: string, pad = '24px 24px 8px') => `<table role="presentation" class="card" width="100%" cellpadding="0" cellspacing="0" style="background:${C.card};border:1px solid ${C.rule};border-radius:18px"><tr><td style="padding:${pad}">${inner}</td></tr></table>`
 
+const cover0 = (p: DigestPost) => p.slide_urls?.[0] ?? p.image_url ?? ''
+
 export function digestEmail(d: DigestContent, opts: { base: string; appUrl: string }): { subject: string; preheader: string; html: string; text: string } {
   const base = opts.base.replace(/\/$/, '')
   const app = opts.appUrl.replace(/\/$/, '')
@@ -144,9 +148,9 @@ export function digestEmail(d: DigestContent, opts: { base: string; appUrl: stri
 
   // Ready to post
   if (d.posts.length) {
-    rows.push(`<tr><td class="px" style="padding:26px 40px 4px">${label('Ready to post')}${h2('One for each channel')}${p('Each one is saved as a draft in Copilot. Open it to check the slides, change anything, then post.', 'mute', C.mute, 15, 4)}</td></tr>`)
+    rows.push(`<tr><td class="px" style="padding:26px 40px 4px">${label('Ready to post')}${h2('One for each channel')}${p('The copy for each brand\'s Figma templates, with the caption ready to paste.', 'mute', C.mute, 15, 4)}</td></tr>`)
     for (const post of d.posts) {
-      const href = post.post_id ? `${app}/v2/post/${post.post_id}` : `${app}/create`
+      const href = post.figma_url || cover0(post) || app
       const fmt = post.format === 'carousel' ? `Carousel, ${(post.slide_urls?.length || post.slides.length)} slides` : post.format === 'video' ? 'Reel' : 'Single image'
       // Long captions stop at the last full sentence; the studio has the rest.
       const head = post.caption.slice(0, 460)
@@ -173,7 +177,7 @@ export function digestEmail(d: DigestContent, opts: { base: string; appUrl: stri
         ${post.hashtags.length ? p(esc(post.hashtags.map((h) => `#${h.replace(/^#/, '')}`).join(' ')), 'faint', C.faint, 13, 12) : ''}
         ${slides}
         ${post.why ? p(`<i>Why today:</i> ${esc(post.why)}`, 'faint', C.faint, 13, 16) : ''}
-        <div style="padding:0 0 18px">${button('Review and post', href)}</div>`)}</td></tr>`)
+        ${post.figma_url ? `<div style="padding:0 0 18px">${button('Open in Figma', post.figma_url)}</div>` : '<div style="height:8px;line-height:8px">&nbsp;</div>'}`)}</td></tr>`)
     }
     rows.push(`<tr><td style="height:14px;line-height:14px">&nbsp;</td></tr>`)
     rows.push(rule())
@@ -273,7 +277,7 @@ ${rows.join('\n')}
     `Founder's Digest, ${d.dateLong}`, '', d.headline, '', d.opening, '',
     "TODAY'S THREE", ...d.priorities.map((x, i) => `${i + 1}. [${x.company}] ${x.text}${x.by ? ` (by ${byLabel(x.by, d.date)})` : ''}`), '',
     'IN THE INDUSTRY', ...d.news.map((n) => `- ${n.title} (${n.source}) ${n.url}\n  ${n.snippet}\n  ${n.so_what}`), '',
-    'READY TO POST', ...d.posts.map((x) => `- ${x.company}: ${x.headline}\n  ${x.post_id ? `${app}/v2/post/${x.post_id}` : ''}`), '',
+    'READY TO POST', ...d.posts.map((x) => `- ${x.company}: ${x.headline}${x.figma_url ? `\n  ${x.figma_url}` : ''}`), '',
     `FOUNDER COACHING: ${c?.title ?? ''}`, c?.principle ?? '', c?.lesson ?? '', `Drill: ${c?.drill ?? ''}`, '',
     'NEXT STEPS', ...d.next_steps.map((s) => `- [${s.company}] ${s.title} (by ${byLabel(s.by, d.date)})`), '',
     d.question,

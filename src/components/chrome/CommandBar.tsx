@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Command } from 'cmdk'
 import { useBrand } from '../../lib/brandContext'
 import { useTheme } from '../../lib/theme'
-import { savePost } from '../../lib/socialCopilot'
-import type { PostFormat } from '../../lib/database.types'
 import {
   IcHome, IcCreate, IcClients, IcSettings,
-  IcSun, IcMoon, IcMonitor, IcDoc, IcMail, IcImage, IcLayers, IcInvoice,
+  IcSun, IcMoon, IcMonitor, IcDoc, IcMail, IcInvoice,
 } from './icons'
 
 /* ============================================================
@@ -19,7 +17,6 @@ export default function CommandBar({ open, onOpenChange }: { open: boolean; onOp
   const nav = useNavigate()
   const { brands, current, setCurrent } = useBrand()
   const { setMode } = useTheme()
-  const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -32,14 +29,6 @@ export default function CommandBar({ open, onOpenChange }: { open: boolean; onOp
 
   if (!open) return null
   const go = (path: string) => { onOpenChange(false); nav(path) }
-  async function newSocial(format: PostFormat) {
-    if (busy) return
-    setBusy(true)
-    try {
-      const post = await savePost({ topic: '', format, sector: 'hospitality', accent: 'copper', platform: 'instagram', headline: '', caption: '', hashtags: [], slides: [], image_url: null, status: 'draft' })
-      go(`/create/social/${post.id}`)
-    } finally { setBusy(false) }
-  }
 
   return (
     <div className="ck-cmd-overlay" onPointerDown={(e) => { if (e.target === e.currentTarget) onOpenChange(false) }}>
@@ -49,9 +38,6 @@ export default function CommandBar({ open, onOpenChange }: { open: boolean; onOp
           <Command.Empty>Nothing matches.</Command.Empty>
 
           <Command.Group heading="Create">
-            <Command.Item onSelect={() => newSocial('carousel')}><IcLayers /> New Instagram carousel</Command.Item>
-            <Command.Item onSelect={() => newSocial('portrait')}><IcImage /> New Instagram post</Command.Item>
-            <Command.Item onSelect={() => newSocial('story')}><IcImage /> New Instagram story</Command.Item>
             <Command.Item onSelect={() => go('/create/journal')}><IcDoc /> New journal article</Command.Item>
             <Command.Item onSelect={() => go('/create/newsletter')}><IcMail /> New newsletter</Command.Item>
             <Command.Item onSelect={() => go('/proposals')}><IcInvoice /> Proposals &amp; invoices</Command.Item>
@@ -62,7 +48,6 @@ export default function CommandBar({ open, onOpenChange }: { open: boolean; onOp
             <Command.Item onSelect={() => go('/create')}><IcCreate /> Create</Command.Item>
             <Command.Item onSelect={() => go('/team')}><IcClients /> Team</Command.Item>
             <Command.Item onSelect={() => go('/clients')}><IcClients /> Clients</Command.Item>
-            <Command.Item onSelect={() => go('/templates')}><IcImage /> Template gallery</Command.Item>
             <Command.Item onSelect={() => go('/settings')}><IcSettings /> Settings</Command.Item>
           </Command.Group>
 

@@ -266,23 +266,10 @@
                       "statement",
                       "list",
                       "quote",
-                      "stat",
                       "close",
-                      "question",
-                      "number",
-                      "remedy",
-                      "glance",
-                      "myth",
-                      "hook",
-                      "sky",
-                      "scene",
-                      "steps",
-                      "quest",
-                      "feature",
-                      "tip",
-                      "pause"
+                      "quest"
                     ],
-                    "description": "A slide kind from that brand's design family."
+                    "description": "The slide's role: cover first, close last; quest is a Moss Island quest card."
                   },
                   "eyebrow": {
                     "type": "string",
@@ -328,10 +315,6 @@
                   "cta": {
                     "type": "string",
                     "description": "The cue or button text, or empty."
-                  },
-                  "image_prompt": {
-                    "type": "string",
-                    "description": "Hue & Heal feature, tip and statement slides and Remedae remedy slides may have their own photograph: a full photographic brief in that brand's image style. At most 4 per post. Empty for none (the slide then uses the cover photo or its own ground)."
                   }
                 },
                 "required": [
@@ -343,11 +326,10 @@
                   "note",
                   "items",
                   "quest_id",
-                  "cta",
-                  "image_prompt"
+                  "cta"
                 ]
               },
-              "description": "The designed post, slide by slide: one slide for a single post, 4 to 8 for a carousel, starting with a cover kind and ending with that brand's closing kind."
+              "description": "The post's copy, slide by slide, for the brand's Figma templates: one slide for a single post, 4 to 8 for a carousel, cover first and close last."
             },
             "image_prompt": {
               "type": "string"
@@ -561,10 +543,10 @@
     ]
   },
   "design": {
-    "intro": "DESIGN THE POST, SLIDE BY SLIDE. Every post is a finished design in its brand's own post family, not a plain photo. Write slides as data: each slide has a kind from that brand's family and only the fields that kind uses (leave the rest empty). A single post is one slide. A carousel is 4 to 8 slides: a cover kind first, one idea per slide, the brand's closing kind last. Keep every line short: titles at most 12 words, bodies at most 35 words, item lines at most 14 words. The cover photo (image_prompt) is used by the kinds marked photo.",
-    "Hue & Heal": "HUE & HEAL family (the new website's look: its Newsreader serif and Poppins on the site's type scale, its near-black ground, warm white type, the room lockups hue&heal: Studio, Lab or Mind, and the room colours Studio coral, Lab jade and Mind periwinkle; with the post structures from the Brand Figma: cinematic full-bleed photographs fading to black, a tracked eyebrow at the top such as EXPERIENCE DESIGN, CREATIVE COACHING or HUE & HEAL'S GUIDE TO, a centred cover stack, a glass pill, 'Swipe to see how' at the foot, and halo rings for pauses). Set one *phrase* in italic in each title. Name the room with kicker on pause, statement and close slides: studio (experience design, client work), lab (Remedae, Moss Island, products) or mind (coaching, the decks, the Creative Boost). cover (photo): eyebrow, kicker as the small line above the title (e.g. 'Designing the', 'Wellness design in'), title with one *italic phrase*, body as the small line under it, note as the pill (e.g. 'Part 1: The table'), cta 'Swipe to see how'. feature (own image_prompt): one named example: eyebrow (the series), title (its name), items as labelled lines (title 'Experience:', 'Why it works:' or 'Try it:', text the line). tip (own image_prompt): one idea in a series: eyebrow (the series name), title (two to four words, may have *italic*), body three short lines separated by line breaks. pause: a word in a halo ring: eyebrow, title one or two words (e.g. '*Pause.*'), kicker the room, body one short line inside the ring. statement (own photo or the room glow): eyebrow, kicker the room, title a line with one *italic phrase*, body one line. close: eyebrow, kicker the room, title the question or the call with one *italic phrase*, body one line inviting a comment or a visit, cta a link such as hueandheal.com/studio. Typical carousel: cover, 3 to 5 feature or tip slides each with its own photo, close. Typical single: cover, pause or statement. Keep titles short: covers at most 6 words, others at most 12.",
-    "Remedae": "REMEDAE family (the Remedae Instagram system: forest ground, Quando headlines with exactly one *phrase* wrapped in asterisks set in mint italic, Poppins text, one cue per post ending in ›, the mark bottom-left). cover (photo): eyebrow and kicker as two pills (a theme and a tradition or region), title with one *phrase*, body as a one-line dek, cta as the cue. question: eyebrow, title is one question with one *phrase*, cta. number (photo): kicker is the stat (e.g. 3bn), title the statement it completes, cta. remedy (may have its own image_prompt: a bright single-subject still of the ingredient): the numbered remedy slide in the founder's carousel shape: eyebrow 'Tradition · Region', kicker 'For ...', title the remedy's name with *name*, body how it was used plus one verified fact, note a short care line. glance: the cream save card: eyebrow, title with one *phrase*, 3 to 6 items (title = tradition, text = one line), cta. myth: kicker is the belief people are told (shown struck through), title what the traditions say, cta. hook: the closing hook slide: eyebrow, title with one *phrase*, items as a quick-glance list of what the post covered (titles only), cta (save it or visit remedae.app). statement: eyebrow, title, body. Carousel shape (founder rule): cover, one context statement that earns the swipe, 2 to 4 remedy slides, hook. Never a dose, never a medical claim.",
-    "Moss Island": "MOSS ISLAND family (its own social set: the teal sky, light Newsreader titles in white, glass rows, cream quest cards on the category colour, Moss on the closing slide). Moss Island posts show REAL quests from the game only: every quest slide has a quest_id from MOSS ISLAND QUESTS, and the card's title, steps, time and skill are filled in from the game, so leave their text empty. sky: title, body as one line, eyebrow as the glass pill (e.g. Coming this November). scene (pack scene art, or the photo): title, body. Use scene as the cover when the quests come from a pack with its own moment (Halloween, Bonfire Night, Diwali). steps: title, 2 to 4 items (title, text) as numbered glass rows. statement: title, body. quest: quest_id only. close: title (default Now accepting Founding Families), body, cta (Apply via the link in bio). Typical carousel: scene or sky cover, 3 to 5 quest cards from the same pack or theme, close. A single post is one quest card or a sky slide."
+    "intro": "WRITE EACH POST AS SLIDE-BY-SLIDE COPY. The posts are made in each brand's own Figma templates, which are the source of truth for the design, so write copy only: what each slide says, in the fields its role uses (eyebrow, kicker, title, body, items, cta), leaving the rest empty. A single post is one slide; a carousel is 4 to 8 slides, a cover first and a closing slide last. Keep lines short: titles at most 10 words, bodies at most 30. Mark the one phrase to emphasise in each title with *asterisks*.",
+    "Hue & Heal": "HUE & HEAL: copy for the Hue & Heal Figma social templates (the link is still to come). Typical carousel: a cover with a short eyebrow, a title and one line, 3 to 5 idea slides, a closing question or call.",
+    "Remedae": "REMEDAE: copy for Remedae's own templates, which are moving to Figma. Until then follow its Instagram system's copy shapes: a cover promise, one context slide, numbered remedy slides, and a closing hook slide that asks people to save it or visit remedae.app.",
+    "Moss Island": "MOSS ISLAND: copy for the Moss Island Figma social templates (Figma file zRPzlRUISFVMvw7KZXkjws: the launch carousels, the Founding Families set and the calendar covers such as 'Introducing Diwali Quests'). Quest slides use a quest_id from MOSS ISLAND QUESTS only and leave their text empty: the card comes from the game. Typical carousel: a cover in the calendar cover style or the launch style, 3 to 5 quest slides, a 'Now accepting Founding Families' close."
   },
   "strategy": {
     "Hue & Heal": "Goal: studio enquiries, Letter subscribers and Mind deck sales; position Maria as the leading voice on designing wellbeing into experiences. Pillars: Ideas from the Journal (wellness experience design across physical and digital, 40 percent), Studio method and proof (how the work is done, before and after, 25 percent), Mind (the coaching decks, the 7 Day Creative Boost, designing your next chapter, 20 percent), Lab (Remedae and Moss Island as products the studio builds, 15 percent). Cadence: 3 to 5 Instagram posts a week, one Journal essay a week, the Letter once a month (plan it in the first week of the month), with a short essay email when a Journal piece goes out.",

@@ -13,7 +13,6 @@ import Calendar from './Calendar'
 import Radar from './Radar'
 import Portfolio from './Portfolio'
 import Digest from './Digest'
-import Post from './Post'
 import Week from './Week'
 import './v2.css'
 
@@ -154,7 +153,6 @@ function Shell() {
             <Route path="radar" element={<Radar />} />
             <Route path="portfolio" element={<Portfolio />} />
             <Route path="digest" element={<Digest />} />
-            <Route path="post/:id" element={<Post />} />
             <Route path="week" element={<Week />} />
             <Route path="calendar" element={<Calendar />} />
             <Route path="chat" element={<Chat messages={messages} thinking={thinking} />} />

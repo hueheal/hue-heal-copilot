@@ -1,14 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useBrand } from '../lib/brandContext'
-import { listPosts, type Post } from '../lib/socialCopilot'
 import { listJournal, type JournalArticle } from '../lib/journal'
 import { listNewsletters, type Newsletter } from '../lib/newsletter'
 import { listProposals, type Proposal } from '../lib/studioOps'
-import { isDesign, type Design } from '../lib/social/design'
-import { fontsFor } from '../lib/social/templates'
-import { INSTAGRAM_FORMATS } from '../lib/social/formats'
-import { SlideCanvas } from './SocialStudio'
 import Composer from '../components/chrome/Composer'
 import Briefing from '../components/Briefing'
 import AssetReview from '../components/AssetReview'
@@ -16,7 +11,6 @@ import { BatchReviewCard } from '../components/BatchShelf'
 import Priorities from '../components/Priorities'
 import { listRoles, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
 import { DEPARTMENTS, deptOf } from '../lib/org'
-import type { PostFormat } from '../lib/database.types'
 
 /* ============================================================
    Home (Phase 5): the intent-led starting point. One composer,
@@ -26,14 +20,12 @@ import type { PostFormat } from '../lib/database.types'
 
 interface Recent {
   id: string
-  kind: 'social' | 'journal' | 'newsletter' | 'proposal'
+  kind: 'journal' | 'newsletter' | 'proposal'
   title: string
   sub: string
   when: string
   to: string
   image?: string
-  design?: Design
-  format?: PostFormat
 }
 
 function ago(iso: string): string {
@@ -66,15 +58,10 @@ export default function Home() {
   useEffect(() => {
     let off = false
     ;(async () => {
-      const [posts, arts, news, props] = await Promise.allSettled([listPosts(), listJournal('article'), listNewsletters(), listProposals()])
+      // Social posts are made in Figma now, so they are not listed here.
+      const [arts, news, props] = await Promise.allSettled([listJournal('article'), listNewsletters(), listProposals()])
       if (off) return
       const r: Recent[] = []
-      if (posts.status === 'fulfilled') for (const p of posts.value.slice(0, 8) as Post[]) r.push({
-        id: p.id, kind: 'social', title: p.headline || p.topic || 'Untitled post',
-        sub: p.format === 'carousel' ? 'Instagram carousel' : p.format === 'story' ? 'Instagram story' : 'Instagram post',
-        when: p.updated_at ?? p.created_at, to: `/create/social/${p.id}`,
-        image: p.image_url ?? undefined, design: isDesign(p.design) ? (p.design as unknown as Design) : undefined, format: p.format,
-      })
       if (arts.status === 'fulfilled') { setJournals(arts.value); for (const a of arts.value.slice(0, 6)) r.push({
         id: a.id, kind: 'journal', title: a.title || 'Untitled article', sub: a.published_at ? 'Journal · published' : 'Journal · draft',
         when: a.updated_at ?? a.created_at, to: `/create/journal?open=${a.id}`, image: a.hero_image || undefined,
@@ -96,10 +83,10 @@ export default function Home() {
   /* Sparse, honest suggestions from what's actually in the workspace. */
   const suggestions = useMemo(() => {
     const out: { label: string; sub: string; to: string }[] = []
-    const draft = (recents ?? []).find((r) => r.sub.includes('draft') || (r.kind === 'social' && r.sub.includes('Instagram')))
+    const draft = (recents ?? []).find((r) => r.sub.includes('draft'))
     if (draft) out.push({ label: `Continue “${draft.title}”`, sub: ago(draft.when), to: draft.to })
     const published = journals.find((a) => a.published_at)
-    if (published) out.push({ label: `Turn “${published.title}” into a carousel`, sub: 'Journal → Instagram', to: `/create/journal?open=${published.id}` })
+    if (published) out.push({ label: `Turn “${published.title}” into a newsletter`, sub: 'Journal → Newsletter', to: `/create/journal?open=${published.id}` })
     const lastNews = newsletters[0]
     const stale = !lastNews || Date.now() - new Date(lastNews.updated_at ?? lastNews.created_at).getTime() > 14 * 86400000
     if (stale) out.push({ label: 'Send subscribers a newsletter', sub: newsletters.length ? 'It has been a while' : 'The list is waiting', to: '/create/newsletter' })
@@ -210,13 +197,7 @@ export default function Home() {
               {recents.map((r) => (
                 <button key={`${r.kind}-${r.id}`} className="ck-card" onClick={() => nav(r.to)}>
                   <div className="ck-thumb">
-                    {r.kind === 'social' && r.design?.slides?.length ? (
-                      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10 }}>
-                        <div style={{ borderRadius: 4, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.18)' }}>
-                          <SlideCanvas slide={r.design.slides[0]} spec={INSTAGRAM_FORMATS[(r.format === 'square' || r.format === 'story' || r.format === 'carousel' || r.format === 'portrait' ? r.format : 'portrait')]} displayW={112} fonts={r.design.fonts ?? fontsFor(current?.name)} />
-                        </div>
-                      </div>
-                    ) : r.image ? (
+                    {r.image ? (
                       <img src={r.image} alt="" loading="lazy" />
                     ) : (
                       <div className="ck-typo">{r.title}</div>

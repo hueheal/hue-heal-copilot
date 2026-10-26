@@ -1,10 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import type { Asset } from '../../lib/assets'
-import { INSTAGRAM_FORMATS } from '../../lib/social/formats'
-import { SlideCanvas } from '../../pages/SocialStudio'
 
-/* One asset, as a visual card: live slide render for social, hero for
-   journal, typographic card otherwise. Chrome surface. */
+/* One asset, as a visual card: hero for journal, typographic card
+   otherwise. Chrome surface. */
 
 export function agoLabel(iso: string): string {
   const d = Date.now() - new Date(iso).getTime()
@@ -17,18 +15,11 @@ export function agoLabel(iso: string): string {
 
 export default function AssetCard({ asset, menu }: { asset: Asset; menu?: React.ReactNode }) {
   const nav = useNavigate()
-  const spec = INSTAGRAM_FORMATS[(asset.format === 'square' || asset.format === 'story' || asset.format === 'carousel' || asset.format === 'portrait') ? asset.format : 'portrait']
   return (
     <div className="ck-card" style={{ position: 'relative' }}>
       <button className="ck-card-hit" onClick={() => nav(asset.to)} aria-label={`Open ${asset.title}`}>
         <div className="ck-thumb">
-          {asset.kind === 'social' && asset.design?.slides?.length ? (
-            <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10 }}>
-              <div style={{ borderRadius: 4, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.18)' }}>
-                <SlideCanvas slide={asset.design.slides[0]} spec={spec} displayW={112} fonts={asset.design.fonts} />
-              </div>
-            </div>
-          ) : asset.image ? (
+          {asset.image ? (
             <img src={asset.image} alt="" loading="lazy" />
           ) : (
             <div className="ck-typo">{asset.title}</div>

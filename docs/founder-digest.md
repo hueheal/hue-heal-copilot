@@ -5,27 +5,24 @@ A branded email from Hue & Heal to the founder every morning at 07:30 London tim
 ## What is in it
 
 1. **The pulse**: live numbers for each company. Remedae and Moss Island come from their own databases through the portfolio connector. Hue & Heal shows subscribers, strong radar leads and the pipeline.
-2. **Today's three**: the three moves that matter most across the companies, each with a date.
+2. **Today's three**: the three moves that matter most across the companies, each with a date. Tasks Maria sets for the day herself (marked now in Copilot) lead it.
 3. **In the industry**: four to six real stories from the last seven days, each with what it means for her.
 4. **Ready to post**: one post each for Hue & Heal, Remedae and Moss Island.
    - Each is a single image or a carousel. Reels only when allowed on the Digest page.
-   - Each comes with a cover image from Higgsfield and is saved as a draft in the studio.
-   - "Review and post" opens the draft in its own brand world.
+   - Each is written as copy for the brand's Figma templates, with a caption ready to paste.
 5. **Founder coaching**: one lesson a day from a 30-lesson curriculum (`supabase/functions/_shared/digest-rules.json`). Each lesson has a principle, a real case, how it applies to her and a 15-minute drill.
 6. **Next steps**: one to three dated steps per company.
    - These are saved as tasks in `life_tasks` with `source = 'digest'`.
    - Unfinished steps are carried forward rather than repeated, and overdue ones are listed.
 7. **One question to sit with.**
 
-## Designed posts
+## The posts
 
-Each post is drawn slide by slide in its brand's own design, then emailed as finished slides. The cover is shown large, with the rest as a strip.
-- The design families and their sources are in `docs/social-design.md`, which is shared with the brand chats.
-- The renderer is in `scripts/post-render/`.
-- Moss Island quest slides are the game's own cards.
-- Hue & Heal feature and tip slides, and Remedae remedy slides, can each have their own photo, at most four per post.
-- The Mac draws the slides in the `render` step. If it has not drawn them within 15 minutes of send time, the email goes with the cover photos instead (5 minutes when the cloud wrote that day's digest).
-- "Review and post" opens `/v2/post/:id`. That page shows the slides and the caption, and posts to the brand's Instagram when it is connected.
+Since 26 Oct 2026, posts are made in each brand's own Figma templates, which are the source of truth (`docs/social-design.md`).
+- The digest writes each post as slide-by-slide copy for those templates, with a caption.
+- Hue & Heal and Remedae posts get a cover photo. Moss Island posts don't, because its templates use the game's art.
+- Copilot no longer draws posts itself, and has no social post screens.
+- Next step: the Mac fills the Figma templates each morning, and the email links to the frames.
 
 ## The weekly plan
 
@@ -47,7 +44,7 @@ One row in `founder_digests` per day; the row is the job (`stage`).
 |---|---|
 | 06:30 | The `founder-digest-tick` cron (every 5 min, 04:00 to 11:55 UTC) opens the day with its context, stage `mac`. |
 | about 07:00 | The scheduled Claude task `hue-heal-founder-digest` runs on the Mac on the Claude plan, so it costs nothing extra. It researches and writes the digest, then files it. It uses `node scripts/digest-local.mjs context`, then `file <json>`. |
-| on filing | Copilot saves the posts and tasks, moves the lesson on, and makes the photos. Stages: `filed`, then `images`, then `render`, then `send`. The Mac draws the slides in `render`. |
+| on filing | Copilot saves the posts and tasks, moves the lesson on, and makes the photos. Stages: `filed`, then `images`, then `send`. |
 | 07:30 | The digest is sent through Resend from news@hueandheal.com to the address on the Digest page, or the Copilot sign-in email when none is set. |
 
 If the Mac has not filed by 07:30, the cloud writes the digest itself and sends it a few minutes later. It researches with Sonnet 5.5 and web search, then writes with Opus 5.5. That costs about 50p.

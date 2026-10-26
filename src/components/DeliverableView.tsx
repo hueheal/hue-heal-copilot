@@ -1,13 +1,12 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Role, RoleRun, RoleAction } from '../lib/roles'
-import { savePost } from '../lib/socialCopilot'
 import { agoLabel } from './chrome/AssetCard'
 
 /* ============================================================
    A deliverable, read. Shared by the department room and a
-   seat's own desk. Proposed pieces spawn real drafts; handoffs
-   link to the colleague they were written to.
+   seat's own desk. Proposed journal and newsletter pieces spawn
+   real drafts (social pieces are made in Figma, so they are not
+   listed); handoffs link to the colleague they were written to.
    ============================================================ */
 
 export const kindBadge = (k?: string) =>
@@ -15,17 +14,11 @@ export const kindBadge = (k?: string) =>
 
 export default function DeliverableView({ run, roster, by, eyebrow }: { run: RoleRun; roster: Role[]; by?: string; eyebrow?: string }) {
   const nav = useNavigate()
-  const [spawning, setSpawning] = useState<string | null>(null)
   const out = run.output
+  const actions = (out.actions ?? []).filter((a) => a.kind === 'journal' || a.kind === 'newsletter')
 
-  async function spawn(a: RoleAction) {
-    setSpawning(a.topic)
-    try {
-      if (a.kind === 'journal') { nav(`/create/journal?topic=${encodeURIComponent(a.topic)}`); return }
-      if (a.kind === 'newsletter') { nav(`/create/newsletter?topic=${encodeURIComponent(a.topic)}`); return }
-      const post = await savePost({ topic: a.topic, format: a.kind, sector: 'hospitality', accent: 'copper', platform: 'instagram', headline: '', caption: '', hashtags: [], slides: [], image_url: null, status: 'draft' })
-      nav(`/create/social/${post.id}`)
-    } finally { setSpawning(null) }
+  function spawn(a: RoleAction) {
+    nav(a.kind === 'journal' ? `/create/journal?topic=${encodeURIComponent(a.topic)}` : `/create/newsletter?topic=${encodeURIComponent(a.topic)}`)
   }
 
   return (
@@ -61,20 +54,18 @@ export default function DeliverableView({ run, roster, by, eyebrow }: { run: Rol
           </div>
         </>
       )}
-      {(out.actions ?? []).length > 0 && (
+      {actions.length > 0 && (
         <>
           <h3 style={{ fontSize: 13, fontWeight: 600, margin: '20px 0 8px' }}>Proposed pieces</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {out.actions.map((a, i) => (
+            {actions.map((a, i) => (
               <div key={i} className="ck-actionrow">
                 <span className="ck-pill" style={{ pointerEvents: 'none', flexShrink: 0 }}>{a.kind}</span>
                 <span style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ fontSize: 13.5, fontWeight: 500 }}>{a.topic}</span>
                   {a.note && <span style={{ fontSize: 12, color: 'var(--ck-faint)', display: 'block' }}>{a.note}</span>}
                 </span>
-                <button className="ck-go" style={{ marginLeft: 0, flexShrink: 0 }} disabled={spawning === a.topic} onClick={() => void spawn(a)}>
-                  {spawning === a.topic ? 'Creating…' : 'Create draft'}
-                </button>
+                <button className="ck-go" style={{ marginLeft: 0, flexShrink: 0 }} onClick={() => spawn(a)}>Create draft</button>
               </div>
             ))}
           </div>

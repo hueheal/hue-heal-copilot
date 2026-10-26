@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import { useAuth } from '../lib/auth'
 import { useIsMobile } from '../lib/useIsMobile'
-import { listPosts, type Post } from '../lib/socialCopilot'
 import { listInvoices, listProposals, type Invoice, type Proposal } from '../lib/studioOps'
 
-type EventKind = 'post' | 'invoice' | 'proposal'
+// Social posts are made in Figma now, so they are not on this calendar.
+type EventKind = 'invoice' | 'proposal'
 interface CalEvent {
   date: Date
   label: string
@@ -15,11 +15,10 @@ interface CalEvent {
 }
 
 const KIND_COLOR: Record<EventKind, string> = {
-  post: 'var(--ck-accent)',
   invoice: 'var(--hh-terracotta)',
   proposal: 'var(--status-positive)',
 }
-const KIND_LABEL: Record<EventKind, string> = { post: 'Scheduled post', invoice: 'Invoice due', proposal: 'Proposal' }
+const KIND_LABEL: Record<EventKind, string> = { invoice: 'Invoice due', proposal: 'Proposal' }
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -39,12 +38,8 @@ export default function Calendar() {
     if (gated) { setEvents([]); return }
     ;(async () => {
       try {
-        const [posts, invoices, proposals] = await Promise.all([listPosts(), listInvoices(), listProposals()])
+        const [invoices, proposals] = await Promise.all([listInvoices(), listProposals()])
         const evs: CalEvent[] = []
-        posts.forEach((p: Post) => {
-          if (p.status === 'scheduled' && p.scheduled_for)
-            evs.push({ date: new Date(p.scheduled_for), label: p.headline || p.topic, kind: 'post', href: `/create/social/${p.id}` })
-        })
         invoices.forEach((i: Invoice) => {
           if (i.due_date) evs.push({ date: new Date(i.due_date), label: `${i.client_name} · invoice due`, kind: 'invoice', href: `/invoices/${i.id}` })
         })
@@ -85,7 +80,7 @@ export default function Calendar() {
       <PageHeader
         eyebrow="Planner"
         title="Calendar"
-        subtitle="Scheduled posts, invoice due dates and live proposals across the month — your studio at a glance."
+        subtitle="Invoice due dates and live proposals across the month: your studio at a glance."
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button className="hh-btn" onClick={() => setCursor(new Date(year, month - 1, 1))} style={navBtn}>‹</button>
@@ -101,7 +96,7 @@ export default function Calendar() {
           <>
             {/* Legend + month count */}
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 18px', marginBottom: 16 }}>
-              {(['post', 'invoice', 'proposal'] as EventKind[]).map((k) => (
+              {(['invoice', 'proposal'] as EventKind[]).map((k) => (
                 <span key={k} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--ck-muted)' }}>
                   <span style={{ width: 9, height: 9, borderRadius: 3, background: KIND_COLOR[k] }} />
                   {KIND_LABEL[k]}
@@ -194,7 +189,7 @@ export default function Calendar() {
 
             {events.length === 0 && (
               <p style={{ fontSize: 13, color: 'var(--ck-faint)', marginTop: 16 }}>
-                Nothing dated yet — schedule a post, or set invoice due dates, and they’ll appear here.
+                Nothing dated yet. Set invoice due dates and they’ll appear here.
               </p>
             )}
           </>

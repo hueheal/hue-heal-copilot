@@ -1,3 +1,5 @@
+> Superseded on 26 Oct 2026: social posts are now made in each brand's own Figma templates (see `docs/social-design.md`). The Copilot template code described here has been removed; the copy rules below still apply until Remedae's Figma templates are in.
+
 # Remedae · Instagram template system
 
 The Remedae workspace has its own social template family in the Social Studio.

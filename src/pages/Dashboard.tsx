@@ -86,15 +86,7 @@ export default function Dashboard() {
         to: `/proposals/${p.id}`,
       }))
 
-    posts
-      .filter((p) => p.status === 'scheduled')
-      .slice(0, 3)
-      .forEach((p) => items.push({
-        glyph: '▦', title: p.headline || p.topic,
-        meta: p.scheduled_for ? `Scheduled · ${new Date(p.scheduled_for).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Scheduled',
-        action: 'Ready', tone: 'positive', chipBg: 'var(--hh-mushroom)', chipFg: '#2A211A',
-        to: `/create/social/${p.id}`,
-      }))
+    // Scheduled social posts are not listed: they are made in Figma now.
 
     clients
       .filter((c) => c.stage === 'lead')
@@ -106,7 +98,7 @@ export default function Dashboard() {
       }))
 
     return items.slice(0, 6)
-  }, [invoices, proposals, posts, clients])
+  }, [invoices, proposals, clients])
 
   const summary = loaded
     ? summarise(proposals, posts, invoices)
@@ -161,7 +153,7 @@ export default function Dashboard() {
                   Draft this week’s “guide to” in a minute
                 </div>
                 <p style={{ fontSize: 13.5, lineHeight: 1.6, color: 'var(--text-on-ink-muted, rgba(244,240,231,0.72))', margin: '0 0 16px', maxWidth: '42ch' }}>
-                  Brief a topic once: social, newsletter, journal or report, and the copilot lays it out in the brand.
+                  Brief a topic once: newsletter, journal or report, and the copilot lays it out in the brand.
                 </p>
                 <span
                   className="hh-btn"

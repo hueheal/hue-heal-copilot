@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import StudioLayout from './components/StudioLayout'
 import Home from './pages/Home'
 import Team from './pages/Team'
@@ -11,7 +11,6 @@ import ClientDocEditor from './pages/ClientDocEditor'
 import Proposals from './pages/Proposals'
 import ProposalEditor from './pages/ProposalEditor'
 import InvoiceEditor from './pages/InvoiceEditor'
-import SocialStudio from './pages/SocialStudio'
 import NewsletterEditor from './pages/NewsletterEditor'
 import LetterEditor from './pages/LetterEditor'
 import Create from './pages/Create'
@@ -22,14 +21,7 @@ function RedirectWithSearch({ to }: { to: string }) {
   const { search } = useLocation()
   return <Navigate to={`${to}${search}`} replace />
 }
-
-/* Old studio links (e.g. from daily digest emails) land in the new editor. */
-function StudioRedirect() {
-  const { id } = useParams()
-  return <Navigate to={`/create/social/${id}`} replace />
-}
 import Settings from './pages/Settings'
-import TemplateGallery from './pages/TemplateGallery'
 import AuthGate from './components/AuthGate'
 import { BrandProvider } from './lib/brandContext'
 import ComingSoon from './pages/ComingSoon'
@@ -45,9 +37,8 @@ export default function App() {
       {/* Public pages — outside the auth gate / studio shell */}
       <Route path="/subscribe" element={<Subscribe />} />
       <Route path="/unsubscribe" element={<Unsubscribe />} />
-      {/* Template contact sheet: signed-in, but outside the workspace picker so it can be
-          opened directly with ?brand=… (used to review a whole family at once). */}
-      <Route path="/templates" element={<AuthGate><BrandProvider><TemplateGallery /></BrandProvider></AuthGate>} />
+      {/* The template gallery is gone: social posts are made in Figma now. */}
+      <Route path="/templates" element={<Navigate to="/create" replace />} />
 
       {/* Company OS draft home (September 2026): its own shell, so it does not inherit the top bar. */}
       {/* Copilot V2, the life OS (docs/copilot-v2-life-os.md). Runs beside V1 until V1 is retired. */}
@@ -75,8 +66,10 @@ export default function App() {
         <Route path="proposals/:id" element={<ProposalEditor />} />
         <Route path="invoices/:id" element={<InvoiceEditor />} />
         <Route path="social" element={<Navigate to="/create" replace />} />
-        <Route path="social/studio/:id" element={<StudioRedirect />} />
-        <Route path="create/social/:id" element={<SocialStudio />} />
+        {/* Social posts are made in Figma now; old Social Studio links (e.g. from
+            daily digest emails) land on Create. */}
+        <Route path="social/studio/:id" element={<Navigate to="/create" replace />} />
+        <Route path="create/social/:id" element={<Navigate to="/create" replace />} />
         <Route path="newsletter" element={<RedirectWithSearch to="/create/newsletter" />} />
         <Route path="journal" element={<Navigate to="/create/journal" replace />} />
         <Route path="reports" element={<Navigate to="/" replace />} />

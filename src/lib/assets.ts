@@ -1,29 +1,26 @@
 import { supabase } from './supabase'
 import { filterByBrand, withBrandInsert } from './brandScope'
-import { listPosts, type Post } from './socialCopilot'
 import { listJournal } from './journal'
 import { listNewsletters } from './newsletter'
 import { listProposals, listInvoices } from './studioOps'
-import { isDesign, type Design } from './social/design'
-import type { PostFormat } from './database.types'
 
 /* ============================================================
    Phase 8 · the unified asset index, projects, and versions.
    The Library reads every content table into one shape; projects
    group related work; versions are JSONB snapshots on save.
-   Local mode degrades to read-only aggregation / no-ops.
+   Local mode degrades to read-only aggregation / no-ops. Social
+   posts are made in Figma now, so they are not indexed here.
    ============================================================ */
 
-export type AssetKind = 'social' | 'journal' | 'newsletter' | 'proposal' | 'invoice'
+export type AssetKind = 'journal' | 'newsletter' | 'proposal' | 'invoice'
 export const ASSET_KINDS: { key: AssetKind; label: string }[] = [
-  { key: 'social', label: 'Social' },
   { key: 'journal', label: 'Journal' },
   { key: 'newsletter', label: 'Newsletters' },
   { key: 'proposal', label: 'Proposals' },
   { key: 'invoice', label: 'Invoices' },
 ]
 export const KIND_TABLE: Record<AssetKind, string> = {
-  social: 'social_posts', journal: 'journal_articles', newsletter: 'newsletters',
+  journal: 'journal_articles', newsletter: 'newsletters',
   proposal: 'proposals', invoice: 'invoices',
 }
 
@@ -36,24 +33,14 @@ export interface Asset {
   when: string
   to: string
   image?: string
-  design?: Design
-  format?: PostFormat
   projectId?: string | null
 }
 
 export async function listAssets(): Promise<Asset[]> {
-  const [posts, arts, news, props, invs] = await Promise.allSettled([
-    listPosts(), listJournal('article'), listNewsletters(), listProposals(), listInvoices(),
+  const [arts, news, props, invs] = await Promise.allSettled([
+    listJournal('article'), listNewsletters(), listProposals(), listInvoices(),
   ])
   const out: Asset[] = []
-  if (posts.status === 'fulfilled') for (const p of posts.value as (Post & { project_id?: string | null })[]) out.push({
-    id: p.id, kind: 'social', title: p.headline || p.topic || 'Untitled post',
-    sub: p.format === 'carousel' ? 'Carousel' : p.format === 'story' ? 'Story' : 'Post',
-    status: p.status === 'published' ? 'published' : p.status === 'scheduled' ? 'scheduled' : 'draft',
-    when: p.updated_at ?? p.created_at, to: `/create/social/${p.id}`,
-    image: p.image_url ?? undefined, design: isDesign(p.design) ? (p.design as unknown as Design) : undefined,
-    format: p.format, projectId: p.project_id ?? null,
-  })
   if (arts.status === 'fulfilled') for (const a of arts.value as (typeof arts.value[number] & { project_id?: string | null })[]) out.push({
     id: a.id, kind: 'journal', title: a.title || 'Untitled article', sub: 'Article',
     status: a.published_at ? 'published' : 'draft',

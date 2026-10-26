@@ -1,20 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { savePost } from '../../lib/socialCopilot'
 
 /* ============================================================
    The universal create composer (Phase 6): natural language in,
    the right creator out. Intent detection is local and instant;
    the pills make it visible and overridable. Used on Home and
-   Create.
+   Create. Social posts are made in Figma now, so a social-sounding
+   prompt falls back to a journal piece.
    ============================================================ */
 
-export type ComposeKind = 'auto' | 'carousel' | 'portrait' | 'story' | 'journal' | 'newsletter' | 'proposal'
+export type ComposeKind = 'auto' | 'journal' | 'newsletter' | 'proposal'
 const PILLS: { key: ComposeKind; label: string }[] = [
   { key: 'auto', label: 'Auto' },
-  { key: 'carousel', label: 'Carousel' },
-  { key: 'portrait', label: 'Post' },
-  { key: 'story', label: 'Story' },
   { key: 'journal', label: 'Journal' },
   { key: 'newsletter', label: 'Newsletter' },
   { key: 'proposal', label: 'Proposal' },
@@ -22,36 +19,27 @@ const PILLS: { key: ComposeKind; label: string }[] = [
 
 export function detectIntent(prompt: string): Exclude<ComposeKind, 'auto'> {
   const p = prompt.toLowerCase()
-  if (/(carousel|slides|swipe)/.test(p)) return 'carousel'
-  if (/(story|stories|reel)/.test(p)) return 'story'
   if (/(newsletter|email|subscriber)/.test(p)) return 'newsletter'
-  if (/(journal|article|long[- ]form|blog|essay|piece about)/.test(p)) return 'journal'
   if (/(proposal|pitch|quote for|invoice)/.test(p)) return 'proposal'
-  if (/(instagram|social|post)/.test(p)) return 'portrait'
-  return 'carousel'
+  // Journal is the default, including for prompts that read as social.
+  return 'journal'
 }
 
 export default function Composer({ autoFocus = false, placeholder }: { autoFocus?: boolean; placeholder?: string }) {
   const nav = useNavigate()
   const [prompt, setPrompt] = useState('')
   const [pill, setPill] = useState<ComposeKind>('auto')
-  const [busy, setBusy] = useState(false)
 
   const detected = pill === 'auto' ? detectIntent(prompt) : pill
   const canGo = prompt.trim().length > 0 || pill !== 'auto'
 
-  async function go() {
-    if (busy || !canGo) return
+  function go() {
+    if (!canGo) return
     const kind = detected
     const topic = prompt.trim()
-    if (kind === 'journal') { nav(`/create/journal${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`); return }
     if (kind === 'newsletter') { nav(`/create/newsletter${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`); return }
     if (kind === 'proposal') { nav('/proposals'); return }
-    setBusy(true)
-    try {
-      const post = await savePost({ topic, format: kind, sector: 'hospitality', accent: 'copper', platform: 'instagram', headline: '', caption: '', hashtags: [], slides: [], image_url: null, status: 'draft' })
-      nav(`/create/social/${post.id}`)
-    } finally { setBusy(false) }
+    nav(`/create/journal${topic ? `?topic=${encodeURIComponent(topic)}` : ''}`)
   }
 
   return (
@@ -60,8 +48,8 @@ export default function Composer({ autoFocus = false, placeholder }: { autoFocus
         value={prompt}
         autoFocus={autoFocus}
         onChange={(e) => setPrompt(e.target.value)}
-        placeholder={placeholder ?? 'Describe it — “a carousel on why every tradition warms the stomach before breakfast”'}
-        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && canGo) { e.preventDefault(); void go() } }}
+        placeholder={placeholder ?? 'Describe it: “a journal piece on why every tradition warms the stomach before breakfast”'}
+        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && canGo) { e.preventDefault(); go() } }}
       />
       <div className="ck-composer-row">
         {PILLS.map((p) => (
@@ -71,7 +59,7 @@ export default function Composer({ autoFocus = false, placeholder }: { autoFocus
             {p.label}
           </button>
         ))}
-        <button className="ck-go" onClick={() => void go()} disabled={!canGo || busy}>{busy ? 'Starting…' : 'Create'}</button>
+        <button className="ck-go" onClick={go} disabled={!canGo}>Create</button>
       </div>
     </div>
   )
