@@ -9,13 +9,16 @@ import Briefing from '../components/Briefing'
 import AssetReview from '../components/AssetReview'
 import { BatchReviewCard } from '../components/BatchShelf'
 import Priorities from '../components/Priorities'
+import WorkspaceInsights from '../components/WorkspaceInsights'
 import { listRoles, listWorkspaceJobs, decideJob, type Role, type RoleJob } from '../lib/roles'
 import { DEPARTMENTS, deptOf } from '../lib/org'
 
 /* ============================================================
-   Home (Phase 5): the intent-led starting point. One composer,
-   the work you were in the middle of, and a few honest
-   suggestions. Chrome surface: --ck-* tokens, light + dark.
+   Home: the workspace at a glance first (its numbers this week,
+   what is due today, cards to its admin, library, website and
+   templates), then the team, the composer, the work you were in
+   the middle of and a few honest suggestions.
+   Chrome surface: --ck-* tokens, light + dark.
    ============================================================ */
 
 interface Recent {
@@ -113,6 +116,8 @@ export default function Home() {
         <div className="ck-eyebrow">{day} · {current?.name ?? 'Studio'}</div>
         <h1 className="ck-h1">{greeting}.</h1>
 
+        <WorkspaceInsights />
+        <div className="ck-sectiongap" />
         <Priorities compact />
         <BatchReviewCard />
         {hasOrg ? (

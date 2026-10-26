@@ -8,8 +8,8 @@ Since 26 Oct 2026, each brand's bespoke Figma social templates are the only sour
 
 | Brand | Figma templates | Status |
 |---|---|---|
-| Moss Island | File `zRPzlRUISFVMvw7KZXkjws` (https://www.figma.com/design/zRPzlRUISFVMvw7KZXkjws). Page 1 holds the launch carousels, the Founding Families set and the art library. Page "Calendar Events" (22:139) holds the calendar covers, such as "Introducing Diwali Quests", and the calendar cards. Made in the MOSS ISLAND chat. | In use |
-| Hue & Heal | Link to come from Maria. | Waiting |
+| Moss Island | File `zRPzlRUISFVMvw7KZXkjws`, "Moss Island Social Templates" (https://www.figma.com/design/zRPzlRUISFVMvw7KZXkjws). Page 1 holds the launch carousels, the Founding Families set and the art library. Page "Calendar Events" (22:139) holds the calendar covers, such as "Introducing Diwali Quests", and the calendar cards. Made in the MOSS ISLAND chat. | In use |
+| Hue & Heal | File `ZpkB5lZiwW3p8ByicUcFiG`, "Hue & Heal Social Templates" (https://www.figma.com/design/ZpkB5lZiwW3p8ByicUcFiG). Pages: Read me, Strategy, Foundations, Image library, Instagram, Stories, LinkedIn, Newsletter, Journal, Ready to post. | In use |
 | Remedae | Remedae is building its own bespoke Figma templates; link to come from Maria. Until then, its copy follows `docs/remedae-social-system.md`. | Waiting |
 
 **Rules that stay with the copy, whatever the template:**
@@ -25,4 +25,4 @@ Since 26 Oct 2026, each brand's bespoke Figma social templates are the only sour
 3. Export the slides for the email.
 4. Link the email to the frame in Figma.
 
-This starts once the Hue & Heal and Remedae links are in.
+Hue & Heal and Moss Island are ready to wire up; Remedae follows when its link is in.
