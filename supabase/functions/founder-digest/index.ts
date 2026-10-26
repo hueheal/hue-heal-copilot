@@ -299,8 +299,9 @@ async function buildContext(admin: SupabaseClient, owner: string, lens: Lens, da
   }
   const next = plans.find((x) => x.week_start === addDays(thisWeek, 7))
   const dow = weekday(date)
-  if (dow === 5 && next?.status !== 'approved') lines.push('', `${RULES.planning} Next week runs from Monday ${addDays(thisWeek, 7)} to Friday ${addDays(thisWeek, 11)}.${next?.input ? ` Her notes so far: ${flat(next.input, 600)}` : ''}`)
-  else lines.push('', 'PLANNING: week_plan and plan_summary stay empty today (planning is on Fridays).')
+  // Friday is planning day: next week's plan is written in its own step after
+  // this digest (writePlan), and today's three include shaping it.
+  if (dow === 5 && next?.status !== 'approved') lines.push('', `TODAY IS PLANNING DAY (Friday): next week's plan is written separately and goes in this email. Include shaping and approving it in today's three.`)
   if (dow === 1 && kept.length) lines.push('', RULES.action as string)
   return { text: lines.join('\n'), module, pulse }
 }
@@ -494,14 +495,17 @@ async function fileStep(admin: SupabaseClient, row: Row): Promise<Partial<Row>> 
 async function planFor(admin: SupabaseClient, row: Row, raw: Json): Promise<Partial<DigestContent>> {
   const date = row.digest_date
   const out: Partial<DigestContent> = {}
-  if (weekday(date) === 5 && Array.isArray(raw.week_plan) && raw.week_plan.length) {
+  if (weekday(date) === 5) {
     const weekStart = addDays(mondayOf(date), 7)
-    const { data: existing } = await admin.from('content_plans').select('id, status').eq('owner', row.owner).eq('week_start', weekStart).maybeSingle()
+    const { data: existing } = await admin.from('content_plans').select('id, status, items, input').eq('owner', row.owner).eq('week_start', weekStart).maybeSingle()
     if (existing?.status !== 'approved') {
-      const items = cleanPlan(raw.week_plan as Json[], weekStart)
-      const summary = cut(raw.plan_summary, 900)
-      await admin.from('content_plans').upsert({ owner: row.owner, week_start: weekStart, status: 'proposed', summary, items, digest_id: row.id, updated_at: new Date().toISOString() }, { onConflict: 'owner,week_start' })
-      out.plan = { week_start: weekStart, summary, items, status: 'proposed' }
+      try {
+        const written = await writePlan(admin, row.owner, weekStart, (existing?.items ?? []) as PlanItem[], String(existing?.input ?? ''))
+        if (written.items.length) {
+          await admin.from('content_plans').upsert({ owner: row.owner, week_start: weekStart, status: 'proposed', summary: written.summary, items: written.items, digest_id: row.id, usage: addUsage({}, WRITE_MODEL, written.usage), updated_at: new Date().toISOString() }, { onConflict: 'owner,week_start' })
+          out.plan = { week_start: weekStart, summary: written.summary, items: written.items, status: 'proposed' }
+        }
+      } catch (e) { console.error('digest plan', (e as Error).message) }
     }
   }
   if (weekday(date) === 1) {
@@ -603,8 +607,7 @@ async function writePlan(admin: SupabaseClient, owner: string, weekStart: string
       ? 'Rewrite the plan for this week following her notes. Keep the kept items unless her notes change them, replace the dropped ones, and say in plan_summary what changed and why.'
       : 'Write the plan for this week now, in week_plan and plan_summary.',
   ].join('\n')
-  const props = (RULES.schema as unknown as { properties: Json }).properties
-  const schema = { type: 'object', additionalProperties: false, properties: { plan_summary: props.plan_summary, week_plan: props.week_plan }, required: ['plan_summary', 'week_plan'] }
+  const schema = RULES.plan_schema
   const res = await anthropic.beta.messages.create({
     model: WRITE_MODEL, max_tokens: 8000, system: RULES.system,
     messages: [{ role: 'user', content: prompt }],
@@ -612,6 +615,23 @@ async function writePlan(admin: SupabaseClient, owner: string, weekStart: string
   } as never) as Anthropic.Beta.BetaMessage
   const out = JSON.parse(res.content.filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text').map((b) => b.text).join('')) as Json
   return { items: cleanPlan((out.week_plan ?? []) as Json[], weekStart), summary: cut(out.plan_summary, 900), usage: res.usage as unknown as Json }
+}
+
+/** When a day's digest cannot be made, a short plain note says so, so a missing email is never silent. */
+async function failureNotice(admin: SupabaseClient, row: Row, reason: string): Promise<void> {
+  try {
+    const lens = await lensOf(admin, row.owner)
+    const to = await recipient(admin, row.owner, lens)
+    const { key } = resendKeyFor(FROM)
+    if (!key) return
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST', headers: { Authorization: `Bearer ${key}`, 'content-type': 'application/json', 'Idempotency-Key': `digest-failed-${row.id}` },
+      body: JSON.stringify({
+        from: FROM, to: [to], reply_to: REPLY_TO, subject: 'Today\'s digest did not go out',
+        text: `Today's Founder's Digest could not be made, so nothing was sent.\n\nWhat went wrong: ${reason}\n\nWrite a fresh one from the Digest page in Copilot: ${APP_URL}/v2/digest`,
+      }),
+    })
+  } catch (e) { console.error('digest failure notice', (e as Error).message) }
 }
 
 /* ---- The tick ---- */
@@ -675,6 +695,7 @@ async function tick(admin: SupabaseClient): Promise<Json> {
       console.error('digest step', row.stage, msg)
       patch = { attempts, error: cut(`${row.stage}: ${msg}`, 400), ...(attempts >= MAX_ATTEMPTS ? { stage: 'failed' } : {}) }
       if (attempts < MAX_ATTEMPTS) moved = true
+      else await failureNotice(admin, row, cut(msg, 300))
     }
     await admin.from('founder_digests').update({ ...patch, lock_until: null, updated_at: new Date().toISOString() }).eq('id', row.id)
     out[row.digest_date] = patch.stage ?? row.stage

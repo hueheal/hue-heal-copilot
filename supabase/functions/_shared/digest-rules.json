@@ -443,7 +443,36 @@
       },
       "question": {
         "type": "string"
-      },
+      }
+    },
+    "required": [
+      "headline",
+      "opening",
+      "priorities",
+      "news",
+      "posts",
+      "coaching",
+      "next_steps",
+      "question"
+    ]
+  },
+  "design": {
+    "intro": "WRITE EACH POST AS SLIDE-BY-SLIDE COPY. The posts are made in each brand's own Figma templates, which are the source of truth for the design, so write copy only: what each slide says, in the fields its role uses (eyebrow, kicker, title, body, items, cta), leaving the rest empty. A single post is one slide; a carousel is 4 to 8 slides, a cover first and a closing slide last. Keep lines short: titles at most 10 words, bodies at most 30. Mark the one phrase to emphasise in each title with *asterisks*.",
+    "Hue & Heal": "HUE & HEAL: copy for the Hue & Heal Social Templates in Figma (file ZpkB5lZiwW3p8ByicUcFiG: Instagram, Stories, LinkedIn, Newsletter and Journal pages, with its own Strategy and Foundations pages). Typical carousel: a cover with a short eyebrow, a title and one line, 3 to 5 idea slides, a closing question or call.",
+    "Remedae": "REMEDAE: copy for Remedae's own templates, which are moving to Figma. Until then follow its Instagram system's copy shapes: a cover promise, one context slide, numbered remedy slides, and a closing hook slide that asks people to save it or visit remedae.app.",
+    "Moss Island": "MOSS ISLAND: copy for the Moss Island Figma social templates (Figma file zRPzlRUISFVMvw7KZXkjws: the launch carousels, the Founding Families set and the calendar covers such as 'Introducing Diwali Quests'). Quest slides use a quest_id from MOSS ISLAND QUESTS only and leave their text empty: the card comes from the game. Typical carousel: a cover in the calendar cover style or the launch style, 3 to 5 quest slides, a 'Now accepting Founding Families' close."
+  },
+  "strategy": {
+    "Hue & Heal": "Goal: studio enquiries, Letter subscribers and Mind deck sales; position Maria as the leading voice on designing wellbeing into experiences. Pillars: Ideas from the Journal (wellness experience design across physical and digital, 40 percent), Studio method and proof (how the work is done, before and after, 25 percent), Mind (the coaching decks, the 7 Day Creative Boost, designing your next chapter, 20 percent), Lab (Remedae and Moss Island as products the studio builds, 15 percent). Cadence: 3 to 5 Instagram posts a week, one Journal essay a week, the Letter once a month (plan it in the first week of the month), with a short essay email when a Journal piece goes out.",
+    "Remedae": "Goal: pilot sign-ups and waitlist growth; be the place people save for traditional and kitchen remedies told as the written record. Instagram ranks on saves, shares and sends, so the mix leans to posts people keep: save and quick-glance reference posts (35 percent), curiosity hooks such as the question, the number and the quiz (25 percent), reframes, myth and truth (15 percent), remedy carousels in the founder's story shape (15 percent), Journal promotion with the editorial cover (10 percent). Cadence: 4 to 5 posts a week, one Journal piece a week, the journal email to subscribers when it goes out. Never name a condition in an email subject.",
+    "Moss Island": "Goal: Founding Family applications before the November launch, then sign-ups; Instagram is where grown-ups act (saves, sends, sign-ups). Mix: quest carousels that are useful and savable (2 a week, one card per slide, from one pack or theme), calendar moments (Moss celebrates on the day, with real quests from that pack; the How we took part follow-up only for a real partner event with written permission), Founding Families calls (1 a week), calm stills (an island, a bud, a real object from a quest). Reels come from TikTok once video is approved. Grid rhythm across a row of three: a reel cover or sky cover, a quest carousel, a calm still. No children's faces, ever."
+  },
+  "planning": "TODAY IS PLANNING DAY (Friday). As well as today's digest, propose next week's content plan in week_plan and plan_summary, for the founder to shape and approve. For each company: one Instagram post for each weekday, Monday to Friday, in that brand's own formats and design family; plus that brand's Journal and newsletter items for the week, following its cadence. Each item names its day, format, topic, angle, why now and the strategy pillar it serves, with the sources behind it. Balance what is trending and buzzing this week (the news you found, conversations, calendar moments) against each brand's social strategy, so the week builds the brand rather than chasing noise. Favour what will give the companies an edge: something early, specific or contrarian that competitors are not saying. Moss Island Instagram items must be built from real quests or packs from the list. In today's three, include shaping and approving the plan.",
+  "action": "TODAY IS ACTION DAY (Monday). The week's plan is below and drives the week: today's three should start it (the first posts, the Journal piece's draft, the newsletter if it is due), and today's posts follow today's planned items.",
+  "plan_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
       "plan_summary": {
         "type": "string",
         "description": "Planning day only: three or four sentences on the thinking behind next week's plan (what is buzzing, what the research found, how it serves each brand's strategy). Empty on other days."
@@ -530,29 +559,8 @@
       }
     },
     "required": [
-      "headline",
-      "opening",
-      "priorities",
-      "news",
-      "posts",
-      "coaching",
-      "next_steps",
-      "question",
       "plan_summary",
       "week_plan"
     ]
-  },
-  "design": {
-    "intro": "WRITE EACH POST AS SLIDE-BY-SLIDE COPY. The posts are made in each brand's own Figma templates, which are the source of truth for the design, so write copy only: what each slide says, in the fields its role uses (eyebrow, kicker, title, body, items, cta), leaving the rest empty. A single post is one slide; a carousel is 4 to 8 slides, a cover first and a closing slide last. Keep lines short: titles at most 10 words, bodies at most 30. Mark the one phrase to emphasise in each title with *asterisks*.",
-    "Hue & Heal": "HUE & HEAL: copy for the Hue & Heal Social Templates in Figma (file ZpkB5lZiwW3p8ByicUcFiG: Instagram, Stories, LinkedIn, Newsletter and Journal pages, with its own Strategy and Foundations pages). Typical carousel: a cover with a short eyebrow, a title and one line, 3 to 5 idea slides, a closing question or call.",
-    "Remedae": "REMEDAE: copy for Remedae's own templates, which are moving to Figma. Until then follow its Instagram system's copy shapes: a cover promise, one context slide, numbered remedy slides, and a closing hook slide that asks people to save it or visit remedae.app.",
-    "Moss Island": "MOSS ISLAND: copy for the Moss Island Figma social templates (Figma file zRPzlRUISFVMvw7KZXkjws: the launch carousels, the Founding Families set and the calendar covers such as 'Introducing Diwali Quests'). Quest slides use a quest_id from MOSS ISLAND QUESTS only and leave their text empty: the card comes from the game. Typical carousel: a cover in the calendar cover style or the launch style, 3 to 5 quest slides, a 'Now accepting Founding Families' close."
-  },
-  "strategy": {
-    "Hue & Heal": "Goal: studio enquiries, Letter subscribers and Mind deck sales; position Maria as the leading voice on designing wellbeing into experiences. Pillars: Ideas from the Journal (wellness experience design across physical and digital, 40 percent), Studio method and proof (how the work is done, before and after, 25 percent), Mind (the coaching decks, the 7 Day Creative Boost, designing your next chapter, 20 percent), Lab (Remedae and Moss Island as products the studio builds, 15 percent). Cadence: 3 to 5 Instagram posts a week, one Journal essay a week, the Letter once a month (plan it in the first week of the month), with a short essay email when a Journal piece goes out.",
-    "Remedae": "Goal: pilot sign-ups and waitlist growth; be the place people save for traditional and kitchen remedies told as the written record. Instagram ranks on saves, shares and sends, so the mix leans to posts people keep: save and quick-glance reference posts (35 percent), curiosity hooks such as the question, the number and the quiz (25 percent), reframes, myth and truth (15 percent), remedy carousels in the founder's story shape (15 percent), Journal promotion with the editorial cover (10 percent). Cadence: 4 to 5 posts a week, one Journal piece a week, the journal email to subscribers when it goes out. Never name a condition in an email subject.",
-    "Moss Island": "Goal: Founding Family applications before the November launch, then sign-ups; Instagram is where grown-ups act (saves, sends, sign-ups). Mix: quest carousels that are useful and savable (2 a week, one card per slide, from one pack or theme), calendar moments (Moss celebrates on the day, with real quests from that pack; the How we took part follow-up only for a real partner event with written permission), Founding Families calls (1 a week), calm stills (an island, a bud, a real object from a quest). Reels come from TikTok once video is approved. Grid rhythm across a row of three: a reel cover or sky cover, a quest carousel, a calm still. No children's faces, ever."
-  },
-  "planning": "TODAY IS PLANNING DAY (Friday). As well as today's digest, propose next week's content plan in week_plan and plan_summary, for the founder to shape and approve. For each company: one Instagram post for each weekday, Monday to Friday, in that brand's own formats and design family; plus that brand's Journal and newsletter items for the week, following its cadence. Each item names its day, format, topic, angle, why now and the strategy pillar it serves, with the sources behind it. Balance what is trending and buzzing this week (the news you found, conversations, calendar moments) against each brand's social strategy, so the week builds the brand rather than chasing noise. Favour what will give the companies an edge: something early, specific or contrarian that competitors are not saying. Moss Island Instagram items must be built from real quests or packs from the list. In today's three, include shaping and approving the plan.",
-  "action": "TODAY IS ACTION DAY (Monday). The week's plan is below and drives the week: today's three should start it (the first posts, the Journal piece's draft, the newsletter if it is due), and today's posts follow today's planned items."
+  }
 }
